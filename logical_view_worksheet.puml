@@ -1,0 +1,62 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Cell {
+    - data: any
+    + set_data(data: any): void
+    + get_data(): any
+}
+
+class Table {
+    - data: Map<string, Cell>
+    - headers: string[]
+    + set_cell(address: string, data: any): void
+    + get_cell(address: string): Cell
+    + get_row(): Map<string, Cell>
+    + get_column(): Map<string, Cell>
+    + add_row(rowData: any[]): void
+    + add_column(headerName: string, columnData: any[]): void
+}
+
+class Worksheet {
+    - name: string
+    - tables: Map<string, Table>
+    + add_table(table_name: string): void
+    + get_table(table_name: string): Table
+}
+
+class Workbook {
+    - name: string
+    - worksheets: Map<string, Worksheet>
+    + add_worksheet(worksheet_name: string): void
+    + remove_worksheet(worksheet_name: string): void
+    + get_worksheet(worksheet_name: string): Worksheet
+    + call_macro(macro_name)
+}
+
+class PDF {
+    + name: string
+    + total: float
+    + date: date (MM-DD-YYYY)
+    + invoice_number: int
+    + filePath: string
+    + extract_text(): string
+    + extract_data_by_pattern(pattern: string): any[]
+    + perform_OCR(): string
+}
+
+class PDFCollection {
+    - pdfs: Map<string, PDF>
+    + add_pdf(filePath: string): void
+    + remove_pdf(filePath: string): void
+    + get_pdf(filePath: string): PDF
+    + apply_operation_to_all(operation: Function): void
+}
+
+Workbook *- "1..*" Worksheet : contains
+Worksheet *- "0..*" Table : contains
+Table *- "0..*" Cell : contains
+Worksheet --> PDFCollection : "utilizes"
+PDFCollection *- "0..*" PDF : contains
+
+@enduml
