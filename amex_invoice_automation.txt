@@ -1,0 +1,5 @@
+3/17/24 When doing calculations to rows of transaction in df_transaction_details(will eventually become just using the classes outlined in "logical_view_worksheet" do multiplication among the different transactions and store the subsets to compare against the invoice
+
+3/17/24 Need to do type hints for parameters:, variables: , and methods -> for better understanding, can use "mypy" or newer feature to check types
+
+3/17/24 on page 51
