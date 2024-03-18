@@ -1,37 +1,31 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-class Cell {
-    - data: any
-    + set_data(data: any): void
-    + get_data(): any
-}
-
 class Table {
-    - data: Map<string, Cell>
+    - data: Map<string, any>
     - headers: string[]
     + set_cell(address: string, data: any): void
-    + get_cell(address: string): Cell
-    + get_row(): Map<string, Cell>
-    + get_column(): Map<string, Cell>
+    + get_cell(address: string): any
+    + get_row(rowNumber: int): Map<string, any>
+    + get_column(columnLetter: string): Map<string, any>
     + add_row(rowData: any[]): void
     + add_column(headerName: string, columnData: any[]): void
 }
 
 class Worksheet {
     - name: string
-    - tables: Map<string, Table>
+    - tables: dict<string, Table>
     + add_table(table_name: string): void
     + get_table(table_name: string): Table
 }
 
 class Workbook {
     - name: string
-    - worksheets: Map<string, Worksheet>
+    - worksheets: dict<string, Worksheet>
     + add_worksheet(worksheet_name: string): void
     + remove_worksheet(worksheet_name: string): void
     + get_worksheet(worksheet_name: string): Worksheet
-    + call_macro(macro_name)
+    + call_macro(macro_name: string): void
 }
 
 class PDF {
@@ -46,7 +40,7 @@ class PDF {
 }
 
 class PDFCollection {
-    - pdfs: Map<string, PDF>
+    - pdfs: dict<string, PDF>
     + add_pdf(filePath: string): void
     + remove_pdf(filePath: string): void
     + get_pdf(filePath: string): PDF
@@ -55,7 +49,6 @@ class PDFCollection {
 
 Workbook *- "1..*" Worksheet : contains
 Worksheet *- "0..*" Table : contains
-Table *- "0..*" Cell : contains
 Worksheet --> PDFCollection : "utilizes"
 PDFCollection *- "0..*" PDF : contains
 
