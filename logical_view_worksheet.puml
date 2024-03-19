@@ -1,55 +1,84 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-class Table {
-    - data: Map<string, any>
-    - headers: string[]
-    + set_cell(address: string, data: any): void
-    + get_cell(address: string): any
-    + get_row(rowNumber: int): Map<string, any>
-    + get_column(columnLetter: string): Map<string, any>
-    + add_row(rowData: any[]): void
-    + add_column(headerName: string, columnData: any[]): void
-}
-
 class Worksheet {
+    note top: Utilizes xlwings to interact with Excel and pandas for DataFrame operations
     - name: string
-    - tables: dict<string, Table>
-    + add_table(table_name: string): void
-    + get_table(table_name: string): Table
+    - sheet: xlwings.Sheet
+    - dataframe: pandas.DataFrame
+    + read_data_as_dataframe(): void
+    + write_data_from_dataframe_to_sheet(dataframe: pandas.DataFrame): void
+    + update_worksheet_from_pdf_data(pdf_data: dict): void
+    + extract_column_data(column_letter: string): list
+    + extract_row_data(row_letter: string): list
 }
 
 class Workbook {
-    - name: string
+    note top: Manages Worksheets with xlwings
+    - workbook_name: string
     - worksheets: dict<string, Worksheet>
+    + Workbook(workbook_path: string)  // Constructor now takes a path to open or create a workbook
     + add_worksheet(worksheet_name: string): void
     + remove_worksheet(worksheet_name: string): void
+    + remove_all_worksheet(): void
     + get_worksheet(worksheet_name: string): Worksheet
-    + call_macro(macro_name: string): void
+    + call_macro_workbook(macro_name: string): void
+    + save(): void  // Method to save changes to the workbook
 }
 
 class PDF {
-    + name: string
+    note top: Stores extracted data from PDF files
+    + pdf_name: string
+    + file_path: string
     + total: float
-    + date: date (MM-DD-YYYY)
+    + date: date MM-DD-YYYY
     + invoice_number: int
-    + filePath: string
-    + extract_text(): string
-    + extract_data_by_pattern(pattern: string): any[]
-    + perform_OCR(): string
+    + vendor: string
+    + extract_pdf_invoice_total(): void
+    + extract_ocr_invoice_total(): void
+    + process_totals(): void // Calls the total extraction methods in the correct sequence extract_pdf_invoice_total and falls back to extract_ocr_invoice_total
+    + extract_pdf_invoice_date(start_date, end_date): void
+    + extract_ocr_invoice_date(start_date, end_date): void
+    + process_dates(): void // Calls the date extraction methods in correct sequence extract_pdf_invoice_date and falls back to extract_ocr_invoice_date
+    + extract_vendor: void
+    - data: dict
+    + extract_data(): void
+    + get_data(): dict
 }
 
 class PDFCollection {
+    note top: Manages a collection of PDF objects, facilitating access by name
     - pdfs: dict<string, PDF>
-    + add_pdf(filePath: string): void
-    + remove_pdf(filePath: string): void
-    + get_pdf(filePath: string): PDF
-    + apply_operation_to_all(operation: Function): void
+    + add_pdf(file_path: string): void
+    + populate_from_file_paths(file_paths: list<string>): void
+    + remove_pdf(file_path: string): void
+    + remove_all_pdf(): void
+    + get_pdf(file_path: string): PDF
+    + extract_totals_from_all_pdfs(): void
+    + extract_dates_from_all_pdfs(): void
+    + aggregate_data_for_worksheet_update(): dict
+}
+
+class AutomationController {
+    note top: Acts as the facade, simplifying complex operations like PDF processing and data manipulation in Excel worksheets.
+    + start_date: string
+    + end_date: string
+    + workbooks: dict<string, Workbook>
+    + open_workbook(path: string, workbook_name: string): Workbook  // New method to open a workbook by path
+    + save_workbook(workbook_name: string): void  // New method to save a workbook
+    + perform_task(workbook_name: string, worksheet_name: string): void
+    + update_data_across_workbooks(source_workbook_name: string, target_workbook_name: string, criteria): void
+    + gather_pdf_file_paths_and_names(workbook_name: string, worksheet_name: string, column_letter: string): dict<pdf_name, pdf_file_path>
+    + collect_and_add_pdfs_to_collection(workbook_name: string, worksheet_name: string, column_letter: string): void
+    + extract_pdf_totals(): void // Delegates to PDFCollection.extract_totals_from_all_pdfs()
+    + extract_pdf_dates(): void // Delegates to PDFCollection.extract_dates_from_all_pdfs()
+    + update_worksheet_from_pdf_collection(workbook_name: string, worksheet_name: string): void
 }
 
 Workbook *- "1..*" Worksheet : contains
-Worksheet *- "0..*" Table : contains
-Worksheet --> PDFCollection : "utilizes"
 PDFCollection *- "0..*" PDF : contains
+AutomationController --> Workbook : manages >
+AutomationController --> PDFCollection : utilizes >
+
 
 @enduml
