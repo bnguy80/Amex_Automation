@@ -3,3 +3,30 @@
 3/17/24 Need to do type hints for parameters:, variables: , and methods -> for better understanding, can use "mypy" or newer feature to check types
 
 3/17/24 on page 51
+
+Invoice receipt available for finance -> t3nas (Ana). Be delivered to Truth Initiative building or Chicago. Exceed $5000 another process of forms for finance. Packing slips two individuals must sign on it. Person ordering cannot sign, two others to avoid theft. Cathy must be provided access to be able to see packing slips -> packing slips.
+
+
+We Need to be able to automate the account code to be able to split the transaction finance to its correct
+
+Anything on Amazon should be 5130 for office supplies
+
+cbt-nugget to Dues & subscriptions, CompTIA to professional development
+
+laptops are computer expenses
+
+For any zoom, telephony type service Telephone & wireless services
+
+Anything shipping related postage and shipping code
+
+supplies: toners,
+
+Consulting: oceans solutions, garner, enterprise security audit
+
+t3billing needs to find the invoices that are not forwarded to t3billing.
+
+Calendly yearly renewal, Chatgpt yearly, lastpass largest purchase
+
+Dashboard of all the applications, all the applications to would use
+
+Duo security be in Dues & Subscriptions
