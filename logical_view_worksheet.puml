@@ -4,13 +4,10 @@
 class Worksheet {
     note top: Utilizes xlwings to interact with Excel and pandas for DataFrame operations
     - name: string
-    - sheet: xlwings.Sheet
+    - sheet: xlwings.Sheet // Usage needed to provide access to the underlying excel sheet, dataframe used as intermediary to manipulate data
     - dataframe: pandas.DataFrame
-    + read_data_as_dataframe(): void
-    + write_data_from_dataframe_to_sheet(dataframe: pandas.DataFrame): void
-    + update_worksheet_from_pdf_data(pdf_data: dict): void
-    + extract_column_data(column_letter: string): list
-    + extract_row_data(row_letter: string): list
+    + read_data_as_dataframe(): void // Reads data from sheet reference to store it as dataframe
+    + update_data_from_dataframe_to_sheet(dataframe: pandas.DataFrame): void // writes manipulated dataframe back into excel sheet
 }
 
 class ConditionalFormatter {
@@ -26,7 +23,8 @@ class Workbook {
     + add_worksheet(worksheet_name: string): void
     + remove_worksheet(worksheet_name: string): void
     + remove_all_worksheet(): void
-    + get_worksheet(worksheet_name: string): Worksheet
+    + get_worksheet(worksheet_name: string): worksheets[worksheet_name: string]
+    + get_all_worksheets(): worksheets
     + call_macro_workbook(macro_name: string): void
     + save(): void  // Method to save changes to the workbook
 }
@@ -53,7 +51,7 @@ class PDF {
 
 class PDFCollection {
     note top: Manages a collection of PDF objects, facilitating access by name
-    - pdfs: dict<string, PDF>
+    - pdfs: pd.DataFrame
     + add_pdf(file_path: string): void
     + populate_from_file_paths(file_paths: list<string>): void
     + remove_pdf(file_path: string): void
@@ -61,7 +59,7 @@ class PDFCollection {
     + get_pdf(file_path: string): PDF
     + extract_totals_from_all_pdfs(): void
     + extract_dates_from_all_pdfs(): void
-    + aggregate_data_for_worksheet_update(): dict
+    + aggregate_data_for_worksheet_update(): void
 }
 
 class AutomationController {
@@ -77,7 +75,7 @@ class AutomationController {
     + collect_and_add_pdfs_to_collection(workbook_name: string, worksheet_name: string, column_letter: string): void
     + extract_pdf_totals(): void // Delegates to PDFCollection.extract_totals_from_all_pdfs()
     + extract_pdf_dates(): void // Delegates to PDFCollection.extract_dates_from_all_pdfs()
-    + update_worksheet_from_pdf_collection(workbook_name: string, worksheet_name: string): void
+    + update_worksheet(workbook_name: string, worksheet_name: string, data: pd.DataFrame): void
 }
 
 Workbook *- "1..*" Worksheet : contains

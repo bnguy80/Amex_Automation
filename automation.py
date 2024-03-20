@@ -150,7 +150,7 @@ class PDF:
 
 class PDFCollection:
     def __init__(self):
-        self.pdfs = {}
+        self.pdfs = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
 
     def add_pdf(self, pdf_path):
         pdf = PDF(pdf_path)
@@ -178,7 +178,7 @@ class PDFCollection:
 
 
 class Worksheet:
-    def __init__(self, name, sheet):
+    def __init__(self,name, sheet):
         self.name = name
         self.sheet = sheet
         self.dataframe = pd.DataFrame()
@@ -187,20 +187,19 @@ class Worksheet:
         # Use xlwings to read data into a DataFrame
         self.dataframe = self.sheet.range('A1').options(pd.DataFrame, expand='table').value
 
-    def write_data_from_dataframe_to_sheet(self, dataframe):
-        # Use xlwings to write DataFrame data back to the sheet
-        self.sheet.range('A1').value = dataframe
-
-    # def extract_column_data(self, column_letter):
-
-    # def extract_row_data(self, row_letter):
+    # def update_data_from_dataframe_to_sheet(self, dataframe):
+    #     # Use xlwings to write DataFrame data back to the sheet
 
 
 class Workbook:
     def __init__(self, name, workbook_path=None):
-        self.workbook_name = name
-        self.worksheets = {}
-        self.wb = xw.Book(workbook_path)
+
+        if workbook_path is None:
+            self.wb = xw.Book()
+            self.workbook_name = self.wb.name
+        else:
+            self.wb = xw.Book(workbook_path)
+            self.workbook_name = self.wb.name
 
         # Automatically add all existing worksheets
         for sheet in self.wb.sheets:
@@ -224,7 +223,10 @@ class Workbook:
         self.worksheets = {}
 
     def get_worksheet(self, worksheet_name):
-        return self.worksheets.get(worksheet_name)
+        return self.worksheets[worksheet_name]
+
+    def get_all_worksheets(self):
+        return self.worksheets
 
     def call_macro_workbook(self, macro_name):
         macro_vba = self.wb.app.macro(macro_name)
@@ -257,15 +259,23 @@ class AutomationController:
         workbook = Workbook(path)
         self.workbooks[workbook_name] = workbook
 
-    # def save_workbook(self, workbook_name):
+    def save_workbook(self, workbook_name):
+        if workbook_name in self.workbooks:
+            self.workbooks[workbook_name].save()
+        else:
+            print(f"Workbook '{workbook_name}' not found.")
+
 
     def update_worksheet_from_pdf_collection(self, workbook_name, worksheet_name):
-        workbook = self.workbooks[workbook_name]
+        workbook = self.workbooks.get(workbook_name)
+        if workbook is None:
+            print(f"Workbook '{workbook_name}' not found")
+            return
         worksheet = workbook.get_worksheet(worksheet_name)
+        if worksheet is None:
+            print(f"Worksheet '{worksheet_name}' not found in Workbook '{workbook_name}'.")
+            return
         pdf_data = self.pdf_collection.aggregate_data_for_worksheet_update()
-        # Assume pdf_data is in a form that can be directly used to update a DataFrame
-        worksheet.dataframe.update(pdf_data)
-        worksheet.write_data_from_dataframe_to_sheet(worksheet.dataframe)
 
     # def extract_pdf_totals(self):
     #

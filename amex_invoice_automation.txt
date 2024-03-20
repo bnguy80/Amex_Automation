@@ -30,3 +30,7 @@ Calendly yearly renewal, Chatgpt yearly, lastpass largest purchase
 Dashboard of all the applications, all the applications to would use
 
 Duo security be in Dues & Subscriptions
+
+Subscription renewal: accurate representation of subscriptions coming up at any given month. Pricing, date, where payments need to made to(vendors), automation
+
+3/20/24: Does PDFCollection need a worksheet object? If one worksheet named "Xlookup table" is used to match find a match of the pdf "Vendor"? or does PDF class need it or neither need it bc AutomationController should be the only one that manages it?
