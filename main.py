@@ -59,41 +59,6 @@ def extract_pdf_invoice_totals(wb, ws):
     wb.save()
 
 
-# def extract_pdf_invoice_dates(wb, ws):
-#     patterns = [
-#         r"Invoice Date:?\s+(\d{2}[\/]\d{2}[\/]\d{4})",
-#         r"Invoice Date:?\s+(\d{2}-[A-Z]{3}-\d{4})",
-#
-#         r"Date of Invoice:?\s+(\d{2}[\/]\d{2}[\/]\d{4})",
-#         r"Date of Invoice:?\s+(\d{2}-[A-Z]{3}-\d{4})",
-#
-#         # r"Invoice Date:\s+(\d{2}[\/]\d{2}[\/]\d{2})",
-#
-#         # r"Order Placed:\s+([A-Z][a-z]+\s\d{2},\s\d{4})",
-#     ]
-#
-#     last_row = ws.range('B' + str(ws.cells.last_cell.row)).end('up').row
-#
-#     for i in range(8, last_row + 1):
-#         pdf_path = ws.range(f"B{i}").value
-#         date_found = False
-#
-#         with pdfplumber.open(pdf_path) as pdf:
-#             text = ' '.join(page.extract_text() or '' for page in pdf.pages)
-#             for pattern in patterns:
-#                 match = re.search(pattern, text, re.IGNORECASE)
-#                 if match:
-#                     date = match.group(1)
-#                     ws.range(f"E{i}").value = date
-#                     date_found = True
-#                     break
-#
-#         if not date_found:
-#             ws.range(f"E{i}").value = "Date Not Found"
-#
-#     wb.save()
-
-
 def extract_ocr_invoice_totals(wb, ws):
     patterns = [
         r"Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})",

@@ -191,6 +191,10 @@ class Worksheet:
         # Use xlwings to write DataFrame data back to the sheet
         self.sheet.range('A1').value = dataframe
 
+    # def extract_column_data(self, column_letter):
+
+    # def extract_row_data(self, row_letter):
+
 
 class Workbook:
     def __init__(self, name, workbook_path=None):
@@ -227,7 +231,7 @@ class Workbook:
         macro_vba()
 
     def save(self, save_path=None):
-        if save_path:
+        if save_path:  # Save to a specific path when specified, or just save at the current location
             self.wb.save(save_path)
         else:
             self.wb.save()

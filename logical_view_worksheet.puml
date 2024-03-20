@@ -13,6 +13,11 @@ class Worksheet {
     + extract_row_data(row_letter: string): list
 }
 
+class ConditionalFormatter {
+    - formatting_rules: list // List of dictionaries for worksheets, rules, range_address, rule_type, rule_value, format_options
+    + apply_conditional_formatting_rule(workbook_name: string): void
+}
+
 class Workbook {
     note top: Manages Worksheets with xlwings
     - workbook_name: string
@@ -76,6 +81,7 @@ class AutomationController {
 }
 
 Workbook *- "1..*" Worksheet : contains
+Worksheet o-- ConditionalFormatter: utilizes >
 PDFCollection *- "0..*" PDF : contains
 AutomationController --> Workbook : manages >
 AutomationController --> PDFCollection : utilizes >
