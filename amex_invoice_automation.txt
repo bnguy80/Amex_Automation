@@ -33,4 +33,8 @@ Duo security be in Dues & Subscriptions
 
 Subscription renewal: accurate representation of subscriptions coming up at any given month. Pricing, date, where payments need to made to(vendors), automation
 
-3/20/24: Does PDFCollection need a worksheet object? If one worksheet named "Xlookup table" is used to match find a match of the pdf "Vendor"? or does PDF class need it or neither need it bc AutomationController should be the only one that manages it?
+3/20/24: Does PDFCollection need a worksheet object? If one worksheet named "Xlookup table" is used to match find a match of the pdf "Vendor"? or does PDF class need it or neither need it bc AutomationController should be the only one that manages it? --- 3/20/24 no it does not.
+
+3/20/24: Make sure to flatten the list when getting single range of row or column; because xlwings returns a list of tuples.
+
+3/20/24: Before being able to run automation.py for first time, need to make sure that all rows, columns, and range are correctly set.

@@ -40,7 +40,6 @@ class PDF:
         self.date = None
         self.invoice_number = None
         self.vendor = None
-        self.data = {}
 
     def extract_pdf_invoice_total(self):
         match_found = False  # Flag to indicate a match was found
@@ -137,62 +136,102 @@ class PDF:
         if self.date == self.fallback_date:
             self.extract_ocr_invoice_date(start_date, end_date)  # Fall back to find the date
 
-    # def extract_vendor(self):
+    def process_vendor(self, vendors):
+        lower_file_name = self.pdf_name.lower()
+        matched_vendor = None
 
-    def extract_data(self):
-        # Placeholder: Implement PDF data extraction logic here
-        self.data = {"total": self.total, "date": self.date, "invoice_number": self.invoice_number,
-                     "vendor": self.vendor}
+        for vendor in vendors:
+            if vendor is None:
+                continue
 
-    def get_data(self):
-        return self.data
+            lower_vendor = vendor.lower()
+            if 'newrelic' in lower_file_name and lower_vendor == 'new':
+                matched_vendor = 'NEW'
+            elif 'msft' in lower_file_name and lower_vendor == 'microsoft':
+                matched_vendor = 'MSFT'
+            elif lower_vendor in lower_file_name and lower_vendor not in ('new', 'microsoft'):
+                matched_vendor = vendor
+
+        self.vendor = matched_vendor if matched_vendor else 'Unknown'
 
 
 class PDFCollection:
     def __init__(self):
-        self.pdfs = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
+        self.pdfs_dataframe = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
+        self.vendors = []
 
-    def add_pdf(self, pdf_path):
+    def add_pdf(self, pdf_path, pdf_name, start_date, end_date):
+        # Create a PDF object and extract data
         pdf = PDF(pdf_path)
-        pdf.extract_data()  # Assume PDFs are processed upon addition
-        self.pdfs[pdf_path] = pdf
+        pdf.pdf_name = pdf_name
 
-    def remove_pdf(self, pdf_path):
-        del self.pdfs[pdf_path]
+        # Directly invoke processing methods with appropriate dates
+        pdf.process_totals()
+        pdf.process_dates(start_date, end_date)
+        pdf.process_vendor(self.vendors)
 
-    def remove_all_pdfs(self):
-        self.pdfs = {}
+        # Add a new row to the DataFrame
+        new_row = {
+            'File Name': pdf.pdf_name,
+            'File Path': pdf.pdf_path,
+            'Amount': pdf.total,
+            'Vendor': pdf.vendor,
+            'Date': pdf.date.strftime('%Y-%m-%d') if isinstance(pdf.date, datetime) else pdf.date
+        }
 
-    # def extract_totals_from_all_pdfs(self):
-    #
-    # def extract_dates_from_all_pdfs(self):
+        # Append the new row to the DataFrame
+        self.pdfs_dataframe = self.pdfs_dataframe.append(new_row, ignore_index=True)
 
-    def aggregate_data_for_worksheet_update(self):
-        aggregated_data = {}
-        # Logic to aggregate data from PDFs
-        for pdf_path, pdf in self.pdfs.items():
-            data = pdf.get_data()
-            # Example aggregation logic
-            aggregated_data[pdf_path] = data
-        return aggregated_data
+    def populate_pdf_dataframe_from_worksheet(self, worksheet, start_date, end_date):
+        data_df = worksheet.read_data_as_dataframe()
+
+        for _, row in data_df.iterrows():
+            self.add_pdf(row['File Name'], row['File'], start_date, end_date)
+
+    def populate_vendors_from_vendor_worksheet(self, vendor_worksheet):
+        self.vendors.clear()  # Clear existing vendors to avoid duplication
+        vendors_range = vendor_worksheet.range('A2:A' + str(vendor_worksheet.cells.last_cell.row)).value
+        if isinstance(vendors_range, list):
+            # Flatten the list if it's a list of tuples (happens with single column ranges)
+            self.vendors = [vendor[0] for vendor in vendors_range if vendor[0] is not None]
+        else:
+            # In case it's a single value (only one vendor in the list)
+            self.vendors = [vendors_range] if vendors_range else []
+
+    def remove_pdf(self, pdf_name):
+        # Find the index of rows where 'File Path' matches pdf_path
+        rows_to_drop = self.pdfs_dataframe[self.pdfs_dataframe['File Name'] == pdf_name].index
+
+        # Drop these rows from the DataFrame
+        if not rows_to_drop.empty:
+            self.pdfs_dataframe = self.pdfs_dataframe.drop(index=rows_to_drop)
+        else:
+            print(f"No PDF found with path: {pdf_name}")
+
+    def remove_all_pdf(self):
+        self.pdfs_dataframe = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
+
+    def get_pdf_dataframe(self):
+        return self.pdfs_dataframe
 
 
 class Worksheet:
-    def __init__(self,name, sheet):
+    def __init__(self, name, sheet):
         self.name = name
         self.sheet = sheet
-        self.dataframe = pd.DataFrame()
+        self.worksheet_dataframe = pd.DataFrame()
 
     def read_data_as_dataframe(self):
         # Use xlwings to read data into a DataFrame
-        self.dataframe = self.sheet.range('A1').options(pd.DataFrame, expand='table').value
+        self.worksheet_dataframe = self.sheet.range('A1').options(pd.DataFrame, expand='table').value
 
-    # def update_data_from_dataframe_to_sheet(self, dataframe):
-    #     # Use xlwings to write DataFrame data back to the sheet
+    def update_data_from_dataframe_to_sheet(self, dataframe):
+        # Use xlwings to write DataFrame data back to the sheet
+        pass
 
 
 class Workbook:
-    def __init__(self, name, workbook_path=None):
+    def __init__(self, workbook_path=None):
 
         if workbook_path is None:
             self.wb = xw.Book()
@@ -240,34 +279,31 @@ class Workbook:
 
 
 class AutomationController:
-    def __init__(self):
-        self.workbooks = {}
+    vendor_worksheet_name = 'Xlookup table'  # Make sure this is correct
+
+    def __init__(self, start_date, end_date):
+        self.workbooks_dict = {}
         self.pdf_collection = PDFCollection()
-        self.start_date = None
-        self.end_date = None
+        self.start_date = start_date
+        self.end_date = end_date
 
     # def perform_task(self, workbook_name, worksheet_name):
     #
     # def update_data_across_workbooks(self, source_workbook_name, target_workbook_name, criteria):
-    #
-    # def gather_pdf_file_paths_and_names(self, workbook_name, worksheet_name):
-    #
-    # def collect_and_add_pdfs_to_collection(self, workbook_name, worksheet_name):
 
     def open_workbook(self, path, workbook_name):
         #  Opens an Excel workbook from the specified path and initializes all its worksheets. With workbook_name as the key in the workbook dictionary.
         workbook = Workbook(path)
-        self.workbooks[workbook_name] = workbook
+        self.workbooks_dict[workbook_name] = workbook
 
     def save_workbook(self, workbook_name):
-        if workbook_name in self.workbooks:
-            self.workbooks[workbook_name].save()
+        if workbook_name in self.workbooks_dict:
+            self.workbooks_dict[workbook_name].save()
         else:
             print(f"Workbook '{workbook_name}' not found.")
 
-
     def update_worksheet_from_pdf_collection(self, workbook_name, worksheet_name):
-        workbook = self.workbooks.get(workbook_name)
+        workbook = self.workbooks_dict.get(workbook_name)
         if workbook is None:
             print(f"Workbook '{workbook_name}' not found")
             return
@@ -275,8 +311,14 @@ class AutomationController:
         if worksheet is None:
             print(f"Worksheet '{worksheet_name}' not found in Workbook '{workbook_name}'.")
             return
-        pdf_data = self.pdf_collection.aggregate_data_for_worksheet_update()
 
-    # def extract_pdf_totals(self):
-    #
-    # def extract_pdf_dates(self):
+        # This step is to get the vendor worksheet to be able to get vendors for pdfs
+        vendor_worksheet = workbook.get_worksheet(self.vendor_worksheet_name)
+        self.pdf_collection.populate_vendors_from_vendor_worksheet(vendor_worksheet)
+
+        # This step populates the PDFCollection directly from the worksheet
+        self.pdf_collection.populate_pdf_dataframe_from_worksheet(worksheet, self.start_date, self.end_date)
+
+        pdf_data = self.pdf_collection.get_pdf_dataframe()
+
+        worksheet.update_data_from_dataframe_to_sheet(pdf_data)

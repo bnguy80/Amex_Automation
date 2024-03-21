@@ -7,7 +7,7 @@ class Worksheet {
     - sheet: xlwings.Sheet // Usage needed to provide access to the underlying excel sheet, dataframe used as intermediary to manipulate data
     - dataframe: pandas.DataFrame
     + read_data_as_dataframe(): void // Reads data from sheet reference to store it as dataframe
-    + update_data_from_dataframe_to_sheet(dataframe: pandas.DataFrame): void // writes manipulated dataframe back into excel sheet
+    + update_data_from_dataframe_to_sheet(dataframe: pandas.DataFrame): void // writes manipulated dataframe back into Excel sheet
 }
 
 class ConditionalFormatter {
@@ -18,7 +18,7 @@ class ConditionalFormatter {
 class Workbook {
     note top: Manages Worksheets with xlwings
     - workbook_name: string
-    - worksheets: dict<string, Worksheet>
+    - worksheets_dict: dict<string, Worksheet>
     + Workbook(workbook_path: string)  // Constructor now takes a path to open or create a workbook
     + add_worksheet(worksheet_name: string): void
     + remove_worksheet(worksheet_name: string): void
@@ -44,38 +44,32 @@ class PDF {
     + extract_ocr_invoice_date(start_date, end_date): void
     + process_dates(): void // Calls the date extraction methods in correct sequence extract_pdf_invoice_date and falls back to extract_ocr_invoice_date
     + extract_vendor: void
-    - data: dict
-    + extract_data(): void
-    + get_data(): dict
 }
 
 class PDFCollection {
     note top: Manages a collection of PDF objects, facilitating access by name
-    - pdfs: pd.DataFrame
-    + add_pdf(file_path: string): void
-    + populate_from_file_paths(file_paths: list<string>): void
-    + remove_pdf(file_path: string): void
+    - pdfs_dataframe: pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
+    - vendors: list
+    + add_pdf(file_path: string, pdf_name: string, start_date: string, end_date: string): void
+    + populate_pdf_dataframe_from_worksheet(worksheet_name: string, start_date: string, end_date: string): void
+    + populate_vendors_from_vendor_worksheet(vendor_worksheet_name: Worksheet): void ---Make sure correct column!!!
+    + remove_pdf(pdf_name: string): void
     + remove_all_pdf(): void
-    + get_pdf(file_path: string): PDF
-    + extract_totals_from_all_pdfs(): void
-    + extract_dates_from_all_pdfs(): void
-    + aggregate_data_for_worksheet_update(): void
+'    + aggregate_data_for_worksheet_update(): void
+    + get_pdf_dataframe(): pdfs_dataframe: pd.DataFrame
 }
 
 class AutomationController {
     note top: Acts as the facade, simplifying complex operations like PDF processing and data manipulation in Excel worksheets.
+    + vendor_worksheet_name: string // Class variable
     + start_date: string
     + end_date: string
-    + workbooks: dict<string, Workbook>
+    + workbooks_dict: dict<string, Workbook>
     + open_workbook(path: string, workbook_name: string): Workbook  // New method to open a workbook by path
     + save_workbook(workbook_name: string): void  // New method to save a workbook
     + perform_task(workbook_name: string, worksheet_name: string): void
     + update_data_across_workbooks(source_workbook_name: string, target_workbook_name: string, criteria): void
-    + gather_pdf_file_paths_and_names(workbook_name: string, worksheet_name: string, column_letter: string): dict<pdf_name, pdf_file_path>
-    + collect_and_add_pdfs_to_collection(workbook_name: string, worksheet_name: string, column_letter: string): void
-    + extract_pdf_totals(): void // Delegates to PDFCollection.extract_totals_from_all_pdfs()
-    + extract_pdf_dates(): void // Delegates to PDFCollection.extract_dates_from_all_pdfs()
-    + update_worksheet(workbook_name: string, worksheet_name: string, data: pd.DataFrame): void
+    + update_worksheet_from_pdf_collection((workbook_name: string, worksheet_name: string): void
 }
 
 Workbook *- "1..*" Worksheet : contains
