@@ -59,6 +59,11 @@ class PDFCollection {
     + get_pdf_dataframe(): pdfs_dataframe: pd.DataFrame
 }
 
+class ExcelManipulation {
+    note top: Handles the complex data manipulation tasks for AutomationController
+   + performCalculations(): void
+}
+
 class AutomationController {
     note top: Acts as the facade, simplifying complex operations like PDF processing and data manipulation in Excel worksheets.
     + vendor_worksheet_name: string // Class variable
@@ -66,6 +71,7 @@ class AutomationController {
     + end_date: string
     + workbooks_dict: dict<string, Workbook>
     + open_workbook(path: string, workbook_name: string): Workbook  // New method to open a workbook by path
+    + get_workbook(): workbooks_dict
     + save_workbook(workbook_name: string): void  // New method to save a workbook
     + perform_task(workbook_name: string, worksheet_name: string): void
     + update_data_across_workbooks(source_workbook_name: string, target_workbook_name: string, criteria): void
@@ -76,6 +82,7 @@ Workbook *- "1..*" Worksheet : contains
 Worksheet o-- ConditionalFormatter: utilizes >
 PDFCollection *- "0..*" PDF : contains
 AutomationController --> Workbook : manages >
+AutomationController --> ExcelManipulation: utilizes >
 AutomationController --> PDFCollection : utilizes >
 
 

@@ -190,7 +190,7 @@ class PDFCollection:
 
     def populate_vendors_from_vendor_worksheet(self, vendor_worksheet):
         self.vendors.clear()  # Clear existing vendors to avoid duplication
-        vendors_range = vendor_worksheet.range('A2:A' + str(vendor_worksheet.cells.last_cell.row)).value
+        vendors_range = vendor_worksheet.range('A7:A' + str(vendor_worksheet.cells.last_cell.row)).value
         if isinstance(vendors_range, list):
             # Flatten the list if it's a list of tuples (happens with single column ranges)
             self.vendors = [vendor[0] for vendor in vendors_range if vendor[0] is not None]
@@ -222,8 +222,8 @@ class Worksheet:
         self.worksheet_dataframe = pd.DataFrame()
 
     def read_data_as_dataframe(self):
-        # Use xlwings to read data into a DataFrame
-        self.worksheet_dataframe = self.sheet.range('A1').options(pd.DataFrame, expand='table').value
+        # Use xlwings to read data into a DataFrame, header True to interpret first row as column headers for the dataframe and index True to include the correct index from the sheet to dataframe
+        self.worksheet_dataframe = self.sheet.range('A7').options(pd.DataFrame, expand='table', header=True, index = True).value
 
     def update_data_from_dataframe_to_sheet(self, dataframe):
         # Use xlwings to write DataFrame data back to the sheet
@@ -296,9 +296,13 @@ class AutomationController:
         workbook = Workbook(path)
         self.workbooks_dict[workbook_name] = workbook
 
-    def save_workbook(self, workbook_name):
+    def get_workbooks(self):
+        return self.workbooks_dict
+
+    def save_workbook(self, workbook_name, save_path=None):
         if workbook_name in self.workbooks_dict:
-            self.workbooks_dict[workbook_name].save()
+            workbook = self.workbooks_dict[workbook_name]
+            workbook.save(save_path)
         else:
             print(f"Workbook '{workbook_name}' not found.")
 
@@ -322,3 +326,4 @@ class AutomationController:
         pdf_data = self.pdf_collection.get_pdf_dataframe()
 
         worksheet.update_data_from_dataframe_to_sheet(pdf_data)
+

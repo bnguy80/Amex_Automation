@@ -7,34 +7,43 @@
 Invoice receipt available for finance -> t3nas (Ana). Be delivered to Truth Initiative building or Chicago. Exceed $5000 another process of forms for finance. Packing slips two individuals must sign on it. Person ordering cannot sign, two others to avoid theft. Cathy must be provided access to be able to see packing slips -> packing slips.
 
 
-We Need to be able to automate the account code to be able to split the transaction finance to its correct
+3/21/2024: We Need to be able to automate the account code to be able to split the transaction finance to its correct subsection, to enhance overall budget power, as of right suboptimal/incorrect Expense Codes has reduced overall budgeting ability.
 
-Anything on Amazon should be 5130 for office supplies
+3/21/2024: Account code by invoice, need to also find out the full Expense Code:
+    [
+    cbt-nugget to Dues & subscriptions, CompTIA to professional development
 
-cbt-nugget to Dues & subscriptions, CompTIA to professional development
+    laptops are computer expenses
 
-laptops are computer expenses
+    For any zoom, telephony type service Telephone & wireless services
 
-For any zoom, telephony type service Telephone & wireless services
+    Anything shipping related postage and shipping code
 
-Anything shipping related postage and shipping code
+    supplies: toners,
 
-supplies: toners,
+    Consulting: oceans solutions, garner, enterprise security audit
 
-Consulting: oceans solutions, garner, enterprise security audit
+    t3billing needs to find the invoices that are not forwarded to t3billing.
 
-t3billing needs to find the invoices that are not forwarded to t3billing.
+    Calendly yearly renewal, Chatgpt yearly, lastpass largest purchase
 
-Calendly yearly renewal, Chatgpt yearly, lastpass largest purchase
+    Duo security be in Dues & Subscriptions
 
-Dashboard of all the applications, all the applications to would use
+    3/21/2024: Anything on Amazon should be 5130 for office supplies. Check if that is actually accurate by going back to [02] Feb 2024 folder
+    ]
 
-Duo security be in Dues & Subscriptions
+3/21/24: Overall high level needs is a dashboard of all the service renewals, all the service renewals coming up, yearly, etc. Need to be able to create a dashboard to see that. Need to have script to go through folders of previous months and years to find all subscriptions.
 
 Subscription renewal: accurate representation of subscriptions coming up at any given month. Pricing, date, where payments need to made to(vendors), automation
 
-3/20/24: Does PDFCollection need a worksheet object? If one worksheet named "Xlookup table" is used to match find a match of the pdf "Vendor"? or does PDF class need it or neither need it bc AutomationController should be the only one that manages it? --- 3/20/24 no it does not.
+3/20/24: Does PDFCollection need a worksheet object? If one worksheet named "Xlookup table" is used to match find a match of the pdf "Vendor"? Or does PDF class need it or neither need it bc AutomationController should be the only one that manages it? --- 3/20/24 no it does not.
 
 3/20/24: Make sure to flatten the list when getting single range of row or column; because xlwings returns a list of tuples.
 
-3/20/24: Before being able to run automation.py for first time, need to make sure that all rows, columns, and range are correctly set.
+3/20/24: Before being able to run automation.py for first time, need to make sure that all rows, columns, and range are correctly set. ---3/21/24 every row, column, table should be starting at A7.
+
+3/21/24: For MSFT Invoice of this month, pdf invoice just last page, name of file is the top header before "Formula for charges".
+
+3/21/24: Ask Aleksei for Comcast internet account to be able to retrieve Comcast internet invoice as t3billing is not sent that.
+
+3/21: Another headache is finding the missing pdf invoices as right now need to manually highlight and check outlook mail, from the start_date and end_date range to find the invoices to populate Amex folder. Sections highlighted yellow need to be manually sent as a copy to Addisu as a way to check specific invoices to be put into the folder.
