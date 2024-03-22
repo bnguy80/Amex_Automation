@@ -223,7 +223,8 @@ class Worksheet:
 
     def read_data_as_dataframe(self):
         # Use xlwings to read data into a DataFrame, header True to interpret first row as column headers for the dataframe and index True to include the correct index from the sheet to dataframe
-        self.worksheet_dataframe = self.sheet.range('A7').options(pd.DataFrame, expand='table', header=True, index = True).value
+        self.worksheet_dataframe = self.sheet.range('A7').options(pd.DataFrame, expand='table', header=True,
+                                                                  index=True).value
 
     def update_data_from_dataframe_to_sheet(self, dataframe):
         # Use xlwings to write DataFrame data back to the sheet
@@ -278,6 +279,10 @@ class Workbook:
             self.wb.save()
 
 
+class ExcelManipulation:
+    pass
+
+
 class AutomationController:
     vendor_worksheet_name = 'Xlookup table'  # Make sure this is correct
 
@@ -286,6 +291,7 @@ class AutomationController:
         self.pdf_collection = PDFCollection()
         self.start_date = start_date
         self.end_date = end_date
+        self.manipulation = ExcelManipulation()
 
     # def perform_task(self, workbook_name, worksheet_name):
     #
@@ -326,4 +332,3 @@ class AutomationController:
         pdf_data = self.pdf_collection.get_pdf_dataframe()
 
         worksheet.update_data_from_dataframe_to_sheet(pdf_data)
-

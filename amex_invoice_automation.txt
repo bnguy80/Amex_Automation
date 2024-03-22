@@ -47,3 +47,13 @@ Subscription renewal: accurate representation of subscriptions coming up at any 
 3/21/24: Ask Aleksei for Comcast internet account to be able to retrieve Comcast internet invoice as t3billing is not sent that.
 
 3/21: Another headache is finding the missing pdf invoices as right now need to manually highlight and check outlook mail, from the start_date and end_date range to find the invoices to populate Amex folder. Sections highlighted yellow need to be manually sent as a copy to Addisu as a way to check specific invoices to be put into the folder.
+
+3/22/24: ServiceNow is part of software, implementation is consulting
+
+3/22/24: KACE one year renewal in Addisu's mail coming up soon
+
+3/22/24: Monday.com 100 licenses purchases coming up June or July
+
+3/22/24: Basecamp staying as it allows for unlimited users
+
+3/22/24: Plan to eventually remove Microsoft Project Management for usage in departments

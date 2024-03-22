@@ -70,6 +70,7 @@ class AutomationController {
     + start_date: string
     + end_date: string
     + workbooks_dict: dict<string, Workbook>
+    + manipulation: ExcelManipulation
     + open_workbook(path: string, workbook_name: string): Workbook  // New method to open a workbook by path
     + get_workbook(): workbooks_dict
     + save_workbook(workbook_name: string): void  // New method to save a workbook
@@ -82,7 +83,7 @@ Workbook *- "1..*" Worksheet : contains
 Worksheet o-- ConditionalFormatter: utilizes >
 PDFCollection *- "0..*" PDF : contains
 AutomationController --> Workbook : manages >
-AutomationController --> ExcelManipulation: utilizes >
+AutomationController o-- ExcelManipulation: utilizes >
 AutomationController --> PDFCollection : utilizes >
 
 
