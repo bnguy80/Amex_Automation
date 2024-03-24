@@ -12,6 +12,7 @@ import pandas as pd
 pytesseract.pytesseract.tesseract_cmd = "C:/Program Files/Tesseract-OCR/tesseract.exe"  # Explicitly set the ocr tesseract.exe path
 poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin"
 
+
 class PDF:
     # Patterns are static, define them at the class level
     total_patterns = [
