@@ -46,8 +46,8 @@ class PDF {
 }
 
 class PDFCollection {
-    - invoice_counter: int // Class variable to show progress when retrieving invoices
     note top: Manages a collection of PDF objects, facilitating access by name
+    - invoice_counter: int // Class variable to show progress when retrieving invoices
     - pdfs_dataframe: pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
     - vendors: list
     + reset_counter(): void
@@ -61,8 +61,9 @@ class PDFCollection {
 }
 
 class ExcelManipulation {
-    note top: Handles the complex data manipulation tasks for AutomationController
-   + performCalculations(): void
+    note top: Handles the complex data manipulation tasks for AutomationController; acts as utility class
+   + find_matching_transactions(invoice_df: pd.DataFrame, transaction_df: pd.DataFrame): void
+   + match_transaction(invoice_row, transaction_details_df: pd.DataFrame, matched_transactions: set): void
 }
 
 class AutomationController {

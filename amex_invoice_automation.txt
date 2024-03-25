@@ -2,7 +2,7 @@
 
 3/17/24 Need to do type hints for parameters:, variables: , and methods -> for better understanding, can use "mypy" or newer feature to check types
 
-3/17/24 on page 51
+3/17/24 on page 51, 3/24/24 on page 72
 
 Invoice receipt available for finance -> t3nas (Ana). Be delivered to Truth Initiative building or Chicago. Exceed $5000 another process of forms for finance. Packing slips two individuals must sign on it. Person ordering cannot sign, two others to avoid theft. Cathy must be provided access to be able to see packing slips -> packing slips.
 

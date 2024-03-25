@@ -9,8 +9,9 @@ import xlwings as xw
 import pytesseract
 import pandas as pd
 
-pytesseract.pytesseract.tesseract_cmd = "C:/Program Files/Tesseract-OCR/tesseract.exe"  # Explicitly set the ocr tesseract.exe path
-poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin"
+pytesseract.pytesseract.tesseract_cmd = "C:/Program Files/Tesseract-OCR/tesseract.exe"  # Explicitly set the ocr tesseract.exe path, need to also install it locally
+
+poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin" # Need to locally install it
 
 
 class PDF:
@@ -334,7 +335,57 @@ class Workbook:
 
 
 class ExcelManipulation:
-    pass
+    @staticmethod
+    def find_matching_transactions(invoice_df, transaction_df):
+        matched_transactions = set()
+        # Iterate over the invoice dataframe
+        for _, invoice_row in invoice_df.iterrows():
+            ExcelManipulation.match_transaction(invoice_row, transaction_df, matched_transactions)
+
+    @staticmethod
+    def match_transaction(invoice_row, transaction_details_df, matched_transactions):
+        # Extract relevant info from the row
+        vendor = invoice_row['Vendor']
+        total = invoice_row['Amount']
+        date = pd.to_datetime(invoice_row['Date'])  # Ensure datetime format
+        file_name = invoice_row['File Name']
+
+        # Filter transactions by the same vendor and not already matched
+        potential_matches = transaction_details_df[
+            (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &
+            (~transaction_details_df.index.isin(matched_transactions))
+        ]
+
+        # Strategy 1: Exact match on amount and date
+        exact_matches = potential_matches[
+            (potential_matches['Amount'] == total) &
+            (pd.to_datetime(potential_matches['Date'], errors='coerce') == date)
+        ]
+
+        if not exact_matches.empty:
+            first_match_index = exact_matches.iloc[0].name
+            transaction_details_df.at[first_match_index, 'File Name'] = file_name
+            matched_transactions.add(first_match_index)
+            return  # Match found and processed, return early
+
+        # Strategy 2: Match by vendor and amount, ignoring date
+        if date is not pd.NaT:  # If date is a valid datetime
+            non_date_matches = potential_matches[
+                (potential_matches['Amount'] == total) &
+                (pd.to_datetime(potential_matches['Date'], errors='coerce') != date)
+            ]
+
+            if not non_date_matches.empty:
+                first_match_index = non_date_matches.iloc[0].name
+                transaction_details_df.at[first_match_index, 'Column1'] = 'Check Date'
+                transaction_details_df.at[first_match_index, 'File Name'] = file_name
+                matched_transactions.add(first_match_index)
+                return
+
+        # Strategy 3: Match by vendor, date, and amount among a subset of transactions
+
+        # No match found, consider additional strategies or manual review
+        print(f"No match found for {file_name} with Amount {total}. Consider manual review.")
 
 
 class AutomationController:
@@ -390,7 +441,6 @@ class AutomationController:
         progress_bar = tqdm(total=num_updates, desc="Updating Excel Sheet Invoices from Invoice PDF Data",
                             bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
 
-        pdf_data = self.pdf_collection.get_pdf_dataframe()
         # print(pdf_data.columns)
 
         # Resets the invoice counter
@@ -426,7 +476,13 @@ class AutomationController:
         transaction_details_worksheet = template_workbook.get_worksheet("Transactions Details 2")
 
         # Convert the worksheets into dataframes
+        invoices_worksheet_df = invoices_worksheet.read_as_dataframe()
+        transaction_details_worksheet_df = transaction_details_worksheet.read_as_dataframe()
+
+        ExcelManipulation.find_matching_transactions(invoices_worksheet_df, transaction_details_worksheet_df)
+        print(transaction_details_worksheet_df)
 
 
 controller = AutomationController("01/21/2024", "2/21/2024")
-controller.process_invoices_worksheet()
+# controller.process_invoices_worksheet()
+controller.process_transaction_details_worksheet()
