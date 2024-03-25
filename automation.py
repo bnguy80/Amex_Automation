@@ -337,6 +337,8 @@ class Workbook:
 class ExcelManipulation:
     @staticmethod
     def find_matching_transactions(invoice_df, transaction_df):
+
+        # Each transaction is matched with a unique row, "File Name" linked to a unique transaction, each row in invoice_df represents a distinct invoice PDF and only matches with one row in transaction_df
         matched_transactions = set()
         # Iterate over the invoice dataframe
         for _, invoice_row in invoice_df.iterrows():
@@ -344,7 +346,8 @@ class ExcelManipulation:
 
     @staticmethod
     def match_transaction(invoice_row, transaction_details_df, matched_transactions):
-        # Extract relevant info from the row
+
+        # Extract relevant info from the invoice_row
         vendor = invoice_row['Vendor']
         total = invoice_row['Amount']
         date = pd.to_datetime(invoice_row['Date'])  # Ensure datetime format
@@ -375,6 +378,7 @@ class ExcelManipulation:
                 (pd.to_datetime(potential_matches['Date'], errors='coerce') != date)
             ]
 
+            # Include detail in "Column1" that user needs to manually check the match to make sure it is indeed the correct invoice even though the date does not match
             if not non_date_matches.empty:
                 first_match_index = non_date_matches.iloc[0].name
                 transaction_details_df.at[first_match_index, 'Column1'] = 'Check Date'
@@ -382,14 +386,14 @@ class ExcelManipulation:
                 matched_transactions.add(first_match_index)
                 return
 
-        # Strategy 3: Match by vendor, date, and amount among a subset of transactions
+        # Strategy 3: Match by vendor, date, and among a subset of transactions that when added together equal the amount from the invoice_row["Amount"]
 
         # No match found, consider additional strategies or manual review
         print(f"No match found for {file_name} with Amount {total}. Consider manual review.")
 
 
 class AutomationController:
-    xlookup_table_worksheet_name = "Xlookup table"  # Make sure this is correct
+    xlookup_table_worksheet_name = "Xlookup table"  # Make sure this is correct, 3/24/24: is correct
     path = "G:/B_Amex"
     amex_workbook_name = "Amex Corp Feb'24 - Addisu Turi (IT) (1).xlsx"
     template_workbook_name = "Template.xlsm"
