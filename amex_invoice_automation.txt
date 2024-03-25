@@ -2,7 +2,7 @@
 
 3/17/24 Need to do type hints for parameters:, variables: , and methods -> for better understanding, can use "mypy" or newer feature to check types
 
-3/17/24 on page 51, 3/24/24 on page 72
+3/17/24 on page 51, 3/24/24 on page 72, 3/25/24 on page 81
 
 Invoice receipt available for finance -> t3nas (Ana). Be delivered to Truth Initiative building or Chicago. Exceed $5000 another process of forms for finance. Packing slips two individuals must sign on it. Person ordering cannot sign, two others to avoid theft. Cathy must be provided access to be able to see packing slips -> packing slips.
 
@@ -25,11 +25,21 @@ Invoice receipt available for finance -> t3nas (Ana). Be delivered to Truth Init
 
     t3billing needs to find the invoices that are not forwarded to t3billing.
 
-    Calendly yearly renewal, Chatgpt yearly, lastpass largest purchase
+    Calendly yearly renewal, Chatgpt yearly, lastpass largest purchase is yearly
+
+    Kahoot! yearly renewal, all departments are using it so 5113, 00-0-005-0000-04
 
     Duo security be in Dues & Subscriptions
 
     3/21/2024: Anything on Amazon should be 5130 for office supplies. Check if that is actually accurate by going back to [02] Feb 2024 folder
+
+    3/25/24: Comcast cable is 5112, Cable tv services
+
+    3/25/24: Comcast internet is 5111 00-0-005-0000-04
+
+    3/25/24: Basecamp: 5113	00-0-005-0000-04
+
+    3/25/24: Cloudflare Marketing $260, Comms $250, Marketing usally pays more than Comms
     ]
 
 3/21/24: Overall high level needs is a dashboard of all the service renewals, all the service renewals coming up, yearly, etc. Need to be able to create a dashboard to see that. Need to have script to go through folders of previous months and years to find all subscriptions.
@@ -57,3 +67,7 @@ Subscription renewal: accurate representation of subscriptions coming up at any 
 3/22/24: Basecamp staying as it allows for unlimited users
 
 3/22/24: Plan to eventually remove Microsoft Project Management for usage in departments
+
+3/25/24: As part of matching invoices to transactions, need to rename the file in folder and excel to be + "Row index # - File Name"
+
+3/25/24: In Template workbook, Transaction Details 2 there needs to be a space after the Vendor name contained in Description for the account, sub-account, vendor, and explanation to be populated correctly

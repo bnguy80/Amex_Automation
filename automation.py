@@ -9,8 +9,16 @@ import xlwings as xw
 import pytesseract
 import pandas as pd
 
-pytesseract.pytesseract.tesseract_cmd = "C:/Program Files/Tesseract-OCR/tesseract.exe"  # Explicitly set the ocr tesseract.exe path, need to also install it locally
+# https://tesseract-ocr.github.io/tessdoc/Installation.html
+# https://pypi.org/project/pytesseract/
+# https://pypi.org/project/pdf2image/
 
+# C:/Users/bnguyen/PycharmProjects/Tesseract-OCR/tesseract.exe -Truth
+# C:/Program Files/Tesseract-OCR/tesseract.exe
+pytesseract.pytesseract.tesseract_cmd = "C:/Users/bnguyen/PycharmProjects/Tesseract-OCR/tesseract.exe"  # Explicitly set the ocr tesseract.exe path, need to also install it locally
+
+# C:/Users/bnguyen/PycharmProjects/poppler-24.02.0/Library/bin -Truth
+# C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin
 poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin" # Need to locally install it
 
 
@@ -483,6 +491,8 @@ class AutomationController:
         invoices_worksheet_df = invoices_worksheet.read_as_dataframe()
         transaction_details_worksheet_df = transaction_details_worksheet.read_as_dataframe()
 
+        # Matches invoice files found in "Invoices" worksheet to "Transaction Details 2" worksheet transactions
+        # Works through 3 strategies of 1: exact matching between vendor|date|amount 2: match between vendor|amount|non-matching date or 3: vendor|amount between subset of transactions that sum to amount of invoice
         ExcelManipulation.find_matching_transactions(invoices_worksheet_df, transaction_details_worksheet_df)
         print(transaction_details_worksheet_df)
 
