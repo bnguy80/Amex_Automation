@@ -523,7 +523,7 @@ class AutomationController:
         transaction_details_worksheet_df = transaction_details_worksheet.read_as_dataframe()
 
         # Matches invoice files found in "Invoices" worksheet to "Transaction Details 2" worksheet transactions
-        # Works through 3 strategies of 1: exact matching between vendor|date|amount 2: match between vendor|amount|non-matching date or 3: vendor|amount between subset of transactions that sum to amount of invoice
+        # Works through 3 strategies of 1: exact matching between vendor|date|amount 2: match between vendor|amount|non-matching date or 3: target total between subset of transactions that sum to amount of invoice
         ExcelManipulation.find_matching_transactions(invoices_worksheet_df, transaction_details_worksheet_df)
         print(transaction_details_worksheet_df)
 
