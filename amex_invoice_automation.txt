@@ -71,3 +71,5 @@ Subscription renewal: accurate representation of subscriptions coming up at any 
 3/25/24: As part of matching invoices to transactions, need to rename the file in folder and excel to be + "Row index # - File Name"
 
 3/25/24: In Template workbook, Transaction Details 2 there needs to be a space after the Vendor name contained in the Description for the account, sub-account, vendor, and explanation to be populated correctly
+
+3/26/24: When completed Amex statement for the month, go to page layout, orientation: landscape width: 1 page height: automatic when printing to PDF: print entire workbook

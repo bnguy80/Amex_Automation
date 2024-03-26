@@ -10,6 +10,7 @@ import xlwings as xw
 import pytesseract
 import pandas as pd
 import numpy as np
+from tabulate import tabulate
 
 # https://tesseract-ocr.github.io/tessdoc/Installation.html
 # https://pypi.org/project/pytesseract/
@@ -433,7 +434,7 @@ class ExcelManipulation:
 
 class AutomationController:
     xlookup_table_worksheet_name = "Xlookup table"  # Make sure this is correct, 3/24/24: is correct
-    path = "G:/B_Amex"
+    path = "H:/B_Amex"
     amex_workbook_name = "Amex Corp Feb'24 - Addisu Turi (IT) (1).xlsx"
     template_workbook_name = "Template.xlsm"
 
@@ -472,7 +473,7 @@ class AutomationController:
             print(f"Worksheet '{worksheet_name}' not found in Workbook '{workbook_name}'.")
             return
 
-            # This step is to get the Xlookup table worksheet to be able to get vendors for pdfs
+        # This step is to get the Xlookup table worksheet to be able to get vendors for pdfs
         xlookup_table_worksheet = workbook.get_worksheet(self.xlookup_table_worksheet_name)
         self.pdf_collection.populate_vendors_from_vendor_worksheet(xlookup_table_worksheet)
 
@@ -525,7 +526,7 @@ class AutomationController:
         # Matches invoice files found in "Invoices" worksheet to "Transaction Details 2" worksheet transactions
         # Works through 3 strategies of 1: exact matching between vendor|date|amount 2: match between vendor|amount|non-matching date or 3: target total between subset of transactions that sum to amount of invoice
         ExcelManipulation.find_matching_transactions(invoices_worksheet_df, transaction_details_worksheet_df)
-        print(transaction_details_worksheet_df)
+        print(tabulate(invoices_worksheet_df, headers='firstrow'))
 
 
 controller = AutomationController("01/21/2024", "2/21/2024")
