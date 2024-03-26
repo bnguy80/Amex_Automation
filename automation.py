@@ -1,4 +1,5 @@
 import os
+from itertools import combinations
 from tqdm import tqdm
 import pdfplumber
 import pdf2image
@@ -8,6 +9,7 @@ from datetime import datetime
 import xlwings as xw
 import pytesseract
 import pandas as pd
+import numpy as np
 
 # https://tesseract-ocr.github.io/tessdoc/Installation.html
 # https://pypi.org/project/pytesseract/
@@ -19,7 +21,7 @@ pytesseract.pytesseract.tesseract_cmd = "C:/Users/bnguyen/PycharmProjects/Tesser
 
 # C:/Users/bnguyen/PycharmProjects/poppler-24.02.0/Library/bin -Truth
 # C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin
-poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin" # Need to locally install it
+poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin"  # Need to locally install it
 
 
 class PDF:
@@ -353,6 +355,15 @@ class ExcelManipulation:
             ExcelManipulation.match_transaction(invoice_row, transaction_df, matched_transactions)
 
     @staticmethod
+    def find_combinations(transactions, target_amount):
+        # Finds all combinations of transactions whose sum equals the target_amount
+        for r in range(1, len(transactions) + 1):
+            for combo in combinations(transactions, r):
+                if np.isclose(sum(item['Amount'] for item in combo), target_amount, atol=0.01):
+                    return combo
+        return None
+
+    @staticmethod
     def match_transaction(invoice_row, transaction_details_df, matched_transactions):
 
         # Extract relevant info from the invoice_row
@@ -365,13 +376,13 @@ class ExcelManipulation:
         potential_matches = transaction_details_df[
             (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &
             (~transaction_details_df.index.isin(matched_transactions))
-        ]
+            ]
 
         # Strategy 1: Exact match on amount and date
         exact_matches = potential_matches[
             (potential_matches['Amount'] == total) &
             (pd.to_datetime(potential_matches['Date'], errors='coerce') == date)
-        ]
+            ]
 
         if not exact_matches.empty:
             first_match_index = exact_matches.iloc[0].name
@@ -384,7 +395,7 @@ class ExcelManipulation:
             non_date_matches = potential_matches[
                 (potential_matches['Amount'] == total) &
                 (pd.to_datetime(potential_matches['Date'], errors='coerce') != date)
-            ]
+                ]
 
             # Include detail in "Column1" that user needs to manually check the match to make sure it is indeed the correct invoice even though the date does not match
             if not non_date_matches.empty:
@@ -395,6 +406,26 @@ class ExcelManipulation:
                 return
 
         # Strategy 3: Match by vendor, date, and among a subset of transactions that when added together equal the amount from the invoice_row["Amount"]
+
+        # Filter potential_matches by same "Description", "Date", "Vendor" from transaction_details_df
+        # Ensure a datetime format for filtering and filter out already matched transactions
+        potential_combination_candidates = transaction_details_df[
+            (transaction_details_df['Vendor'] == vendor) &
+            (pd.to_datetime(transaction_details_df['Date'], errors='coerce') == date) &
+            (~transaction_details_df.index.isin(matched_transactions))
+            ].reset_index(drop=True)
+
+        # Group by 'Description', 'Vendor', and 'Date', then look for matching combinations within each group
+        for (_, group) in potential_combination_candidates.groupby(['Description', 'Vendor', 'Date']):
+            transactions_to_check = group.to_dict('records')  # Now includes 'index' from DataFrame
+            combo = ExcelManipulation.find_combinations(transactions_to_check, total)
+            if combo:
+                for transaction in combo:
+                    # Use the 'index' key to identify the original row in transaction_details_df
+                    idx = transaction['index']  # 'index' is now explicitly included
+                    transaction_details_df.at[idx, 'File Name'] = f"{file_name} (combined)"
+                    matched_transactions.add(idx)
+                return
 
         # No match found, consider additional strategies or manual review
         print(f"No match found for {file_name} with Amount {total}. Consider manual review.")
