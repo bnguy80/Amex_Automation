@@ -77,6 +77,7 @@ class AutomationController {
     + end_date: string
     + workbooks_dict: dict<string, Workbook>
     + manipulation: ExcelManipulation
+    + {static} duplicate_and_label_rows(DataFrame, string, int)
     + open_workbook(path: string, workbook_name: string): Workbook  // New method to open a workbook by path
     + get_workbook(workbook_name: string): workbooks
     + save_workbook(workbook_name: string): void  // New method to save a workbook
