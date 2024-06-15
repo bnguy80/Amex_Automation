@@ -1,0 +1,25 @@
+issuer: Apple Inc.
+keywords:
+- Apple Store for Business
+- Your order has been sent to the Apple Store for Business
+- Please contact Apple at 888-659-5842 if you have questions about your order.
+- Apple Inc.
+fields:
+  amount:
+    required: True
+    type: float
+    regex: 'Total ([\d,]+\.\d{2}) USD'
+  date:
+    required: True
+    type: date
+    regex: 'Order Date\n\n(\d{2}/\d{2}/\d{4})'
+    date_formats:
+      - '%B %d, %Y'
+  invoice_number:
+    required: True
+    regex: '.*'  # This matches anything
+    default: '000000'  # Default value if no match is found
+options:
+  remove_whitespace: False
+  currency: USD
+  decimal_separator: '.'

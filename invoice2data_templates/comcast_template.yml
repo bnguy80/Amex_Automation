@@ -1,0 +1,23 @@
+issuer: Comcast Business
+keywords:
+  - Comcast Business
+  - Thanks for choosing Comcast Business!
+fields:
+  amount:
+    parser: regex
+    regex: 'Automatic payment \$([\d,]+\.\d{2})'
+    type: float
+  date:
+    parser: regex
+    regex: 'Billing Date:\s+(\w+ \d{1,2}, \d{4})'
+    type: date
+    date_formats:
+      - '%B %d, %Y'
+  invoice_number:
+    parser: regex
+    regex: 'Invoice Number:\s+(\d+)'
+    type: str
+options:
+  remove_whitespace: true
+  currency: USD
+  decimal_separator: '.'

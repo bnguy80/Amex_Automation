@@ -1,0 +1,23 @@
+issuer: CompTIA
+keywords:
+- CompTIA Store
+- CompTIA
+fields:
+  amount:
+    required: True
+    type: float
+    regex: 'Total: USD \$([\d,]+\.\d{2})'
+  date:
+    required: True
+    type: date
+    regex: 'Thank you for shopping with us at the CompTIA Store. Your order was received and we are preparing it for shipment. If you would like to view or manage your orders, please visit My Account.\n\nOrder details\n\nOrder #:\s*\d+\s*Check order status\n\nShipping address:\n\n[^\n]+\n[^\n]+\n[^\n]+\n[^\n]+\nUS\n\d+\n\nShipping method: Delivered via Email\nBilling information:\n\n[^\n]+\n[^\n]+\n[^\n]+\n[^\n]+\nUS\n\d+\n\nPayment method: amex \*\*\*\*\*\*\*\*\*1383\n\nProduct Quantity Each Total\n\nCompTIA Server\+ \(SK0-005\) Complete Bundle\n\nGBB-SER-005-TSTV-21-C\s*\nCompTIA Server\+ \(SK0-005\) Voucher\nRetake \(1\)\n\nSER-005-CLLI-21-C\s*\nCompTIA Integrated CertMaster Learn \+\nLabs for Server\+ \(SK0-005\) - Individual\nLicense \(1\)\n\nSER-005-CMPI-21-C\s*\nCompTIA CertMaster Practice for Server\+\n\(SK0-005\) - Individual License \(1\)\n\n1 USD \$1,589.00\nUSD \$1,132.00\n\nUSD\n\n\$1,132.00\n\nhttps:\/\/nam02\.safelinks\.protection\.outlook\.com\/\?url=http%3A%2F%2Fstore\.comptia\.org%2Fmyaccount&data=05%7C02%7Cysahibzada%40truthinitiative\.org%7Ce57ac54a48684a091e2208dc20deb219%7Cfc076a247c0641598e373c4523d2a5ba%7C0%7C0%7C638421388040528319%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI'
+    date_formats:
+      - '%B %d, %Y'
+  invoice_number:
+    required: True
+    regex: '.*'  # This matches anything
+    default: '000000'  # Default value if no match is found
+options:
+  remove_whitespace: False
+  currency: USD
+  decimal_separator: '.'

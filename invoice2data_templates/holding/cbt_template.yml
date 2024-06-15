@@ -1,0 +1,24 @@
+issuer: CBT Nuggets LLC
+keywords:
+- CBT Nuggets LLC
+- CBT Nuggets - Monthly Subscriptions
+-  CBT Nuggets
+fields:
+  amount:
+    required: True
+    type: float
+    regex: 'Total \(in USD\) \$([\d,]+\.\d{2})'
+  date:
+    required: True
+    type: date
+    regex: 'Invoice Date\n(\d{2}/\d{2}/\d{4})'
+    date_formats:
+      - '%B %d, %Y'
+  invoice_number:
+    required: True
+    regex: '.*'  # This matches anything
+    default: '000000'  # Default value if no match is found
+options:
+  remove_whitespace: False
+  currency: USD
+  decimal_separator: '.'

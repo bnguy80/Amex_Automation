@@ -1,0 +1,23 @@
+issuer: Granite Telecommunications
+keywords:
+- Granite Telecommunications
+- 100 Newport Ave Ext.
+fields:
+  amount:
+    required: True
+    type: float
+    regex: 'TOTAL AMOUNT DUE: \$([\d,]+\.\d{2})'
+  date:
+    required: True
+    type: date
+    regex: 'INVOICE DATE: (\d{2}/\d{2}/\d{2})'
+    date_formats:
+      - '%B %d, %Y'
+  invoice_number:
+    required: True
+    regex: '.*'  # This matches anything
+    default: '000000'  # Default value if no match is found
+options:
+  remove_whitespace: False
+  currency: USD
+  decimal_separator: '.'

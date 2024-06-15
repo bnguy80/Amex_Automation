@@ -1,0 +1,24 @@
+issuer: ServerCentral LLC dba Deft.com
+keywords:
+- ServerCentral
+- Deft.com
+- 2200 Busse Road
+fields:
+  total:
+    required: True
+    type: float
+    regex: 'Total \$([\d,]+\.\d{2})'
+  date:
+    required: True
+    type: date
+    regex: 'Date (\d{1,2}/\d{1,2}/\d{4})'
+    date_formats:
+      - '%B %d, %Y'
+  invoice_number:
+    required: True
+    regex: '.*'  # This matches anything
+    default: '000000'  # Default value if no match is found
+options:
+  remove_whitespace: False
+  currency: USD
+  decimal_separator: '.'

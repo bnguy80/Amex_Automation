@@ -1,0 +1,24 @@
+issuer: Amazon
+keywords:
+- Amazon
+- Amazon.com
+- Amazon.com, Inc. or its affiliates
+fields:
+  amount:
+    required: True
+    type: float
+    regex: 'Grand Total:\$([\d,]+\.\d{2})'
+  date:
+    required: True
+    type: date
+    regex: 'Order Placed: (\w+ \d{1,2}, \d{4})'
+    date_formats:
+      - '%B %d, %Y'
+  invoice_number:
+    required: True
+    regex: '.*'  # This matches anything
+    default: '000000'  # Default value if no match is found
+options:
+  remove_whitespace: False
+  currency: USD
+  decimal_separator: '.'
