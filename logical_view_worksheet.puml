@@ -60,7 +60,7 @@ class PDFCollection {
     + get_pdf_dataframe(): pdfs_dataframe: pd.DataFrame
 }
 
-class ExcelManipulation {
+class DataManipulation {
     note top: Handles the complex data manipulation tasks for AutomationController; acts as utility class
    + {static} find_matching_transactions(invoice_df: pd.DataFrame, transaction_df: pd.DataFrame): void
    + {static} match_transaction(invoice_row, transaction_details_df: pd.DataFrame, matched_transactions: set): void

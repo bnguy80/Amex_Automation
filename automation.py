@@ -411,7 +411,7 @@ class Workbook:
             self.wb.save()
 
 
-class ExcelManipulation:
+class DataManipulation:
     @staticmethod
     def find_matching_transactions(invoice_df, transaction_df):
 
@@ -420,7 +420,7 @@ class ExcelManipulation:
         matched_invoices = set()  # This set will track matched invoice indices.
         # Iterate over the invoice dataframe
         for index, invoice_row in invoice_df.iterrows():
-            ExcelManipulation.match_transaction(invoice_row, transaction_df, matched_transactions, matched_invoices,index)
+            DataManipulation.match_transaction(invoice_row, transaction_df, matched_transactions, matched_invoices, index)
 
         # After all, invoices have been processed in finding matches, filter and print unmatched matches
         unmatched_invoices = invoice_df.loc[~invoice_df.index.isin(matched_invoices)]
@@ -499,7 +499,7 @@ class ExcelManipulation:
             transactions_to_check = group.to_dict('records')  # Now includes 'index' from DataFrame
             print("Potential Candidates Strategy 3")
             print(tabulate(transactions_to_check, headers='keys', tablefmt='psql'))
-            combo = ExcelManipulation.find_combinations(transactions_to_check, invoice_row_total)
+            combo = DataManipulation.find_combinations(transactions_to_check, invoice_row_total)
             if combo:
                 for transaction in combo:
                     # Use the 'index' key to identify the original row in transaction_details_df
@@ -528,7 +528,7 @@ class AutomationController:
         self.pdf_collection = PDFCollection()
         self.start_date = start_date
         self.end_date = end_date
-        self.manipulation = ExcelManipulation()
+        self.manipulation = DataManipulation()
 
     #
     # def update_data_across_workbooks(self, source_workbook_name, target_workbook_name, criteria):
@@ -636,7 +636,7 @@ class AutomationController:
 
         # Matches invoice files found in "Invoices" worksheet to "Transaction Details 2" worksheet transactions
         # Works through 3 strategies of 1: exact matching between vendor|date|amount 2: match between vendor|amount|non-matching date or 3: target total between subset of transactions that sum to amount of invoice
-        ExcelManipulation.find_matching_transactions(invoices_worksheet_df, transaction_details_worksheet_df)
+        DataManipulation.find_matching_transactions(invoices_worksheet_df, transaction_details_worksheet_df)
 
         # Call function to duplicate Cloudflare rows and update file names starting from index 8
         transaction_details_worksheet_df = self.duplicate_and_label_rows(transaction_details_worksheet_df)
