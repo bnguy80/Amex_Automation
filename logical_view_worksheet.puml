@@ -90,7 +90,7 @@ Workbook *- "1..*" Worksheet : contains
 Worksheet o-- ConditionalFormatter: utilizes >
 PDFCollection *- "0..*" PDF : contains
 AutomationController --> Workbook : manages >
-AutomationController o-- ExcelManipulation: utilizes >
+AutomationController o-- DataManipulation: utilizes >
 AutomationController --> PDFCollection : utilizes >
 
 @enduml
