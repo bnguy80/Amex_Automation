@@ -33,7 +33,7 @@ group Amex_Workbook Automation Process
     loop Until All Invoices Are Found
 
         group Initial Invoice Status
-        Amex_Automation -> Amex_Workbook: Check Amex_Workbook
+        Amex_Automation -> Amex_Workbook: Check Amex_Workbook of All Transactions Recorded
         Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
         Amex_Automation -> Amex_Workbook: Process Automation; Match Invoice and Transaction and Highlight Amex_Workbook Yellow and Green
 
@@ -94,7 +94,7 @@ group Amex_Workbook Automation Process
                 NewRelic_Portal -> Invoice_Folder: Download Invoices
                 Brandon -> Invoice_Folder: Add Invoices
                 Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-                Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight Amex_Workbook Green
+                Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight the Amex_Workbook Green
             end
 
             group From Server Central Portal
@@ -102,7 +102,7 @@ group Amex_Workbook Automation Process
                 Deft_Portal -> Invoice_Folder: Download Invoices
                 Brandon -> Invoice_Folder: Add Invoices
                 Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-                Amex_Automation -> Amex_Workbook: Process Automation; Match Invoice and Transaction and Highlight Amex_Workbook Green
+                Amex_Automation -> Amex_Workbook: Process Automation; Match Invoice and Transaction and Highlight the Amex_Workbook Green
             end
 
             group From CDW Portal
@@ -134,17 +134,15 @@ end
 
 group Get Signatures
 Amex_Binder -> Docusign: Create Docusign: Send Docusign of Amex_Binder PDF To be Signed by Addisu and Kathy
-Docusign -> Addisu: Get Signature for Amex_Binder from Addisu
-Addisu -> Docusign: Addissu Signs Amex_Binder
-Docusign -> Kathy: Get Signature for Amex_Binder from Kathy
-Kathy -> Docusign: Kathy Signs Amex Binder
+Docusign -> Addisu: Get Signature for Amex_Binder from Addisu; Addissu Signs Amex_Binder
+Docusign -> Kathy: Get Signature for Amex_Binder from Kathy; Kathy Signs Amex Binder
 end
 
 group Send Monthly Signed * Completed Amex_Binder PDF
 Docusign -> Amex_Binder: Download Signed Amex_Binder_SIGNED
 Amex_Binder -> Invoice_Folder: Save Signed Amex_Binder to Invoice_Folder
 Invoice_Folder -> Brandon: Make copy of Amex_Binder_SIGNED
-Brandon -> Ana: Send Copy of Signed Amex_Binder
+Brandon -> Ana: Send Copy of the Signed Amex_Binder
 end
 
 @enduml
