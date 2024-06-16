@@ -113,13 +113,13 @@ group Amex_Workbook Automation Process
                 Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight Amex_Workbook Green
             end
 
-            group All Invoices in Invoice_Folder
-            Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-            Amex_Automation -> Amex_Workbook: Process Automation; Updated Amex_Workbook with all Matching Invoices and Transactions
-            end
-
         end
 
+end
+
+group All Invoices in Invoice_Folder
+Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
+Amex_Automation -> Amex_Workbook: Process Automation; Updated Amex_Workbook with all Matching Invoices and Transactions
 end
 
 group Create PDF using Adobe Acrobat Pro
