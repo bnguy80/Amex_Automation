@@ -45,7 +45,7 @@ group Amex_Workbook Automation Process
                 Brandon -> T3billing_Inbox: Access Inbox
                 T3billing_Inbox -> Brandon: Download Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
-                Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data and Match Invoice and Transaction
+                Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
                 Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight Amex_Workbook Green
             end
 
