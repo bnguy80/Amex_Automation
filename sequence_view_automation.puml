@@ -34,7 +34,6 @@ group Amex_Workbook Automation Process
 
         group Initial Invoice Status
         Amex_Automation -> Amex_Workbook: Check Amex_Workbook
-        note right of Amex_Automation: Highlight in Amex_Workbook:\n Green for Present Invoices\nand Yellow for Missing Invoices in the Invoice_Folder
         Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
         Amex_Automation -> Amex_Workbook: Process Automation; Match Invoice and Transaction and Highlight Amex_Workbook Yellow and Green
 
