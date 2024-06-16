@@ -3,6 +3,12 @@
 
 class PDF {
     note top: Stores extracted data from PDF files
+    -- Class Variables --
+    - total_patterns: list
+    - date_patterns: list
+    - FALL_BACK_TOTAL: float
+    - FALL_BACK_DATE: datetime
+    - FALL_BACK_VENDOR: string
     -- Instance Variables --
     + pdf_name: string
     + file_path: string
@@ -10,31 +16,30 @@ class PDF {
     + date: date MM-DD-YYYY
     + vendor: string
     -- Methods --
-    + extract_pdf_invoice_total(): void
-    + extract_ocr_invoice_total(): void
-    + process_totals(): void // Calls the total extraction methods in the correct sequence extract_pdf_invoice_total and falls back to extract_ocr_invoice_total
+    + extract_pdf_invoice_total(): return pattern
+    + extract_ocr_invoice_total(): return pattern
     + extract_pdf_invoice_date(start_date, end_date): void
     + extract_ocr_invoice_date(start_date, end_date): void
-    + process_dates(): void // Calls the date extraction methods in correct sequence extract_pdf_invoice_date and falls back to extract_ocr_invoice_date
-    + process_vendor(): void // Extracts the vendors for each invoice
+    + process_total(): void // Calls the total extraction methods in the correct sequence extract_pdf_invoice_total and falls back to extract_ocr_invoice_total
+    + process_pdf_date(): void // Calls the date extraction methods in correct sequence extract_pdf_invoice_date and falls back to extract_ocr_invoice_date
+    + match_pdf_invoice_vendor(vendor_list: list): void // Sets the vendor of PDF instances if there is a match; vendor_list is provided from PDFCollection
 }
 
 class PDFCollection {
     note top: Manages a collection of PDF objects, facilitating access by name
     -- Class Variables --
-    - invoice_counter: int // Class variable to show progress when retrieving invoices
+    - invoice_counter: int // Show progress when retrieving invoices
     -- Instance Variables --
     - pdfs_dataframe: pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
-    - vendors: list
+    - vendors_list: list
     -- Methods --
-    + reset_counter(): void
-    + add_pdf(file_path: string, pdf_name: string, start_date: string, end_date: string): void
-    + populate_pdf_dataframe_from_worksheet(worksheet_name: string, start_date: string, end_date: string): void
-    + populate_vendors_from_vendor_worksheet(xlookup_table_worksheet_name: Worksheet): void ---Make sure correct column!!!
     + remove_pdf(pdf_name: string): void
     + remove_all_pdf(): void
-'    + aggregate_data_for_worksheet_update(): void
-    + get_pdf_dataframe(): pdfs_dataframe: pd.DataFrame
+    + get_pdf_collection_dataframe(): pdfs_dataframe: DataFrame
+    + reset_counter(): void
+    + create_pdf_instances_set_path_name_total_date_vendor(file_path: string, pdf_name: string, start_date: string, end_date: string): void
+    + populate_pdf_collections_vendors_list_from_xlookup_worksheet(xlookup_table_worksheet_name: Worksheet): void ---Make sure correct column!!!
+    + populate_pdf_collection_dataframe_from_worksheet(worksheet_name: string, start_date: string, end_date: string): void
 }
 
 class Worksheet {
@@ -42,9 +47,9 @@ class Worksheet {
     -- Instance Variables --
     - name: string
     - sheet: xlwings.Sheet // Usage needed to provide access to the underlying excel sheet, dataframe used as intermediary to manipulate data
-    - dataframe: pandas.DataFrame
+    - worksheet_dataframe: pandas.DataFrame
     -- Methods --
-    + read_data_as_dataframe(): dataframe: pandas.DataFrame // Reads data from sheet reference to and returns a dataframe of the sheet
+    + read_data_as_dataframe(): pandas.DataFrame // Reads data from sheet reference to and returns a dataframe of the sheet
     + update_data_from_dataframe_to_sheet(dataframe: pandas.DataFrame, progress_bar): void // writes manipulated dataframe back into Excel sheet and progress_bar from AutomationController method: update_worksheet_from_pdf_collection
 }
 
@@ -59,16 +64,16 @@ class Workbook {
     + remove_all_worksheets_dict(): void
     + get_worksheet(worksheet_name: string): worksheets[worksheet_name: string]
     + get_all_worksheets(): worksheets
-    + call_macro_workbook(macro_name: string, folder_path_macro: string, month_folder_macro: string): void
     + save(save_path: None): void  // Method to save changes to the workbook to same location, but when parameter passed saves to different location
+    + call_macro_workbook(macro_name: string, macro_parameter_1: None, macro_parameter_2: void): void
 }
 
 class DataManipulation {
     note top: Handles the complex data manipulation tasks for AutomationController; acts as utility class
    -- Methods --
-   + {static} find_matching_transactions(invoice_df: pd.DataFrame, transaction_df: pd.DataFrame): void
-   + {static} match_transaction(invoice_row, transaction_details_df: pd.DataFrame, matched_transactions: set): void
+   + {static} find_matching_transactions(invoice_df: pandas.DataFrame, transaction_df: pandas.DataFrame): void
    + {static} find_combinations(transaction, target_amount: float): void
+  + {static} match_transaction(invoice_row, transaction_details_df: pd.DataFrame, matched_transactions: set): void
 }
 
 class ConditionalFormatter {
@@ -81,16 +86,19 @@ class ConditionalFormatter {
 class AutomationController {
     note top: Acts as the facade, simplifying complex operations like PDF processing and data manipulation in Excel worksheets.
     -- Class Variables --
-    + xlookup_table_worksheet_name: string //
-    + path: string // Class Variable
-    + amex_workbook_name: string // Class Variable
-    + template_workbook_name: string // Class Variable
-    + start_date: string
-    + end_date: string
+    + XLOOKUP_TABLE_WORKSHEET_NAME: string
+    + TEMPLATE_WORKBOOK_NAME: string
+    + TEMPLATE_INVOICE_WORKSHEET_NAME: string
+    + TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME: string
     + LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: string
     -- Instance Variables --
     + workbooks_dict: dict<string, Workbook>
-    + manipulation: ExcelManipulation
+    + pdf_collection: PDFCollection
+    + manipulation: DataManipulation
+    + amex_path: string
+    + amex_statement: string
+    + start_date: string
+    + end_date: string
     + folder_path_macro: string
     + month_folder_macro: string
     -- Methods --
@@ -98,9 +106,10 @@ class AutomationController {
     + open_workbook(path: string, workbook_name: string): Workbook  // New method to open a workbook by path
     + get_workbook(workbook_name: string): workbooks
     + save_selected_workbook(workbook_name: string, save_path: None): void  // New method to save a specific workbook; if save_path parameter passed saves to different location
-    + update_data_across_workbooks(source_workbook_name: string, target_workbook_name: string, criteria): void
-    + update_worksheet_from_pdf_collection((workbook_name: string, worksheet_name: string): void
-    + process_invoices_worksheet(): void // Processes the Invoice Worksheet
+    + duplicate_and_label_rows(pandas.DataFrame): pandas.DataFrame
+    + update_invoices_worksheet_with_all_extracted_data(): void // Reliant on process_invoices_worksheet() get pandas.DataFrame that will update the invoices worksheet
+    + process_invoices_worksheet(): void // Processes the Invoice Worksheet from start to finish.
+    + process_transaction_details_worksheet(): void
 }
 
 Workbook *- "1..*" Worksheet : contains
