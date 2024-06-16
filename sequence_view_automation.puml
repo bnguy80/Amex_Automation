@@ -11,6 +11,7 @@ collections "Brandon's Inbox" as Brandon_Inbox
 collections "Comcast Internet Portal" as Comcast_Internet_Portal
 collections "New Relic Portal" as NewRelic_Portal
 collections "Server Central Portal" as Deft_Portal
+collections "CDW Portal" as CDW_Portal
 actor Addisu
 actor Aleksei
 actor Zef
@@ -99,6 +100,14 @@ group Amex_Workbook Automation Process
             group From Server Central Portal
                 Brandon -> Deft_Portal: Access Account
                 Deft_Portal -> Invoice_Folder: Download Invoices
+                Brandon -> Invoice_Folder: Add Invoices
+                Amex_Automation -> Invoice_Folder: Check Invoice Presence
+                Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Green
+            end
+
+            group From CDW Portal
+                Brandon -> CDW_Portal: Access Account
+                CDW_Portal -> Invoice_Folder: Download Invoices
                 Brandon -> Invoice_Folder: Add Invoices
                 Amex_Automation -> Invoice_Folder: Check Invoice Presence
                 Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Green
