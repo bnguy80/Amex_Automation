@@ -48,7 +48,7 @@ group Amex_Workbook Automation Process
             group From Brandon's Inbox
                 Brandon -> Brandon_Inbox: Access Account
                 Brandon_Inbox -> Brandon: Download Missing Invoices
-                Brandon -> Invoice_Folder: Add Invoices
+                Brandon -> Invoice_Folder: Add the Invoices
             end
 
             group From Aleksei
