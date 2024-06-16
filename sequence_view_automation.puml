@@ -30,90 +30,68 @@ end
 
 group Amex_Workbook Automation Process
 
-    loop Until All Invoices Are Found
+    loop Attempt to Retrieve all Invoices Until All Invoices Are Found
 
-        group Initial Invoice Status
+        group Match Transactions and Invoices
         Amex_Automation -> Amex_Workbook: Check Amex_Workbook of All Transactions Recorded
         Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
         Amex_Automation -> Amex_Workbook: Process Automation; Match Invoice and Transaction and Highlight Amex_Workbook Yellow and Green
 
         end
 
-        group Attempt to Retrieve Missing Invoices
-
             group From T3 Billing Inbox
                 Brandon -> T3billing_Inbox: Access Inbox
                 T3billing_Inbox -> Brandon: Download Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
-                Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-                Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight Amex_Workbook Green
             end
 
             group From Brandon's Inbox
                 Brandon -> Brandon_Inbox: Access Account
                 Brandon_Inbox -> Brandon: Download Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
-                Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-                Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight Amex_Workbook Green
             end
 
             group From Aleksei
                 Brandon -> Aleksei: Request Missing Invoices
                 Aleksei -> Brandon: Provide Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
-                Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-                Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight Amex_Workbook Green
             end
 
             group From Zef
                 Brandon -> Zef: Request Missing Invoices
                 Zef -> Brandon: Provide Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
-                Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-                Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight Amex_Workbook Green
             end
 
             group From Addisu
                 Brandon -> Addisu: Share Amex_Workbook and Request Missing Invoices
                 Addisu -> Brandon: Provide Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
-                Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-                Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight Amex_Workbook Green
             end
 
             group From Comcast Internet Portal
                 Brandon -> Comcast_Internet_Portal: Access Account
                 Comcast_Internet_Portal -> Invoice_Folder: Download Invoices
                 Brandon -> Invoice_Folder: Add Invoices
-                Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-                Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight Amex_Workbook Green
             end
 
             group From New Relic Portal
                 Brandon -> NewRelic_Portal: Access Account
                 NewRelic_Portal -> Invoice_Folder: Download Invoices
                 Brandon -> Invoice_Folder: Add Invoices
-                Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-                Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight the Amex_Workbook Green
             end
 
             group From Server Central Portal
                 Brandon -> Deft_Portal: Access Account
                 Deft_Portal -> Invoice_Folder: Download Invoices
                 Brandon -> Invoice_Folder: Add Invoices
-                Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-                Amex_Automation -> Amex_Workbook: Process Automation; Match Invoice and Transaction and Highlight the Amex_Workbook Green
             end
 
             group From CDW Portal
                 Brandon -> CDW_Portal: Access Account
                 CDW_Portal -> Invoice_Folder: Download Invoices
                 Brandon -> Invoice_Folder: Add Invoices
-                Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
-                Amex_Automation -> Amex_Workbook: Process Automation;  Match Invoice and Transaction and Highlight Amex_Workbook Green
             end
-
-        end
 
 end
 
