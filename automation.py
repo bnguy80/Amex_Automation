@@ -400,9 +400,9 @@ class Workbook:
     def get_all_worksheets(self):
         return self.worksheets
 
-    def call_macro_workbook(self, macro_name):
+    def call_macro_workbook(self, macro_name, folder_path, month_folder):
         macro_vba = self.wb.app.macro(macro_name)
-        macro_vba()
+        macro_vba(folder_path, month_folder)
 
     def save(self, save_path=None):
         if save_path:  # Save to a specific path when specified, or just save at the current location
@@ -425,6 +425,7 @@ class DataManipulation:
         # After all, invoices have been processed in finding matches, filter and print unmatched matches
         unmatched_invoices = invoice_df.loc[~invoice_df.index.isin(matched_invoices)]
         if not unmatched_invoices.empty:
+            print("\n")
             print("Unmatched Invoices:")
             print(tabulate(unmatched_invoices, headers='keys', tablefmt='psql'))
 
@@ -441,10 +442,15 @@ class DataManipulation:
     def match_transaction(invoice_row, transaction_details_df, matched_transactions, matched_invoices, index):
 
         # Extract relevant info from the invoice_row
-        invoice_row_vendor = invoice_row['Vendor']
-        invoice_row_total = invoice_row['Amount']
+        invoice_row_vendor = invoice_row['Vendor']  # Extract the vendor from the invoice row
+        invoice_row_total = invoice_row['Amount'] # Extract the Amount from the invoice row to compare against the transaction total
         invoice_row_date = pd.to_datetime(invoice_row['Date'])  # Ensure datetime format
-        invoice_row_file_name = invoice_row['File Name']
+        invoice_row_file_name = invoice_row['File Name']  # Extrac the file name from the invoice row
+        invoice_row_file_path = invoice_row['File Path']  # Extract the file path from the invoice row
+
+        # Ensure "File path" column exists in the DataFrame
+        if 'File path' not in transaction_details_df.columns:
+            transaction_details_df['File path'] = None
 
         # Basic filtering by vendor and not matched yet 6/15/2024
         potential_matches_candidates = transaction_details_df[
@@ -461,7 +467,8 @@ class DataManipulation:
         if not exact_matches.empty:
             first_match_index = exact_matches.iloc[0].name
             transaction_details_df.at[first_match_index, 'File name'] = invoice_row_file_name
-            transaction_details_df.at[first_match_index, 'Column1'] = "Exact Amount & Date Match"
+            transaction_details_df.at[first_match_index, 'Column1'] = "Amount & Date Match"
+            transaction_details_df.at[first_match_index, 'File path'] = invoice_row_file_path
             matched_transactions.add(first_match_index)
             matched_invoices.add(index)
             print(f"Match found for Strategy 1 in transaction with id {first_match_index}!")
@@ -478,7 +485,8 @@ class DataManipulation:
             if not non_date_matches.empty:
                 first_match_index = non_date_matches.iloc[0].name
                 transaction_details_df.at[first_match_index, 'File name'] = invoice_row_file_name
-                transaction_details_df.at[first_match_index, 'Column1'] = 'Non-Date Match'
+                transaction_details_df.at[first_match_index, 'Column1'] = 'Amount & Non-Date Match'
+                transaction_details_df.at[first_match_index, 'File path'] = invoice_row_file_path
                 matched_transactions.add(first_match_index)
                 matched_invoices.add(index)
                 print(f"Match found for Strategy 2 in transaction with id {first_match_index}!")
@@ -505,13 +513,14 @@ class DataManipulation:
                     # Use the 'index' key to identify the original row in transaction_details_df
                     idx = transaction['index']  # 'index' is now explicitly included
                     transaction_details_df.at[idx, 'File name'] = invoice_row_file_name
-                    transaction_details_df.at[idx, 'Column1'] = 'Combined Amount Match'
+                    transaction_details_df.at[idx, 'Column1'] = 'Combination Amount Match'
+                    transaction_details_df.at[idx, 'File path'] = invoice_row_file_path
                     matched_transactions.add(idx)
                     matched_invoices.add(index)
                 print(f"Match found for Strategy 3 in transactions with id {[t['index'] for t in combo]}!")
                 return  # Match found and processed, return early
 
-        # No match found, consider additional strategies or manual review
+        # No match found, set the File name to "None" and consider additional strategies or manual review 6/15/2024
         print(f"No match found for {invoice_row_file_name} with Amount {invoice_row_total}. Consider manual review.")
 
 
@@ -523,12 +532,14 @@ class AutomationController:
     template_invoice_worksheet_name = "Invoices"
     template_transaction_details_2_worksheet_name = "Transaction Details 2"
 
-    def __init__(self, start_date, end_date):
+    def __init__(self, start_date, end_date, folder_path_macro, month_folder_macro):
         self.workbooks_dict = {}
         self.pdf_collection = PDFCollection()
         self.start_date = start_date
         self.end_date = end_date
         self.manipulation = DataManipulation()
+        self.folder_path_macro = folder_path_macro
+        self.month_folder_macro = month_folder_macro
 
     #
     # def update_data_across_workbooks(self, source_workbook_name, target_workbook_name, criteria):
@@ -560,7 +571,7 @@ class AutomationController:
     def get_workbook(self, workbook_name):
         return self.workbooks_dict[workbook_name]
 
-    def save_workbook(self, workbook_name, save_path=None):
+    def save_selected_workbook(self, workbook_name, save_path=None):
         if workbook_name in self.workbooks_dict:
             workbook = self.workbooks_dict[workbook_name]
             workbook.save(save_path)
@@ -586,15 +597,14 @@ class AutomationController:
 
         pdf_data = self.pdf_collection.get_pdf_dataframe()
         num_updates = len(pdf_data.index)
-        progress_bar = tqdm(total=num_updates, desc="Updating Excel Sheet Invoices from Invoice PDF Data",
-                            bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
+        progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
 
         # print(pdf_data.columns)
 
         # Resets the invoice counter
         self.pdf_collection.reset_counter()
 
-        worksheet.update_data_from_dataframe_to_sheet(pdf_data,progress_bar)  # Updates the Invoice worksheet with totals and dates of each PDF invoice 6/15/2024
+        worksheet.update_data_from_dataframe_to_sheet(pdf_data, progress_bar)  # Updates the Invoice worksheet with totals and dates of each PDF invoice 6/15/2024
 
         progress_bar.close()
 
@@ -608,7 +618,7 @@ class AutomationController:
 
         # Get initial invoice names and invoice file paths for "Invoices" worksheet of Template workbook
         template_workbook = self.get_workbook(self.template_workbook_name)
-        template_workbook.call_macro_workbook(list_invoice_name_and_path)
+        template_workbook.call_macro_workbook(list_invoice_name_and_path, self.folder_path_macro, self.month_folder_macro)
 
         # Update Template workbook "Invoices" worksheet from Invoice PDF data
         self.update_worksheet_from_pdf_collection(self.template_workbook_name, self.template_invoice_worksheet_name)
@@ -630,7 +640,7 @@ class AutomationController:
         # Convert Transaction Details 2 worksheet into DataFrame
         transaction_details_worksheet_df = transaction_details_worksheet.read_data_as_dataframe()
         # Print the transaction details DataFrame before matching
-        print("Transaction Details 2 DataFrame before matching:")
+        print("Before Matching Transaction Details 2 DataFrame:")
         print(tabulate(transaction_details_worksheet_df, headers='keys', tablefmt='psql'))
         print("\n")
 
@@ -640,12 +650,12 @@ class AutomationController:
 
         # Call function to duplicate Cloudflare rows and update file names starting from index 8
         transaction_details_worksheet_df = self.duplicate_and_label_rows(transaction_details_worksheet_df)
-
-        print("After Processing Transaction Details 2 DataFrame after matching")
+        print("\n")
+        print("After Matching Invoice and Transactions Transaction Details 2 DataFrame")
         print(tabulate(transaction_details_worksheet_df, headers='keys', tablefmt='psql'))
         print("\n")
 
 
-controller = AutomationController("01/21/2024", "2/21/2024")
+controller = AutomationController("01/21/2024", "2/21/2024", r"K:\t3nas\APPS\\", "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
 controller.process_invoices_pdf_name_file_path_worksheet()
 controller.process_transaction_details_worksheet()

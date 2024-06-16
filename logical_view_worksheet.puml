@@ -25,8 +25,8 @@ class Workbook {
     + remove_all_worksheets_dict(): void
     + get_worksheet(worksheet_name: string): worksheets[worksheet_name: string]
     + get_all_worksheets(): worksheets
-    + call_macro_workbook(macro_name: string): void
-    + save(): void  // Method to save changes to the workbook
+    + call_macro_workbook(macro_name: string, folder_path_macro: string, month_folder_macro: string): void
+    + save(save_path: None): void  // Method to save changes to the workbook to same location, but when parameter passed saves to different location
 }
 
 class PDF {
@@ -42,7 +42,7 @@ class PDF {
     + extract_pdf_invoice_date(start_date, end_date): void
     + extract_ocr_invoice_date(start_date, end_date): void
     + process_dates(): void // Calls the date extraction methods in correct sequence extract_pdf_invoice_date and falls back to extract_ocr_invoice_date
-    + extract_vendor: void
+    + process_vendor(): void // Extracts the vendors for each invoice
 }
 
 class PDFCollection {
@@ -77,10 +77,12 @@ class AutomationController {
     + end_date: string
     + workbooks_dict: dict<string, Workbook>
     + manipulation: ExcelManipulation
+    + folder_path_macro: string
+    + month_folder_macro: string
     + {static} duplicate_and_label_rows(DataFrame, string, int)
     + open_workbook(path: string, workbook_name: string): Workbook  // New method to open a workbook by path
     + get_workbook(workbook_name: string): workbooks
-    + save_workbook(workbook_name: string): void  // New method to save a workbook
+    + save_selected_workbook(workbook_name: string, save_path: None): void  // New method to save a specific workbook; if save_path parameter passed saves to different location
     + update_data_across_workbooks(source_workbook_name: string, target_workbook_name: string, criteria): void
     + update_worksheet_from_pdf_collection((workbook_name: string, worksheet_name: string): void
     + process_invoices_worksheet(): void // Processes the Invoice Worksheet
