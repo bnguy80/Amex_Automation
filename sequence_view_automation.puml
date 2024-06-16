@@ -100,17 +100,17 @@ Amex_Automation -> Invoice_Folder: Process Automation; Extract Invoice PDF Data
 Amex_Automation -> Amex_Workbook: Process Automation; Updated Amex_Workbook with all Matching Invoices and Transactions
 end
 
-group Create PDF using Adobe Acrobat Pro
-Amex_Workbook -> Adobe_Acrobat_Pro_2020 : Upload Amex_Workbook
-note right: Make Sure Page Width is 1 for Easier Reading
-Invoice_Folder -> Adobe_Acrobat_Pro_2020: Upload Invoices
-Adobe_Acrobat_Pro_2020 -> Amex_Binder: Combine Amex_Workbook and Invoices PDF
-Amex_Binder -> Invoice_Folder: Save unsigned Amex_Binder to the Invoice_Folder
-end
-
 end
 
 group Manual Process
+
+    group Create PDF using Adobe Acrobat Pro
+    Amex_Workbook -> Adobe_Acrobat_Pro_2020 : Upload Amex_Workbook
+    note right: Make Sure Page Width is 1 for Easier Reading
+    Invoice_Folder -> Adobe_Acrobat_Pro_2020: Upload Invoices
+    Adobe_Acrobat_Pro_2020 -> Amex_Binder: Combine Amex_Workbook and Invoices PDF
+    Amex_Binder -> Invoice_Folder: Save unsigned Amex_Binder to the Invoice_Folder
+    end
 
     group Get Signatures
     Amex_Binder -> Docusign: Create Docusign: Send Docusign of Amex_Binder PDF To be Signed by Addisu and Kathy
