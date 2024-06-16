@@ -1,39 +1,40 @@
 @startuml
 
-actor "Amex Workbook\n(Mar '24)" as Amex
+collections "Amex Workbook\n(Mar '24)" as Amex_Workbook
 actor Ana
 actor Brandon
-actor "Automation.py" as Amex_Automation
-actor "Invoice Folder" as Invoice_Folder
-actor "One Drive Folder" as Kathy_View
-actor "T3 Billing Inbox" as T3billing_Inbox
-actor "Brandon's Inbox" as Brandon_Inbox
-actor "Comcast Internet Portal" as Comcast_Internet_Portal
-actor "New Relic Portal" as NewRelic_Portal
-actor "Server Central Portal" as Deft_Portal
+control "Automation.py" as Amex_Automation
+database "Invoice Folder" as Invoice_Folder
+collections "One Drive Folder" as Kathy_View
+collections "T3 Billing Inbox" as T3billing_Inbox
+collections "Brandon's Inbox" as Brandon_Inbox
+collections "Comcast Internet Portal" as Comcast_Internet_Portal
+collections "New Relic Portal" as NewRelic_Portal
+collections "Server Central Portal" as Deft_Portal
 actor Addisu
 actor Aleksei
 actor Zef
 actor Kathy
-actor Adobe_Acrobat_Pro_2020
-actor Amex_Binder
-actor Docusign
-actor Tony
+control Adobe_Acrobat_Pro_2020
+collections Amex_Binder
+control Docusign
+actor Kathy
 
 
 ' Monthly Amex Statement Process
 
-group Get Monthly Amex
-Ana -> Brandon: Send Amex Workbook
+group Get Monthly Amex_Workbook
+Ana -> Brandon: Send Amex_Workbook Workbook
 end
 
-group Amex Automation Process
+group Amex_Workbook Automation Process
 
     loop Until All Invoices Are Found
         group Initial Invoice Status
-        Amex_Automation -> Amex: Check Amex Workbook
-        note right of Amex_Automation: Highlight in Amex Workbook:\n Green for Present Invoices\nand Yellow for Missing Invoices in the Invoice_Folder
+        Amex_Automation -> Amex_Workbook: Check Amex_Workbook Workbook
+        note right of Amex_Automation: Highlight in Amex_Workbook Workbook:\n Green for Present Invoices\nand Yellow for Missing Invoices in the Invoice_Folder
         Amex_Automation -> Invoice_Folder: Check Invoice Presence
+        Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Yellow and Green
 
         end
 
@@ -43,48 +44,69 @@ group Amex Automation Process
                 Brandon -> T3billing_Inbox: Access Inbox
                 T3billing_Inbox -> Brandon: Download Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
+                Amex_Automation -> Invoice_Folder: Check Invoice Presence
+                Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Green
             end
 
             group From Brandon's Inbox
                 Brandon -> Brandon_Inbox: Access Account
                 Brandon_Inbox -> Brandon: Download Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
+                Amex_Automation -> Invoice_Folder: Check Invoice Presence
+                Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Green
             end
 
             group From Aleksei
                 Brandon -> Aleksei: Request Missing Invoices
                 Aleksei -> Brandon: Provide Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
+                Amex_Automation -> Invoice_Folder: Check Invoice Presence
+                Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Green
             end
 
             group From Zef
                 Brandon -> Zef: Request Missing Invoices
                 Zef -> Brandon: Provide Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
+                Amex_Automation -> Invoice_Folder: Check Invoice Presence
+                Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Green
             end
 
             group From Addisu
-                Brandon -> Addisu: Share Amex Workbook\nand Request Missing Invoices
+                Brandon -> Addisu: Share Amex_Workbook Workbook\nand Request Missing Invoices
                 Addisu -> Brandon: Provide Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
+                Amex_Automation -> Invoice_Folder: Check Invoice Presence
+                Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Green
             end
 
             group From Comcast Internet Portal
                 Brandon -> Comcast_Internet_Portal: Access Account
                 Comcast_Internet_Portal -> Invoice_Folder: Download Invoices
                 Brandon -> Invoice_Folder: Add Invoices
+                Amex_Automation -> Invoice_Folder: Check Invoice Presence
+                Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Green
             end
 
             group From New Relic Portal
                 Brandon -> NewRelic_Portal: Access Account
                 NewRelic_Portal -> Invoice_Folder: Download Invoices
                 Brandon -> Invoice_Folder: Add Invoices
+                Amex_Automation -> Invoice_Folder: Check Invoice Presence
+                Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Green
             end
 
             group From Server Central Portal
                 Brandon -> Deft_Portal: Access Account
                 Deft_Portal -> Invoice_Folder: Download Invoices
                 Brandon -> Invoice_Folder: Add Invoices
+                Amex_Automation -> Invoice_Folder: Check Invoice Presence
+                Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Green
+            end
+
+            group All Invoices in Invoice_Folder
+            Amex_Automation -> Invoice_Folder: Check Invoice Presence
+            Amex_Automation -> Amex_Workbook: Update Amex_Workbook with all the matched invoices and transactions
             end
 
         end
@@ -92,23 +114,26 @@ group Amex Automation Process
 end
 
 group Create PDF using Adobe Acrobat Pro
-Amex_Automation -> Adobe_Acrobat_Pro_2020 : Utilizes for Creating Amex_Binders PDF; Amex_Binder_UNSIGNED_NOT_COMBINED and Amex_Binder_UNSIGNED_COMBINED
+Amex_Workbook -> Adobe_Acrobat_Pro_2020 : Upload Amex_Workbook
+Invoice_Folder -> Adobe_Acrobat_Pro_2020: Upload Invoices
 note right: Make Sure Page Width is 1 for Easier Reading
-Amex_Binder -> Invoice_Folder: Save an Amex_Binder_UNSIGNED_COMBINED and Amex_Binder_UNSIGNED_NOT_COMBINED
+Adobe_Acrobat_Pro_2020 -> Amex_Binder: Combine Amex_Workbook and Invoices PDF
+Amex_Binder -> Invoice_Folder: Save unsigned Amex_Binder to the Invoice_Folder
 end
 
 end
 
 group Get Signatures
 Amex_Binder -> Docusign: Create Docusign
-note left: Send Docusign of Amex_Binder PDF To be Signed by Addisu and Tony
-Docusign -> Addisu: Get Signature for Amex_Binder
-Docusign -> Tony: Get Signature for Amex_Binder
+note right: Send Docusign of Amex_Binder PDF To be Signed by Addisu and Kathy
+Docusign -> Addisu: Get Signature for Amex_Binder from Addisu
+Docusign -> Kathy: Get Signature for Amex_Binder from Kathy
 end
 
 group Send Monthly Signed * Completed Amex_Binder PDF
 Docusign -> Amex_Binder: Download Signed Amex_Binder_SIGNED
 Amex_Binder -> Invoice_Folder: Save Signed Amex_Binder to Invoice_Folder
+Invoice_Folder -> Brandon: Make copy of Amex_Binder_SIGNED
 Brandon -> Ana: Send Copy of Signed Amex_Binder
 end
 
