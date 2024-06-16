@@ -363,7 +363,6 @@ class Worksheet:
 
 class Workbook:
     def __init__(self, workbook_path=None):
-
         self.worksheets = {}
 
         if workbook_path is None:
@@ -531,6 +530,8 @@ class AutomationController:
     template_workbook_name = "Template.xlsm"  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
     template_invoice_worksheet_name = "Invoices"
     template_transaction_details_2_worksheet_name = "Transaction Details 2"
+    # Macro name to get invoice pdf file names and file_paths from the invoices folder, need to adjust monthly 3/23/2024
+    LIST_INVOICE_NAME_AND_PATH_MACRO_NAME = "ListFilesInSpecificFolder"
 
     def __init__(self, start_date, end_date, folder_path_macro, month_folder_macro):
         self.workbooks_dict = {}
@@ -609,8 +610,6 @@ class AutomationController:
         progress_bar.close()
 
     def process_invoices_pdf_name_file_path_worksheet(self):
-        # Macro name to get invoice pdf file names and file_paths from the invoices folder, need to adjust monthly 3/23/2024
-        list_invoice_name_and_path = "ListFilesInSpecificFolder"
 
         # Open the template workbook and add all sheets
         template_workbook_path = os.path.join(self.path, self.template_workbook_name)
@@ -618,7 +617,7 @@ class AutomationController:
 
         # Get initial invoice names and invoice file paths for "Invoices" worksheet of Template workbook
         template_workbook = self.get_workbook(self.template_workbook_name)
-        template_workbook.call_macro_workbook(list_invoice_name_and_path, self.folder_path_macro, self.month_folder_macro)
+        template_workbook.call_macro_workbook(self.LIST_INVOICE_NAME_AND_PATH_MACRO_NAME, self.folder_path_macro, self.month_folder_macro)
 
         # Update Template workbook "Invoices" worksheet from Invoice PDF data
         self.update_worksheet_from_pdf_collection(self.template_workbook_name, self.template_invoice_worksheet_name)

@@ -1,41 +1,15 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-class Worksheet {
-    note top: Utilizes xlwings to interact with Excel and pandas for DataFrame operations
-    - name: string
-    - sheet: xlwings.Sheet // Usage needed to provide access to the underlying excel sheet, dataframe used as intermediary to manipulate data
-    - dataframe: pandas.DataFrame
-    + read_data_as_dataframe(): dataframe: pandas.DataFrame // Reads data from sheet reference to and returns a dataframe of the sheet
-    + update_data_from_dataframe_to_sheet(dataframe: pandas.DataFrame, progress_bar): void // writes manipulated dataframe back into Excel sheet and progress_bar from AutomationController method: update_worksheet_from_pdf_collection
-}
-
-class ConditionalFormatter {
-    - formatting_rules: list // List of dictionaries for worksheets, rules, range_address, rule_type, rule_value, format_options
-    + apply_conditional_formatting_rule(workbook_name: string): void
-}
-
-class Workbook {
-    note top: Manages Worksheets with xlwings
-    - workbook_name: string
-    - worksheets: dict<string, Worksheet>
-    + Workbook(workbook_path: string)  // Constructor now takes a path to open or create a workbook
-    + add_worksheet(worksheet_name: string): void
-    + remove_worksheet(worksheet_name: string): void
-    + remove_all_worksheets_dict(): void
-    + get_worksheet(worksheet_name: string): worksheets[worksheet_name: string]
-    + get_all_worksheets(): worksheets
-    + call_macro_workbook(macro_name: string, folder_path_macro: string, month_folder_macro: string): void
-    + save(save_path: None): void  // Method to save changes to the workbook to same location, but when parameter passed saves to different location
-}
-
 class PDF {
     note top: Stores extracted data from PDF files
+    -- Instance Variables --
     + pdf_name: string
     + file_path: string
     + total: float
     + date: date MM-DD-YYYY
     + vendor: string
+    -- Methods --
     + extract_pdf_invoice_total(): void
     + extract_ocr_invoice_total(): void
     + process_totals(): void // Calls the total extraction methods in the correct sequence extract_pdf_invoice_total and falls back to extract_ocr_invoice_total
@@ -47,9 +21,12 @@ class PDF {
 
 class PDFCollection {
     note top: Manages a collection of PDF objects, facilitating access by name
+    -- Class Variables --
     - invoice_counter: int // Class variable to show progress when retrieving invoices
+    -- Instance Variables --
     - pdfs_dataframe: pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
     - vendors: list
+    -- Methods --
     + reset_counter(): void
     + add_pdf(file_path: string, pdf_name: string, start_date: string, end_date: string): void
     + populate_pdf_dataframe_from_worksheet(worksheet_name: string, start_date: string, end_date: string): void
@@ -60,25 +37,63 @@ class PDFCollection {
     + get_pdf_dataframe(): pdfs_dataframe: pd.DataFrame
 }
 
+class Worksheet {
+    note top: Utilizes xlwings to interact with Excel and pandas for DataFrame operations
+    -- Instance Variables --
+    - name: string
+    - sheet: xlwings.Sheet // Usage needed to provide access to the underlying excel sheet, dataframe used as intermediary to manipulate data
+    - dataframe: pandas.DataFrame
+    -- Methods --
+    + read_data_as_dataframe(): dataframe: pandas.DataFrame // Reads data from sheet reference to and returns a dataframe of the sheet
+    + update_data_from_dataframe_to_sheet(dataframe: pandas.DataFrame, progress_bar): void // writes manipulated dataframe back into Excel sheet and progress_bar from AutomationController method: update_worksheet_from_pdf_collection
+}
+
+class Workbook {
+    note top: Manages Worksheets with xlwings
+    -- Instance Variables --
+    - worksheets: dict<string, Worksheet>
+    + Workbook(workbook_path: string)  // Constructor now takes a path to open or create a workbook
+    -- Methods --
+    + add_worksheet(worksheet_name: string): void
+    + remove_worksheet(worksheet_name: string): void
+    + remove_all_worksheets_dict(): void
+    + get_worksheet(worksheet_name: string): worksheets[worksheet_name: string]
+    + get_all_worksheets(): worksheets
+    + call_macro_workbook(macro_name: string, folder_path_macro: string, month_folder_macro: string): void
+    + save(save_path: None): void  // Method to save changes to the workbook to same location, but when parameter passed saves to different location
+}
+
 class DataManipulation {
     note top: Handles the complex data manipulation tasks for AutomationController; acts as utility class
+   -- Methods --
    + {static} find_matching_transactions(invoice_df: pd.DataFrame, transaction_df: pd.DataFrame): void
    + {static} match_transaction(invoice_row, transaction_details_df: pd.DataFrame, matched_transactions: set): void
    + {static} find_combinations(transaction, target_amount: float): void
 }
 
+class ConditionalFormatter {
+    -- Class Variables --
+    - formatting_rules: list // List of dictionaries for worksheets, rules, range_address, rule_type, rule_value, format_options
+    -- Methods --
+    + apply_conditional_formatting_rule(workbook_name: string): void
+}
+
 class AutomationController {
     note top: Acts as the facade, simplifying complex operations like PDF processing and data manipulation in Excel worksheets.
-    + xlookup_table_worksheet_name: string // Class Variable
+    -- Class Variables --
+    + xlookup_table_worksheet_name: string //
     + path: string // Class Variable
     + amex_workbook_name: string // Class Variable
     + template_workbook_name: string // Class Variable
     + start_date: string
     + end_date: string
+    + LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: string
+    -- Instance Variables --
     + workbooks_dict: dict<string, Workbook>
     + manipulation: ExcelManipulation
     + folder_path_macro: string
     + month_folder_macro: string
+    -- Methods --
     + {static} duplicate_and_label_rows(DataFrame, string, int)
     + open_workbook(path: string, workbook_name: string): Workbook  // New method to open a workbook by path
     + get_workbook(workbook_name: string): workbooks
