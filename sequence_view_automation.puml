@@ -115,8 +115,8 @@ end
 
 group Create PDF using Adobe Acrobat Pro
 Amex_Workbook -> Adobe_Acrobat_Pro_2020 : Upload Amex_Workbook
-Invoice_Folder -> Adobe_Acrobat_Pro_2020: Upload Invoices
 note right: Make Sure Page Width is 1 for Easier Reading
+Invoice_Folder -> Adobe_Acrobat_Pro_2020: Upload Invoices
 Adobe_Acrobat_Pro_2020 -> Amex_Binder: Combine Amex_Workbook and Invoices PDF
 Amex_Binder -> Invoice_Folder: Save unsigned Amex_Binder to the Invoice_Folder
 end
@@ -124,10 +124,11 @@ end
 end
 
 group Get Signatures
-Amex_Binder -> Docusign: Create Docusign
-note right: Send Docusign of Amex_Binder PDF To be Signed by Addisu and Kathy
+Amex_Binder -> Docusign: Create Docusign: Send Docusign of Amex_Binder PDF To be Signed by Addisu and Kathy
 Docusign -> Addisu: Get Signature for Amex_Binder from Addisu
+Addisu -> Docusign: Addissu Signs Amex_Binder
 Docusign -> Kathy: Get Signature for Amex_Binder from Kathy
+Kathy -> Docusign: Kathy Signs Amex Binder
 end
 
 group Send Monthly Signed * Completed Amex_Binder PDF
