@@ -24,15 +24,15 @@ actor Kathy
 ' Monthly Amex Statement Process
 
 group Get Monthly Amex_Workbook
-Ana -> Brandon: Send Amex_Workbook Workbook
+Ana -> Brandon: Send Amex_Workbook
 end
 
 group Amex_Workbook Automation Process
 
     loop Until All Invoices Are Found
         group Initial Invoice Status
-        Amex_Automation -> Amex_Workbook: Check Amex_Workbook Workbook
-        note right of Amex_Automation: Highlight in Amex_Workbook Workbook:\n Green for Present Invoices\nand Yellow for Missing Invoices in the Invoice_Folder
+        Amex_Automation -> Amex_Workbook: Check Amex_Workbook
+        note right of Amex_Automation: Highlight in Amex_Workbook:\n Green for Present Invoices\nand Yellow for Missing Invoices in the Invoice_Folder
         Amex_Automation -> Invoice_Folder: Check Invoice Presence
         Amex_Automation -> Amex_Workbook: Highlight Amex_Workbook Yellow and Green
 
@@ -73,7 +73,7 @@ group Amex_Workbook Automation Process
             end
 
             group From Addisu
-                Brandon -> Addisu: Share Amex_Workbook Workbook\nand Request Missing Invoices
+                Brandon -> Addisu: Share Amex_Workbook and Request Missing Invoices
                 Addisu -> Brandon: Provide Missing Invoices
                 Brandon -> Invoice_Folder: Add Invoices
                 Amex_Automation -> Invoice_Folder: Check Invoice Presence
