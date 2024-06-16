@@ -110,17 +110,20 @@ end
 
 end
 
-group Get Signatures
-Amex_Binder -> Docusign: Create Docusign: Send Docusign of Amex_Binder PDF To be Signed by Addisu and Kathy
-Docusign -> Addisu: Get Signature for Amex_Binder from Addisu; Addissu Signs Amex_Binder
-Docusign -> Kathy: Get Signature for Amex_Binder from Kathy; Kathy Signs Amex Binder
-end
+group Manual Process
 
-group Send Monthly Signed * Completed Amex_Binder PDF
-Docusign -> Amex_Binder: Download Signed Amex_Binder_SIGNED
-Amex_Binder -> Invoice_Folder: Save Signed Amex_Binder to Invoice_Folder
-Invoice_Folder -> Brandon: Make copy of Amex_Binder_SIGNED
-Brandon -> Ana: Send Copy of the Signed Amex_Binder
-end
+    group Get Signatures
+    Amex_Binder -> Docusign: Create Docusign: Send Docusign of Amex_Binder PDF To be Signed by Addisu and Kathy
+    Docusign -> Addisu: Get Signature for Amex_Binder from Addisu; Addissu Signs Amex_Binder
+    Docusign -> Kathy: Get Signature for Amex_Binder from Kathy; Kathy Signs Amex Binder
+    end
 
+    group Send Monthly Signed * Completed Amex_Binder PDF
+    Docusign -> Amex_Binder: Download Signed Amex_Binder_SIGNED
+    Amex_Binder -> Invoice_Folder: Save Signed Amex_Binder to Invoice_Folder
+    Invoice_Folder -> Brandon: Make copy of Amex_Binder_SIGNED
+    Brandon -> Ana: Send Copy of the Signed Amex_Binder
+    end
+
+end
 @enduml
