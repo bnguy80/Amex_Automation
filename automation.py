@@ -12,7 +12,10 @@ import xlwings as xw
 from tabulate import tabulate
 from tqdm import tqdm
 
-# https://tesseract-ocr.github.io/tessdoc/Installation.html # How-to download tesseract for OCR
+# from invoice2data import extract_data
+# from invoice2data.extract.loader import read_templates
+
+# https://tesseract-ocr.github.io/tessdoc/Installation.html # How-to download tesseract for OCR on local machine 6/16/2024
 # https://pypi.org/project/pytesseract/
 # https://pypi.org/project/pdf2image/
 # https://poppler.freedesktop.org/
@@ -26,15 +29,15 @@ pytesseract.pytesseract.tesseract_cmd = "C:/Program Files/Tesseract-OCR/tesserac
 poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin"  # Need to locally install it
 
 
-# THIS IS FOR INVOICE2DATA USAGE 6/15/2024
-# Set the path for pdftotext directly in the script
-# C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin -computer
+# # THIS IS FOR INVOICE2DATA USAGE 6/15/2024
+# # Set the path for pdftotext directly in the script
+# # C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin -computer
 # pdftotext_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin/"
 # os.environ['PATH'] += os.pathsep + pdftotext_path
 
 
 class PDF:
-    # Static patterns for pdfplumber and OCR
+    # Static fallback patterns for pdfplumber and OCR
     total_patterns = [
         r"Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})",
         r"Total amount due(?: \(USD\))?:?\s+\$?\S?(\d[\d,]*\.\d{2})",
@@ -46,7 +49,7 @@ class PDF:
         r"Billing Date\s+([A-z]+ \d{1,2}, \d{4})",
     ]
 
-    # Static patterns for pdfplumber and OCR
+    # Static fallback patterns for pdfplumber and OCR
     date_patterns = [
         r'\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}',
         r'\d{1,2}[\/-][A-Za-z]{3}[\/-]\d{2,4}',
@@ -54,9 +57,158 @@ class PDF:
         r'[A-Za-z]+ \d{1,2}, \d{4}'
     ]
 
-    FALL_BACK_TOTAL = float(666.66)
-    FALL_BACK_DATE = datetime(1999, 1, 1)  # Using a datetime object for comparison
-    FALL_BACK_VENDOR = 'Unknown'
+    # Template for vendor-specific patterns to extract total amounts and dates from identified invoice PDFs 6/16/2024.
+    vendor_patterns = {
+        # Comcast Business Internet template 6/16/2024
+        'Thanks for choosing Comcast Business!': {
+            'date': [
+                r'\d+\s+([A-Z][a-z]{2} \d{1,2}, \d{4})',
+                # Add other date patterns for Comcast
+            ],
+            'total': [
+                r'Regular monthly charges\s+\$([\d\.,]+)',
+                # Add other total patterns for Comcast
+            ]
+        },
+        # Comcast Cable template 6/16/2024
+        'Comcast Business Cable': {
+            'date': [
+                r'(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})'
+            ],
+            'total': [
+                r'Total Amount Due(?: \(USD\))?:?\s+\$?\S?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        'adobe': {
+            'date': [
+                r'\d{1,2}[\/-][A-Za-z]{3}[\/-]\d{2,4}'
+            ],
+            'total': [
+                r'Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        # Amazon invoices can only use OCR
+        'amazon': {
+            'date': [
+                r'[A-Za-z]+ \d{1,2}, \d{4}'
+            ],
+            'total': [
+                r'Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        # Apple
+        'Apple Store for Business': {
+            'date': [
+                r'\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}'
+            ],
+            'total': [
+                r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        'calendy': {
+            # Special case, cannot find it via OCR, but still try
+            'date': [
+                r'[A-Za-z]{3}\.?\s\d{1,2},\s\d{4}'
+            ],
+            'total': [
+                r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        'cbt': {
+            'date': [
+                r'\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}'
+            ],
+            'total': [
+                r'Total\s+\(in USD\)\s*:? ?\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        'cloudflare': {
+            'date': [
+                r'Invoice Date:\s*(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})'
+            ],
+            'total': [
+                r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        'comptia': {
+            'date': [
+                r'Invoice Date:\s*(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})'
+            ],
+            'total': [
+                r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        'deft.com': {
+            'date': [
+                r'Date\s+(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})'
+            ],
+            'total': [
+                r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        'dell!': {
+            'date': [
+                r'Purchased On:\s+([A-Za-z]{3}\.?\s\d{1,2},\s\d{4})'
+            ],
+            'total': [
+                r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        # Granite
+        'www.granitenet.com': {
+            'date': [
+                r'INVOICE DATE:\s*(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})'
+            ],
+            'total': [
+                r'TOTAL AMOUNT DUE:\s*\$([\d,]+\.?\d*)'
+            ]
+        },
+        'lastpass': {
+            'date': [
+                r'Invoice Date:\s*(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})'
+            ],
+            'total': [
+                r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        'Microsoft Corporation': {
+            'date': [
+                r'Due Date:\s*(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})'
+            ],
+            'total': [
+                r'Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        'relic': {
+            'date': [
+                r'Due Date:\s*(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})'
+            ],
+            'total': [
+                r'Invoice Total\s+\$(\d[\d,]*\.\d{2})'
+            ]
+        },
+        'www.serversupply.com': {
+            'date': [
+                r'Date:\s*(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})'
+            ],
+            'total': [
+                r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+        # Special case, need OCR but still try
+        'chatgpt': {
+            'date': [
+                r'\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}'
+            ],
+            'total': [
+                r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ]
+        },
+    }
+
+    FALL_BACK_TOTAL = float(666.66)  # DO NOT CHANGE 6/16/2024
+    FALL_BACK_DATE = datetime(1999, 1, 1)  # DO NOT CHANGE 6/16/2024
+    FALL_BACK_VENDOR = 'Unknown'  # DO NOT CHANGE 6/16/2024
 
     def __init__(self, pdf_path):
         self.pdf_path = pdf_path
@@ -65,20 +217,34 @@ class PDF:
         self.date = None
         self.vendor = None
 
+    def identify_vendor(self, text):
+        for vendor_identifier, patterns in self.vendor_patterns.items():
+            if vendor_identifier in text:  # Using the key directly in the search
+                self.vendor = vendor_identifier  # Optionally map to a more readable format if needed
+                return patterns
+        self.vendor = self.FALL_BACK_VENDOR
+        return None
+
     def extract_pdf_invoice_total(self):
         """
-        Extracts the total amount from a PDF invoice.
-
-        :return: pattern: pattern used to match the total amount from a PDF invoice.
+        Extracts the total amount from a PDF invoice using vendor-specific patterns, with a fallback to general patterns.
         """
-
         with pdfplumber.open(self.pdf_path) as pdf:
             text = ' '.join(page.extract_text() or '' for page in pdf.pages)
-            for pattern in self.total_patterns:
-                match = re.search(pattern, text, re.IGNORECASE)
-                if match:
-                    self.total = float(match.group(1).replace(',', ''))
-                    return pattern  # Return the pattern used for matching 6/15/2024
+
+        # Identify vendor and use specific patterns if available
+        vendor_info = self.identify_vendor(text)
+        if vendor_info and 'total' in vendor_info:
+            total_patterns = vendor_info['total']
+        else:
+            total_patterns = self.total_patterns  # Fallback to general patterns
+
+        # Search for the total using the determined patterns
+        for pattern in total_patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                self.total = float(match.group(1).replace(',', ''))
+                return pattern  # Return the pattern used for matching
 
         # No match was found for total
         self.total = self.FALL_BACK_TOTAL
@@ -117,26 +283,41 @@ class PDF:
     #         self.total = self.fall_back_total
     #         self.date = self.fallback_date
 
+    # def process_pdf_total_date(self, start_date, end_date):
+    #     # First attempt to extract using invoice2data
+    #     self.extract_total_date_with_invoice2data(start_date, end_date)
+    #     # Check if fallback values are used and use OCR if they are
+    #     if self.total == self.fall_back_total:
+    #         self.extract_ocr_invoice_total()
+    #     if self.date == self.fallback_date:
+    #         self.extract_ocr_invoice_date(start_date, end_date)
+
     def extract_pdf_invoice_date(self, start_date, end_date):
         """
-        Extract invoice date from PDF file.
-        :param start_date: The start date to filter the extracted invoice date.
-        :param end_date: The end date to filter the extracted invoice date.
-        :return: The extracted invoice date as a string in the format 'YYYY-MM-DD'. If no invoice date is found, the fallback date is used (1999, 1, 1)
+        Extract invoice date from PDF file using vendor-specific patterns, with a fallback to general patterns.
         """
         start_date = dateparser.parse(start_date)
         end_date = dateparser.parse(end_date)
 
         with pdfplumber.open(self.pdf_path) as pdf:
             text = ' '.join(page.extract_text() or '' for page in pdf.pages)
-            for pattern in self.date_patterns:
-                dates = re.findall(pattern, text)
-                for date_text in dates:
-                    parsed_date = dateparser.parse(date_text)
-                    if parsed_date and start_date <= parsed_date <= end_date:
-                        formatted_date = parsed_date.strftime('%Y-%m-%d')
-                        self.date = formatted_date
-                        return pattern
+
+        # Identify vendor and use specific patterns if available
+        vendor_info = self.identify_vendor(text)
+        if vendor_info and 'date' in vendor_info:
+            date_patterns = vendor_info['date']
+        else:
+            date_patterns = self.date_patterns  # Fallback to general patterns
+
+        # Search for the date using the determined patterns
+        for pattern in date_patterns:
+            dates = re.findall(pattern, text)
+            for date_text in dates:
+                parsed_date = dateparser.parse(date_text)
+                if parsed_date and start_date <= parsed_date <= end_date:
+                    formatted_date = parsed_date.strftime('%Y-%m-%d')
+                    self.date = formatted_date
+                    return pattern
 
         self.date = self.FALL_BACK_DATE
         return None
@@ -196,15 +377,6 @@ class PDF:
         else:
             print("Date successfully found, but no pattern was identified.")
 
-    # def process_pdf_total_date(self, start_date, end_date):
-    #     # First attempt to extract using invoice2data
-    #     self.extract_total_date_with_invoice2data(start_date, end_date)
-    #     # Check if fallback values are used and use OCR if they are
-    #     if self.total == self.fall_back_total:
-    #         self.extract_ocr_invoice_total()
-    #     if self.date == self.fallback_date:
-    #         self.extract_ocr_invoice_date(start_date, end_date)
-
     def match_pdf_invoice_vendor(self, vendors_list):
         lower_file_name = self.pdf_name.lower()
         matched_vendor = None
@@ -259,10 +431,9 @@ class PDFCollection:
         # Increment the counter
         self.invoice_counter += 1
 
-        # Directly invoke processing methods with appropriate dates and sets date, total, vendor, for each PDF object
+        # Directly invoke processing methods to extract date, total, vendor, for each PDF object
         pdf.process_pdf_total()
         pdf.process_pdf_date(start_date, end_date)
-        # pdf.extract_pdf_invoice_date(start_date, end_date) # This may be an accidental addition, as already present in process_dates function 6/15/2024
         # pdf.process_pdf_total_date(start_date, end_date)
         pdf.match_pdf_invoice_vendor(self.vendors_list)
 
@@ -533,7 +704,7 @@ class AutomationController:
     TEMPLATE_WORKBOOK_NAME = "Template.xlsm"  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
     TEMPLATE_INVOICES_WORKSHEET_NAME = "Invoices"
     TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME = "Transaction Details 2"
-    LIST_INVOICE_NAME_AND_PATH_MACRO_NAME = "ListFilesInSpecificFolder"  # Macro name to get invoice pdf file names and file_paths from the invoices folder, need to adjust monthly 3/23/2024
+    LIST_INVOICE_NAME_AND_PATH_MACRO_NAME = "ListFilesInSpecificFolder"  # Macro name to get invoice pdf file names and file_paths from the invoices folder 6/15/2024
 
     def __init__(self, amex_path, amex_statement, start_date, end_date, macro_parameter_1=None, macro_parameter_2=None):
         self.workbooks_dict = {}
@@ -581,7 +752,7 @@ class AutomationController:
         # Renumber file names starting from index 8
         for i in range(len(df)):
             df.at[i, 'File name'] = f"{8 + i} - {df.loc[i, 'File name']}"
-
+            # Need to also add logic to navigate to file path and rename file if a File path is present 6/16/2024.
         return df
 
     def update_invoices_worksheet_with_all_extracted_data(self):
@@ -600,20 +771,17 @@ class AutomationController:
         self.pdf_collection.populate_pdf_collections_vendors_list_from_xlookup_worksheet(xlookup_table_worksheet)
 
         # This step populates the pdf_collection_dataframe with all the pdf data 6/16/2024
-        self.pdf_collection.populate_pdf_collection_dataframe_from_worksheet(invoice_worksheet, self.start_date,
-                                                                             self.end_date)
+        self.pdf_collection.populate_pdf_collection_dataframe_from_worksheet(invoice_worksheet, self.start_date, self.end_date)
         pdf_collection_df = self.pdf_collection.get_pdf_collection_dataframe()
         num_updates = len(pdf_collection_df.index)
-        progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data",
-                            bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
+        progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
 
         # print(pdf_data.columns)
 
         # Resets the invoice counter
         self.pdf_collection.reset_counter()
 
-        invoice_worksheet.update_data_from_dataframe_to_sheet(pdf_collection_df,
-                                                              progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
+        invoice_worksheet.update_data_from_dataframe_to_sheet(pdf_collection_df, progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
 
         progress_bar.close()
 
@@ -624,8 +792,7 @@ class AutomationController:
 
         # Get initial invoice names and invoice file paths for "Invoices" worksheet of Template workbook
         template_workbook = self.get_workbook(self.TEMPLATE_WORKBOOK_NAME)
-        template_workbook.call_macro_workbook(self.LIST_INVOICE_NAME_AND_PATH_MACRO_NAME, self.macro_parameter_1,
-                                              self.macro_parameter_2)
+        template_workbook.call_macro_workbook(self.LIST_INVOICE_NAME_AND_PATH_MACRO_NAME, self.macro_parameter_1, self.macro_parameter_2)
 
         # Update Template workbook "Invoices" worksheet from Invoice PDF Collection DataFrame
         self.update_invoices_worksheet_with_all_extracted_data()
@@ -640,8 +807,7 @@ class AutomationController:
 
         template_workbook = self.get_workbook(self.TEMPLATE_WORKBOOK_NAME)
         invoices_worksheet = template_workbook.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
-        transaction_details_worksheet = template_workbook.get_worksheet(
-            self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
+        transaction_details_worksheet = template_workbook.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
 
         # Convert the Invoice worksheet into DataFrame
         invoices_worksheet_df = invoices_worksheet.read_data_as_dataframe()
@@ -668,6 +834,8 @@ class AutomationController:
         print("\n")
 
 
-controller = AutomationController("K:/B_Amex", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024", r"K:\t3nas\APPS\\", "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
-# controller.process_invoices_worksheet()
-# controller.process_transaction_details_worksheet()
+controller = AutomationController("K:/B_Amex", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",
+                                  r"K:\t3nas\APPS\\",
+                                  "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
+controller.process_invoices_worksheet()
+controller.process_transaction_details_worksheet()
