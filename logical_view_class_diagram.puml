@@ -17,6 +17,7 @@ class PDF {
     + date: date MM-DD-YYYY
     + vendor: string
     -- Methods --
+    + identify_vendor(pdf_text): void
     + extract_pdf_invoice_total(): return pattern
     + extract_ocr_invoice_total(): return pattern
     + extract_pdf_invoice_date(start_date, end_date): void

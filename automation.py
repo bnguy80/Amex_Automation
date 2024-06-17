@@ -217,13 +217,13 @@ class PDF:
         self.date = None
         self.vendor = None
 
-    def identify_vendor(self, text):
+    def identify_vendor(self, pdf_text):
         for vendor_identifier, patterns in self.VENDOR_PATTERNS.items():
-            if vendor_identifier in text:  # Using the key directly in the search
+            if vendor_identifier in pdf_text:  # Using the key directly in the search
                 self.vendor = vendor_identifier  # Optionally map to a more readable format if needed
                 return patterns
         self.vendor = self.FALL_BACK_VENDOR
-        return None
+        return None  # Use to return prematurely because the vendor was identified 6/15/2024
 
     def extract_pdf_invoice_total(self):
         """
@@ -347,8 +347,10 @@ class PDF:
         """
         Calls the date extraction methods in the correct sequence first with pdfplumber then if total not found, then use tesseract OCR
         """
+        # Strategy 1: Use pdfplumber
         pattern_used_pdf = self.extract_pdf_invoice_total()  # Tries to parse regular pdf first
         if self.total == self.FALL_BACK_TOTAL:  # If the total is set to the fallback after using the pdfplumber function, then use OCR to find the total 6/15/2024
+            # Strategy 2: Use pytesserract
             pattern_used_ocr = self.extract_ocr_invoice_total()  # Fall back to find the total
 
             # Print the pattern used, if any
@@ -362,9 +364,10 @@ class PDF:
             print("Amount successfully found, but no pattern was identified.")
 
     def process_pdf_date(self, start_date, end_date):
-        # Calls the date extraction methods in the correct sequence
+        # Strategy 1: Use pdfplumber
         pattern_used_pdf = self.extract_pdf_invoice_date(start_date, end_date)
         if self.date == self.FALL_BACK_DATE:
+            # Strategy 2: Use pytesserract
             pattern_used_ocr = self.extract_ocr_invoice_date(start_date, end_date)  # Fall back to find the date
 
             # Print the pattern used, if any
@@ -771,17 +774,20 @@ class AutomationController:
         self.pdf_collection.populate_pdf_collections_vendors_list_from_xlookup_worksheet(xlookup_table_worksheet)
 
         # This step populates the pdf_collection_dataframe with all the pdf data 6/16/2024
-        self.pdf_collection.populate_pdf_collection_dataframe_from_worksheet(invoice_worksheet, self.start_date, self.end_date)
+        self.pdf_collection.populate_pdf_collection_dataframe_from_worksheet(invoice_worksheet, self.start_date,
+                                                                             self.end_date)
         pdf_collection_df = self.pdf_collection.get_pdf_collection_dataframe()
         num_updates = len(pdf_collection_df.index)
-        progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
+        progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data",
+                            bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
 
         # print(pdf_data.columns)
 
         # Resets the invoice counter
         self.pdf_collection.reset_counter()
 
-        invoice_worksheet.update_data_from_dataframe_to_sheet(pdf_collection_df, progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
+        invoice_worksheet.update_data_from_dataframe_to_sheet(pdf_collection_df,
+                                                              progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
 
         progress_bar.close()
 
@@ -792,7 +798,8 @@ class AutomationController:
 
         # Get initial invoice names and invoice file paths for "Invoices" worksheet of Template workbook
         template_workbook = self.get_workbook(self.TEMPLATE_WORKBOOK_NAME)
-        template_workbook.call_macro_workbook(self.LIST_INVOICE_NAME_AND_PATH_MACRO_NAME, self.macro_parameter_1, self.macro_parameter_2)
+        template_workbook.call_macro_workbook(self.LIST_INVOICE_NAME_AND_PATH_MACRO_NAME, self.macro_parameter_1,
+                                              self.macro_parameter_2)
 
         # Update Template workbook "Invoices" worksheet from Invoice PDF Collection DataFrame
         self.update_invoices_worksheet_with_all_extracted_data()
@@ -807,7 +814,8 @@ class AutomationController:
 
         template_workbook = self.get_workbook(self.TEMPLATE_WORKBOOK_NAME)
         invoices_worksheet = template_workbook.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
-        transaction_details_worksheet = template_workbook.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
+        transaction_details_worksheet = template_workbook.get_worksheet(
+            self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
 
         # Convert the Invoice worksheet into DataFrame
         invoices_worksheet_df = invoices_worksheet.read_data_as_dataframe()
@@ -834,6 +842,8 @@ class AutomationController:
         print("\n")
 
 
-controller = AutomationController("K:/B_Amex", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",r"K:\t3nas\APPS\\","[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
+controller = AutomationController("K:/B_Amex", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",
+                                  r"K:\t3nas\APPS\\",
+                                  "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
 controller.process_invoices_worksheet()
 controller.process_transaction_details_worksheet()
