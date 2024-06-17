@@ -2,6 +2,8 @@ import os
 import re
 from datetime import datetime
 from itertools import combinations
+from typing import Union
+
 import dateparser
 import numpy as np
 import pandas as pd
@@ -15,18 +17,18 @@ from tqdm import tqdm
 # from invoice2data import extract_data
 # from invoice2data.extract.loader import read_templates
 
-# https://tesseract-ocr.github.io/tessdoc/Installation.html # How-to download tesseract for OCR on local machine 6/16/2024
+# https://tesseract-ocr.github.io/tessdoc/Installation.html --> Tesseract at UB Mannheim --> https://github.com/UB-Mannheim/tesseract/wiki # How-to download tesseract for OCR on local machine 6/16/2024
 # https://pypi.org/project/pytesseract/
 # https://pypi.org/project/pdf2image/
-# https://poppler.freedesktop.org/
+# https://github.com/oschwartz10612/poppler-windows/releases
 
-# C:/Users/bnguyen/PycharmProjects/Tesseract-OCR/tesseract.exe -Truth
+# C:/Users/bnguyen/AppData/Local/Programs/Tesseract-OCR/tesseract.exe -Truth
 # C:/Program Files/Tesseract-OCR/tesseract.exe -computer
-pytesseract.pytesseract.tesseract_cmd = "C:/Program Files/Tesseract-OCR/tesseract.exe"  # Explicitly set the ocr tesseract.exe path, need to also install it locally 6/15/2024
+pytesseract.pytesseract.tesseract_cmd = "C:/Users/bnguyen/AppData/Local/Programs/Tesseract-OCR/tesseract.exe"  # Explicitly set the ocr tesseract.exe path, need to also install it locally 6/15/2024
 
-# C:/Users/bnguyen/PycharmProjects/poppler-24.02.0/Library/bin -Truth
+# C:/Users/bnguyen/AppData/Local/Programs/poppler-24.02.0/Library/bin -Truth
 # C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin -computer
-poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin"  # Need to locally install it
+poppler_path = "C:/Users/bnguyen/AppData/Local/Programs/poppler-24.02.0/Library/bin"  # Need to locally install it
 
 
 # # THIS IS FOR INVOICE2DATA USAGE 6/15/2024
@@ -38,7 +40,7 @@ poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin"  # 
 
 class PDF:
     # Static fallback patterns for pdfplumber and OCR; DO NOT CHANGE ORDER!
-    TOTAL_PATTERNS = [
+    _TOTAL_PATTERNS = [
         r"Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})",
         r"Total amount due(?: \(USD\))?:?\s+\$?\S?(\d[\d,]*\.\d{2})",
         r"Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})",
@@ -50,7 +52,7 @@ class PDF:
     ]
 
     # Static fallback patterns for pdfplumber and OCR; DO NOT CHANGE ORDER!
-    DATE_PATTERNS = [
+    _DATE_PATTERNS = [
         r'\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}',
         r'\d{1,2}[\/-][A-Za-z]{3}[\/-]\d{2,4}',
         r'[A-Za-z]{3}\.?\s\d{1,2},\s\d{4}',
@@ -58,7 +60,7 @@ class PDF:
     ]
 
     # Template for vendor-specific patterns to extract total amounts and dates from identified invoice PDFs 6/16/2024.
-    VENDOR_PATTERNS = {
+    _VENDOR_PATTERNS = {
         # Comcast Business Internet
         'Thanks for choosing Comcast Business!': {
             'date': [
@@ -217,15 +219,15 @@ class PDF:
         self.date = None
         self.vendor = None
 
-    def identify_vendor(self, pdf_text):
-        for vendor_identifier, patterns in self.VENDOR_PATTERNS.items():
+    def _identify_vendor(self, pdf_text: str):
+        for vendor_identifier, patterns in self._VENDOR_PATTERNS.items():
             if vendor_identifier in pdf_text:  # Using the key directly in the search
                 self.vendor = vendor_identifier  # Optionally map to a more readable format if needed
                 return patterns
         self.vendor = self.FALL_BACK_VENDOR
         return None  # Use to return prematurely because the vendor was identified 6/15/2024
 
-    def extract_pdf_invoice_total(self):
+    def _extract_pdf_invoice_total(self) -> Union[str, None]:
         """
         Extracts the total amount from a PDF invoice using vendor-specific patterns, with a fallback to general patterns.
         """
@@ -233,11 +235,11 @@ class PDF:
             text = ' '.join(page.extract_text() or '' for page in pdf.pages)
 
         # Identify vendor and use specific patterns if available
-        vendor_info = self.identify_vendor(text)
+        vendor_info = self._identify_vendor(text)
         if vendor_info and 'total' in vendor_info:
             total_patterns = vendor_info['total']
         else:
-            total_patterns = self.TOTAL_PATTERNS  # Fallback to general patterns
+            total_patterns = self._TOTAL_PATTERNS  # Fallback to general patterns
 
         # Search for the total using the determined patterns
         for pattern in total_patterns:
@@ -250,7 +252,7 @@ class PDF:
         self.total = self.FALL_BACK_TOTAL
         return None
 
-    def extract_ocr_invoice_total(self):
+    def _extract_ocr_invoice_total(self) -> Union[str, None]:
         """
         This method extracts the total amount from an OCR-processed invoice. It uses the pytesseract library to convert images of the invoice to text and searches for patterns that indicate the presence of the total amount. If a match is found, the total amount is extracted and converted to a float.
         :param self: The instance of the class calling the method.
@@ -260,7 +262,7 @@ class PDF:
 
         for image in images:
             ocr_text = pytesseract.image_to_string(image)
-            for pattern in self.TOTAL_PATTERNS:
+            for pattern in self._TOTAL_PATTERNS:
                 match = re.search(pattern, ocr_text, re.IGNORECASE)
                 if match:
                     # Extract the total and convert to float
@@ -292,7 +294,7 @@ class PDF:
     #     if self.date == self.fallback_date:
     #         self.extract_ocr_invoice_date(start_date, end_date)
 
-    def extract_pdf_invoice_date(self, start_date, end_date):
+    def _extract_pdf_invoice_date(self, start_date, end_date):
         """
         Extract invoice date from PDF file using vendor-specific patterns, with a fallback to general patterns.
         """
@@ -303,11 +305,11 @@ class PDF:
             text = ' '.join(page.extract_text() or '' for page in pdf.pages)
 
         # Identify vendor and use specific patterns if available
-        vendor_info = self.identify_vendor(text)
+        vendor_info = self._identify_vendor(text)
         if vendor_info and 'date' in vendor_info:
             date_patterns = vendor_info['date']
         else:
-            date_patterns = self.DATE_PATTERNS  # Fallback to general patterns
+            date_patterns = self._DATE_PATTERNS  # Fallback to general patterns
 
         # Search for the date using the determined patterns
         for pattern in date_patterns:
@@ -322,7 +324,7 @@ class PDF:
         self.date = self.FALL_BACK_DATE
         return None
 
-    def extract_ocr_invoice_date(self, start_date, end_date):
+    def _extract_ocr_invoice_date(self, start_date, end_date):
 
         start_date = dateparser.parse(start_date)
         end_date = dateparser.parse(end_date)
@@ -331,7 +333,7 @@ class PDF:
 
         for image in images:
             ocr_text = pytesseract.image_to_string(image)
-            for pattern in self.DATE_PATTERNS:
+            for pattern in self._DATE_PATTERNS:
                 dates = re.findall(pattern, ocr_text)
                 for date_text in dates:
                     parsed_date = dateparser.parse(date_text)
@@ -348,10 +350,10 @@ class PDF:
         Calls the date extraction methods in the correct sequence first with pdfplumber then if total not found, then use tesseract OCR
         """
         # Strategy 1: Use pdfplumber
-        pattern_used_pdf = self.extract_pdf_invoice_total()  # Tries to parse regular pdf first
+        pattern_used_pdf = self._extract_pdf_invoice_total()  # Tries to parse regular pdf first
         if self.total == self.FALL_BACK_TOTAL:  # If the total is set to the fallback after using the pdfplumber function, then use OCR to find the total 6/15/2024
             # Strategy 2: Use pytesserract
-            pattern_used_ocr = self.extract_ocr_invoice_total()  # Fall back to find the total
+            pattern_used_ocr = self._extract_ocr_invoice_total()  # Fall back to find the total
 
             # Print the pattern used, if any
             if pattern_used_ocr:
@@ -365,10 +367,10 @@ class PDF:
 
     def process_pdf_date(self, start_date, end_date):
         # Strategy 1: Use pdfplumber
-        pattern_used_pdf = self.extract_pdf_invoice_date(start_date, end_date)
+        pattern_used_pdf = self._extract_pdf_invoice_date(start_date, end_date)
         if self.date == self.FALL_BACK_DATE:
             # Strategy 2: Use pytesserract
-            pattern_used_ocr = self.extract_ocr_invoice_date(start_date, end_date)  # Fall back to find the date
+            pattern_used_ocr = self._extract_ocr_invoice_date(start_date, end_date)  # Fall back to find the date
 
             # Print the pattern used, if any
             if pattern_used_ocr:
@@ -590,7 +592,6 @@ class Workbook:
 class DataManipulation:
     @staticmethod
     def find_matching_transactions(invoice_df, transaction_df):
-
         # Each transaction is matched with a unique row, "File Name" linked to a unique transaction, each row in invoice_df represents a distinct invoice PDF and only matches with one row in transaction_df
         matched_transactions = set()  # This set will track matched transactions
         matched_invoices = set()  # This set will track matched invoice indices.
@@ -617,18 +618,17 @@ class DataManipulation:
 
     @staticmethod
     def match_transaction(invoice_row, transaction_details_df, matched_transactions, matched_invoices, index):
+        # Ensure "File path" column exists in the DataFrame
+        if 'File path' not in transaction_details_df.columns:
+            transaction_details_df['File path'] = None
 
         # Extract relevant info from the invoice_row
         invoice_row_vendor = invoice_row['Vendor']  # Extract the vendor from the invoice row
         invoice_row_total = invoice_row[
             'Amount']  # Extract the Amount from the invoice row to compare against the transaction total
         invoice_row_date = pd.to_datetime(invoice_row['Date'])  # Ensure datetime format
-        invoice_row_file_name = invoice_row['File Name']  # Extrac the file name from the invoice row
+        invoice_row_file_name = invoice_row['File Name']  # Extract the file name from the invoice row
         invoice_row_file_path = invoice_row['File Path']  # Extract the file path from the invoice row
-
-        # Ensure "File path" column exists in the DataFrame
-        if 'File path' not in transaction_details_df.columns:
-            transaction_details_df['File path'] = None
 
         # Basic filtering by vendor and not matched yet 6/15/2024
         potential_matches_candidates = transaction_details_df[
@@ -704,7 +704,7 @@ class DataManipulation:
 
 class AutomationController:
     XLOOKUP_TABLE_WORKSHEET_NAME = "Xlookup table"  # Make sure this is correct, 3/24/24: is correct inside Template.xlsm 6/15/2024
-    TEMPLATE_WORKBOOK_NAME = "Template.xlsm"  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
+    TEMPLATE_WORKBOOK_NAME = "Template - Master.xlsm"  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
     TEMPLATE_INVOICES_WORKSHEET_NAME = "Invoices"
     TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME = "Transaction Details 2"
     LIST_INVOICE_NAME_AND_PATH_MACRO_NAME = "ListFilesInSpecificFolder"  # Macro name to get invoice pdf file names and file_paths from the invoices folder 6/15/2024
@@ -842,8 +842,14 @@ class AutomationController:
         print("\n")
 
 
-controller = AutomationController("K:/B_Amex", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",
-                                  r"K:\t3nas\APPS\\",
+# "H:/Amex" Automtion -Truth--> amex_path
+# "K:/B_Amex" -computer
+# r"H:\Amex Automtion\t3nas\APPS\\" -Truth--> macro_parameter_1
+# r"K:\t3nas\APPS\\" -computer
+
+
+controller = AutomationController("H:/Amex", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",
+                                  r"H:\Amex Automtion\t3nas\APPS\\",
                                   "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
 controller.process_invoices_worksheet()
 controller.process_transaction_details_worksheet()

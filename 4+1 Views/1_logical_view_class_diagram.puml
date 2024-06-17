@@ -17,11 +17,11 @@ class PDF {
     + date: date MM-DD-YYYY
     + vendor: string
     -- Methods --
-    + identify_vendor(pdf_text): void
-    + extract_pdf_invoice_total(): return pattern
-    + extract_ocr_invoice_total(): return pattern
-    + extract_pdf_invoice_date(start_date, end_date): void
-    + extract_ocr_invoice_date(start_date, end_date): void
+    - identify_vendor(pdf_text): void
+    - extract_pdf_invoice_total(): return pattern
+    - extract_ocr_invoice_total(): return pattern
+    - extract_pdf_invoice_date(start_date, end_date): return pattern
+    - extract_ocr_invoice_date(start_date, end_date): return pattern
     + process_total(): void // Calls the total extraction methods in the correct sequence extract_pdf_invoice_total and falls back to extract_ocr_invoice_total
     + process_pdf_date(): void // Calls the date extraction methods in correct sequence extract_pdf_invoice_date and falls back to extract_ocr_invoice_date
     + match_pdf_invoice_vendor(vendor_list: list): void // Sets the vendor of PDF instances if there is a match; vendor_list is provided from PDFCollection
@@ -78,7 +78,7 @@ class DataManipulation {
   + {static} match_transaction(invoice_row, transaction_details_df: pd.DataFrame, matched_transactions: set): void
 }
 
-class ConditionalFormatter {
+class Conditions {
     -- Class Variables --
     - formatting_rules: list // List of dictionaries for worksheets, rules, range_address, rule_type, rule_value, format_options
     -- Methods --
@@ -114,11 +114,11 @@ class AutomationController {
     + process_transaction_details_worksheet(): void
 }
 
-Workbook *- "1..*" Worksheet : contains
-Worksheet o-- ConditionalFormatter: utilizes >
-PDFCollection *- "0..*" PDF : contains
-AutomationController --> Workbook : manages >
-AutomationController o-- DataManipulation: utilizes >
-AutomationController --> PDFCollection : utilizes >
+Workbook *--> "1..*" Worksheet : contains
+Worksheet *--> Conditions: utilizes >
+PDFCollection *--> "1..*" PDF : contains
+AutomationController o--> Workbook : manages >
+AutomationController o--> DataManipulation: utilizes >
+AutomationController o--> PDFCollection : utilizes >
 
 @enduml
