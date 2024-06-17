@@ -59,7 +59,7 @@ class PDF:
 
     # Template for vendor-specific patterns to extract total amounts and dates from identified invoice PDFs 6/16/2024.
     vendor_patterns = {
-        # Comcast Business Internet template 6/16/2024
+        # Comcast Business Internet
         'Thanks for choosing Comcast Business!': {
             'date': [
                 r'\d+\s+([A-Z][a-z]{2} \d{1,2}, \d{4})',
@@ -70,7 +70,7 @@ class PDF:
                 # Add other total patterns for Comcast
             ]
         },
-        # Comcast Cable template 6/16/2024
+        # Comcast Cable
         'Comcast Business Cable': {
             'date': [
                 r'(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})'
