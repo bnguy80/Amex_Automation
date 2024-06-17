@@ -4,9 +4,9 @@
 class PDF {
     note top: Stores extracted data from PDF files
     -- Class Variables --
-    - total_patterns: list
-    - date_patterns: list
-    - vendor_patterns: dict
+    - TOTAL_PATTERNS: list
+    - DATE_PATTERNS: list
+    - VENDOR_PATTERNS: dict
     - FALL_BACK_TOTAL: float
     - FALL_BACK_DATE: datetime
     - FALL_BACK_VENDOR: string

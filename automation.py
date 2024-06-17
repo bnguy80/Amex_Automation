@@ -38,7 +38,7 @@ poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin"  # 
 
 class PDF:
     # Static fallback patterns for pdfplumber and OCR
-    total_patterns = [
+    TOTAL_PATTERNS = [
         r"Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})",
         r"Total amount due(?: \(USD\))?:?\s+\$?\S?(\d[\d,]*\.\d{2})",
         r"Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})",
@@ -50,7 +50,7 @@ class PDF:
     ]
 
     # Static fallback patterns for pdfplumber and OCR
-    date_patterns = [
+    DATE_PATTERNS = [
         r'\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}',
         r'\d{1,2}[\/-][A-Za-z]{3}[\/-]\d{2,4}',
         r'[A-Za-z]{3}\.?\s\d{1,2},\s\d{4}',
@@ -58,7 +58,7 @@ class PDF:
     ]
 
     # Template for vendor-specific patterns to extract total amounts and dates from identified invoice PDFs 6/16/2024.
-    vendor_patterns = {
+    VENDOR_PATTERNS = {
         # Comcast Business Internet
         'Thanks for choosing Comcast Business!': {
             'date': [
@@ -218,7 +218,7 @@ class PDF:
         self.vendor = None
 
     def identify_vendor(self, text):
-        for vendor_identifier, patterns in self.vendor_patterns.items():
+        for vendor_identifier, patterns in self.VENDOR_PATTERNS.items():
             if vendor_identifier in text:  # Using the key directly in the search
                 self.vendor = vendor_identifier  # Optionally map to a more readable format if needed
                 return patterns
@@ -237,7 +237,7 @@ class PDF:
         if vendor_info and 'total' in vendor_info:
             total_patterns = vendor_info['total']
         else:
-            total_patterns = self.total_patterns  # Fallback to general patterns
+            total_patterns = self.TOTAL_PATTERNS  # Fallback to general patterns
 
         # Search for the total using the determined patterns
         for pattern in total_patterns:
@@ -260,7 +260,7 @@ class PDF:
 
         for image in images:
             ocr_text = pytesseract.image_to_string(image)
-            for pattern in self.total_patterns:
+            for pattern in self.TOTAL_PATTERNS:
                 match = re.search(pattern, ocr_text, re.IGNORECASE)
                 if match:
                     # Extract the total and convert to float
@@ -307,7 +307,7 @@ class PDF:
         if vendor_info and 'date' in vendor_info:
             date_patterns = vendor_info['date']
         else:
-            date_patterns = self.date_patterns  # Fallback to general patterns
+            date_patterns = self.DATE_PATTERNS  # Fallback to general patterns
 
         # Search for the date using the determined patterns
         for pattern in date_patterns:
@@ -331,7 +331,7 @@ class PDF:
 
         for image in images:
             ocr_text = pytesseract.image_to_string(image)
-            for pattern in self.date_patterns:
+            for pattern in self.DATE_PATTERNS:
                 dates = re.findall(pattern, ocr_text)
                 for date_text in dates:
                     parsed_date = dateparser.parse(date_text)
