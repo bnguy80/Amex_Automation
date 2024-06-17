@@ -834,8 +834,6 @@ class AutomationController:
         print("\n")
 
 
-controller = AutomationController("K:/B_Amex", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",
-                                  r"K:\t3nas\APPS\\",
-                                  "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
+controller = AutomationController("K:/B_Amex", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",r"K:\t3nas\APPS\\","[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
 controller.process_invoices_worksheet()
 controller.process_transaction_details_worksheet()
