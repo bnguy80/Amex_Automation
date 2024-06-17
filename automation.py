@@ -37,7 +37,7 @@ poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin"  # 
 
 
 class PDF:
-    # Static fallback patterns for pdfplumber and OCR
+    # Static fallback patterns for pdfplumber and OCR; DO NOT CHANGE ORDER!
     TOTAL_PATTERNS = [
         r"Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})",
         r"Total amount due(?: \(USD\))?:?\s+\$?\S?(\d[\d,]*\.\d{2})",
@@ -49,7 +49,7 @@ class PDF:
         r"Billing Date\s+([A-z]+ \d{1,2}, \d{4})",
     ]
 
-    # Static fallback patterns for pdfplumber and OCR
+    # Static fallback patterns for pdfplumber and OCR; DO NOT CHANGE ORDER!
     DATE_PATTERNS = [
         r'\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}',
         r'\d{1,2}[\/-][A-Za-z]{3}[\/-]\d{2,4}',
