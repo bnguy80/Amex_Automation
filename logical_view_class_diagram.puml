@@ -6,6 +6,7 @@ class PDF {
     -- Class Variables --
     - total_patterns: list
     - date_patterns: list
+    - vendor_patterns: dict
     - FALL_BACK_TOTAL: float
     - FALL_BACK_DATE: datetime
     - FALL_BACK_VENDOR: string
