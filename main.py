@@ -15,24 +15,24 @@ This automates the extraction of pdf invoice data and matching of transactional 
 Use this CLI to simplify the AMEX Statement process and save time.[/light_cyan1]""", justify="left")
 
 
-@app.command(help="Processes the AMEX statement by handling both invoices and transaction details.")
-def process_amex_statement(
+@app.command(help="Processes the AMEX Statement by handling both invoices and transaction details.")
+def process_amex(
         amex_path: str = typer.Option(
             "K:/B_Amex",
-            prompt="Please enter the directory path for the AMEX statement workbook",
+            prompt="Please enter the directory path for the AMEX Statement workbook",
             help="Directory path of the AMEX statement workbook."
         ),
         amex_statement: str = typer.Option(
             "Amex Corp Feb'24 - Addisu Turi (IT).xlsx",
-            prompt="Please enter the AMEX statement workbook name",
+            prompt="Please enter the AMEX Statement workbook name",
             help="Name of the AMEX statement workbook."
         ),
-        start_date: str = typer.Option(
+        amex_start_date: str = typer.Option(
             "01/21/2024",
             prompt="Please enter the start date for the statement processing (MM/DD/YYYY)",
             help="Start date for the statement processing."
         ),
-        end_date: str = typer.Option(
+        amex_end_date: str = typer.Option(
             "2/21/2024",
             prompt="Please enter the end date for the statement processing (MM/DD/YYYY)",
             help="End date for the statement processing."
@@ -49,7 +49,7 @@ def process_amex_statement(
         )
 ):
     """Processes the AMEX statement by handling both invoices and transaction details."""
-    controller = AutomationController(amex_path, amex_statement, start_date, end_date, macro_parameter_1,
+    controller = AutomationController(amex_path, amex_statement, amex_start_date, amex_end_date, macro_parameter_1,
                                       macro_parameter_2)
     controller.process_invoices_worksheet()
     controller.process_transaction_details_worksheet()
