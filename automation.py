@@ -3,7 +3,6 @@ import re
 from datetime import datetime
 from itertools import combinations
 from typing import Union
-
 import dateparser
 import numpy as np
 import pandas as pd
@@ -219,7 +218,7 @@ class PDF:
         self.date = None
         self.vendor = None
 
-    def _identify_vendor(self, pdf_text: str):
+    def _identify_vendor(self, pdf_text: str) -> Union[str, None]:
         for vendor_identifier, patterns in self._VENDOR_PATTERNS.items():
             if vendor_identifier in pdf_text:  # Using the key directly in the search
                 self.vendor = vendor_identifier  # Optionally map to a more readable format if needed
@@ -294,7 +293,7 @@ class PDF:
     #     if self.date == self.fallback_date:
     #         self.extract_ocr_invoice_date(start_date, end_date)
 
-    def _extract_pdf_invoice_date(self, start_date, end_date):
+    def _extract_pdf_invoice_date(self, start_date: str, end_date: str) -> Union[str, None]:
         """
         Extract invoice date from PDF file using vendor-specific patterns, with a fallback to general patterns.
         """
@@ -324,8 +323,7 @@ class PDF:
         self.date = self.FALL_BACK_DATE
         return None
 
-    def _extract_ocr_invoice_date(self, start_date, end_date):
-
+    def _extract_ocr_invoice_date(self, start_date: str, end_date: str) -> Union[str, None]:
         start_date = dateparser.parse(start_date)
         end_date = dateparser.parse(end_date)
 
@@ -345,7 +343,7 @@ class PDF:
         self.date = self.FALL_BACK_DATE
         return None
 
-    def process_pdf_total(self):
+    def process_pdf_total(self) -> None:
         """
         Calls the date extraction methods in the correct sequence first with pdfplumber then if total not found, then use tesseract OCR
         """
@@ -365,7 +363,7 @@ class PDF:
         else:
             print("Amount successfully found, but no pattern was identified.")
 
-    def process_pdf_date(self, start_date, end_date):
+    def process_pdf_date(self, start_date, end_date) -> None:
         # Strategy 1: Use pdfplumber
         pattern_used_pdf = self._extract_pdf_invoice_date(start_date, end_date)
         if self.date == self.FALL_BACK_DATE:
@@ -382,7 +380,7 @@ class PDF:
         else:
             print("Date successfully found, but no pattern was identified.")
 
-    def match_pdf_invoice_vendor(self, vendors_list):
+    def match_pdf_invoice_vendor(self, vendors_list: list) -> None:
         lower_file_name = self.pdf_name.lower()
         matched_vendor = None
 
@@ -405,11 +403,10 @@ class PDFCollection:
     invoice_counter = 0
 
     def __init__(self):
-        self.pdf_collection_dataframe = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor',
-                                                              'Date'])  # Note The header names (File Name--> File name) is different compared to Invoice & Transaction Details 2 worksheets 6/15/2024
+        self.pdf_collection_dataframe = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])  # Note The header names (File Name--> File name) is different compared to Invoice & Transaction Details 2 worksheets 6/15/2024
         self.vendors_list = []
 
-    def remove_pdf(self, pdf_name):
+    def remove_pdf(self, pdf_name: str) -> None:
         # Find the index of rows where 'File Path' matches pdf_path
         rows_to_drop = self.pdf_collection_dataframe[self.pdf_collection_dataframe['File Name'] == pdf_name].index
 
@@ -419,7 +416,7 @@ class PDFCollection:
         else:
             print(f"No PDF found with path: {pdf_name}")
 
-    def remove_all_pdf(self):
+    def remove_all_pdf(self) -> None:
         self.pdf_collection_dataframe = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
 
     def get_pdf_collection_dataframe(self):
@@ -428,7 +425,7 @@ class PDFCollection:
     def reset_counter(self):
         self.invoice_counter = 0
 
-    def create_pdf_instances_set_path_name_total_date_vendor(self, pdf_path, pdf_name, start_date, end_date):
+    def create_pdf_instances_set_path_name_total_date_vendor(self, pdf_path: str, pdf_name: str, start_date: str, end_date: str) -> None:
 
         # Creates a PDF instance and sets the pdf invoice path and name first that is used later for further data extraction 6/15/2024
         pdf = PDF(pdf_path)
@@ -472,7 +469,7 @@ class PDFCollection:
                   f"Date: {pdf.date.strftime('%Y-%m-%d') if isinstance(pdf.date, datetime) else pdf.date}")
             print("\n")
 
-    def populate_pdf_collections_vendors_list_from_xlookup_worksheet(self, xlookup_table_worksheet):
+    def populate_pdf_collections_vendors_list_from_xlookup_worksheet(self, xlookup_table_worksheet) -> None:
         self.vendors_list.clear()  # Clear existing vendors to avoid duplication
         sheet = xlookup_table_worksheet.sheet
         vendors_range = sheet.range('A8:A' + str(sheet.cells.last_cell.row)).value
@@ -493,14 +490,13 @@ class PDFCollection:
             # If vendors_range is a single value (string or tuple), turn it into a list
             self.vendors_list = [vendors_range[0]] if isinstance(vendors_range, tuple) else [vendors_range]
 
-    def populate_pdf_collection_dataframe_from_worksheet(self, worksheet, start_date, end_date):
+    def populate_pdf_collection_dataframe_from_worksheet(self, worksheet, start_date: str, end_date: str):
         data_df = worksheet.read_data_as_dataframe()
         # print(data_df.columns)  # Check if 'File Name' and 'File Path' are part of the columns
 
         # Creating pdf instances; setting the path, name, total, date, vendor for each one. Then add it into the pdf_collection_dataframe 6/16/2024
         for _, row in data_df.iterrows():
-            self.create_pdf_instances_set_path_name_total_date_vendor(row['File Path'], row['File Name'], start_date,
-                                                                      end_date)
+            self.create_pdf_instances_set_path_name_total_date_vendor(row['File Path'], row['File Name'], start_date, end_date)
 
 
 class Worksheet:
@@ -511,12 +507,11 @@ class Worksheet:
 
     def read_data_as_dataframe(self):
         # Use xlwings to read data into a DataFrame, header True to interpret first row as column headers for the dataframe, index=False to make sure the first column is not interpreted as an index column
-        dataframe = self.worksheet_dataframe = self.sheet.range('A7').options(pd.DataFrame, expand='table', header=True,
-                                                                              index=False).value
+        dataframe = self.worksheet_dataframe = self.sheet.range('A7').options(pd.DataFrame, expand='table', header=True, index=False).value
 
         return dataframe
 
-    def update_data_from_dataframe_to_sheet(self, data_df, progress_bar):
+    def update_data_from_dataframe_to_sheet(self, data_df, progress_bar) -> None:
         # Assuming 'data_df' is a DataFrame with columns ['File Name', 'File Path', 'Amount', 'Vendor', 'Date']
 
         # Read the existing data from worksheet into a dataframe
@@ -555,30 +550,30 @@ class Workbook:
         for sheet in self.wb.sheets:
             self.worksheets[sheet.name] = Worksheet(sheet.name, sheet)
 
-    def add_worksheet(self, worksheet_name):
+    def add_worksheet(self, worksheet_name: str) -> None:
         if worksheet_name not in self.worksheets:
             sheet = self.wb.sheets.add(worksheet_name)
             self.worksheets[worksheet_name] = Worksheet(worksheet_name, sheet)
         else:
             print(f"Worksheet '{worksheet_name}' already exists.")
 
-    def remove_worksheet(self, worksheet_name):
+    def remove_worksheet(self, worksheet_name) -> None:
         if worksheet_name in self.worksheets:
             self.wb.sheets[worksheet_name].delete()
             del self.worksheets[worksheet_name]
         else:
             print(f"Worksheet '{worksheet_name}' not found.")
 
-    def remove_all_worksheets_dict(self):
+    def remove_all_worksheets_dict(self) -> None:
         self.worksheets = {}
 
     def get_worksheet(self, worksheet_name):
         return self.worksheets[worksheet_name]
 
-    def get_all_worksheets(self):
+    def get_all_worksheets(self) -> dict:
         return self.worksheets
 
-    def save(self, save_path=None):
+    def save(self, save_path: str = None) -> None:
         if save_path:  # Save to a specific path when specified, or just save at the current location
             self.wb.save(save_path)
         else:
@@ -591,16 +586,16 @@ class Workbook:
 
 class DataManipulation:
     @staticmethod
-    def find_matching_transactions(invoice_df, transaction_df):
+    def find_matching_transactions(invoice_df, transaction_df) -> None:
         # Each transaction is matched with a unique row, "File Name" linked to a unique transaction, each row in invoice_df represents a distinct invoice PDF and only matches with one row in transaction_df
         matched_transactions = set()  # This set will track matched transactions
         matched_invoices = set()  # This set will track matched invoice indices.
+
         # Iterate over the invoice dataframe
         for index, invoice_row in invoice_df.iterrows():
-            DataManipulation.match_transaction(invoice_row, transaction_df, matched_transactions, matched_invoices,
-                                               index)
+            DataManipulation.match_transaction(invoice_row, transaction_df, matched_transactions, matched_invoices, index)
 
-        # After all, invoices have been processed in finding matches, filter and print unmatched matches
+        # After all the invoices have been processed in finding matches to transactions, filter and print unmatched matches 6/16/2024
         unmatched_invoices = invoice_df.loc[~invoice_df.index.isin(matched_invoices)]
         if not unmatched_invoices.empty:
             print("\n")
@@ -720,15 +715,15 @@ class AutomationController:
         self.macro_parameter_1 = macro_parameter_1
         self.macro_parameter_2 = macro_parameter_2
 
-    def open_workbook(self, path, workbook_name):
+    def open_workbook(self, path, workbook_name: str):
         #  Opens an Excel workbook from the specified path and initializes all its worksheets. With workbook_name as the key in the workbook dictionary.
         workbook = Workbook(path)
         self.workbooks_dict[workbook_name] = workbook
 
-    def get_workbook(self, workbook_name):
+    def get_workbook(self, workbook_name: str):
         return self.workbooks_dict[workbook_name]
 
-    def save_selected_workbook(self, workbook_name, save_path=None):
+    def save_selected_workbook(self, workbook_name: str, save_path: str = None) -> None:
         if workbook_name in self.workbooks_dict:
             workbook = self.workbooks_dict[workbook_name]
             workbook.save(save_path)
@@ -778,16 +773,14 @@ class AutomationController:
                                                                              self.end_date)
         pdf_collection_df = self.pdf_collection.get_pdf_collection_dataframe()
         num_updates = len(pdf_collection_df.index)
-        progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data",
-                            bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
+        progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
 
         # print(pdf_data.columns)
 
         # Resets the invoice counter
         self.pdf_collection.reset_counter()
 
-        invoice_worksheet.update_data_from_dataframe_to_sheet(pdf_collection_df,
-                                                              progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
+        invoice_worksheet.update_data_from_dataframe_to_sheet(pdf_collection_df, progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
 
         progress_bar.close()
 
@@ -807,7 +800,7 @@ class AutomationController:
         # Save the changes
         template_workbook.save()
 
-    def process_transaction_details_worksheet(self):
+    def process_transaction_details_worksheet(self) -> None:
         # Open the template workbook and add all sheets
         template_workbook_path = os.path.join(self.amex_path, self.TEMPLATE_WORKBOOK_NAME)
         self.open_workbook(template_workbook_path, self.TEMPLATE_WORKBOOK_NAME)

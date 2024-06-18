@@ -72,17 +72,13 @@ class Workbook {
 
 class DataManipulation {
     note top: Handles the complex data manipulation tasks for AutomationController; acts as utility class
+   -- Class Variable --
+   - FORMATTING RULES: Dict // Dictionary of dictionaries for worksheets, rules, range_address, rule_type, rule_value, format_options
    -- Methods --
    + {static} find_matching_transactions(invoice_df: pandas.DataFrame, transaction_df: pandas.DataFrame): void
    + {static} find_combinations(transaction, target_amount: float): void
-  + {static} match_transaction(invoice_row, transaction_details_df: pd.DataFrame, matched_transactions: set): void
-}
-
-class Conditions {
-    -- Class Variables --
-    - formatting_rules: list // List of dictionaries for worksheets, rules, range_address, rule_type, rule_value, format_options
-    -- Methods --
-    + apply_conditional_formatting_rule(workbook_name: string): void
+   + {static} match_transaction(invoice_row, transaction_details_df: pd.DataFrame, matched_transactions: set): void
+   + apply_conditional_formatting_rule(workbook_name: string): void
 }
 
 class AutomationController {
@@ -114,11 +110,10 @@ class AutomationController {
     + process_transaction_details_worksheet(): void
 }
 
-Workbook *--> "1..*" Worksheet : contains
-Worksheet *--> Conditions: utilizes >
-PDFCollection *--> "1..*" PDF : contains
+Workbook *--> "1..*" Worksheet : contains >
+PDFCollection *--> "1..*" PDF : contains >
 AutomationController o--> Workbook : manages >
-AutomationController o--> DataManipulation: utilizes >
+AutomationController ..> DataManipulation: utilizes >
 AutomationController o--> PDFCollection : utilizes >
 
 @enduml
