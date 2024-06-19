@@ -839,7 +839,10 @@ class AutomationController:
 # "K:/B_Amex" -computer
 # r"H:\Amex Automtion\t3nas\APPS\\" -Truth--> macro_parameter_1
 # r"K:\t3nas\APPS\\" -computer
-
+path_1 = "H:/Amex"
+path_2 = "K:/B_Amex"
+macro_1 = r"H:\Amex Automtion\t3nas\APPS\\"
+macro_2 = r"K:\t3nas\APPS\\"
 
 controller = AutomationController("H:/Amex", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",
                                   r"H:\Amex Automtion\t3nas\APPS\\",
