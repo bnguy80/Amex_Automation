@@ -817,14 +817,14 @@ class AutomationController:
 
         # Convert the Invoice worksheet into DataFrame
         invoices_worksheet_df = invoices_worksheet.read_data_as_dataframe()
-        print("Invoices DataFrame before matching")
+        print("Invoices DataFrame Before Matching Process")
         print(tabulate(invoices_worksheet_df, headers='keys', tablefmt='psql'))
         print("\n")
 
         # Convert Transaction Details 2 worksheet into DataFrame
         transaction_details_worksheet_df = transaction_details_worksheet.read_data_as_dataframe()
         # Print the transaction details DataFrame before matching
-        print("Before Matching Transaction Details 2 DataFrame:")
+        print("Transaction Details 2 DataFrame Before Matching Process:")
         print(tabulate(transaction_details_worksheet_df, headers='keys', tablefmt='psql'))
         print("\n")
 
@@ -835,22 +835,22 @@ class AutomationController:
         # Call function to duplicate Cloudflare rows and update file names starting from index 8
         transaction_details_worksheet_df = self.duplicate_and_label_rows(transaction_details_worksheet_df)
         print("\n")
-        print("After Matching Invoice and Transactions Transaction Details 2 DataFrame")
+        print("Transaction Details 2 DataFrame After Matching and Duplication Process")
         print(tabulate(transaction_details_worksheet_df, headers='keys', tablefmt='psql'))
         print("\n")
 
 
-# "H:/Amex" Automtion -Truth--> amex_path
+# "H:/Amex Automation" Automation Truth--> amex_path
 # "K:/B_Amex" -computer
-# r"H:\Amex Automtion\t3nas\APPS\\" -Truth--> macro_parameter_1
+# r"H:\Amex Automation\t3nas\APPS\\" -Truth--> macro_parameter_1
 # r"K:\t3nas\APPS\\" -computer
-path_1 = "H:/Amex"
+path_1 = "H:/Amex Automation"
 path_2 = "K:/B_Amex"
-macro_1 = r"H:\Amex Automtion\t3nas\APPS\\"
+macro_1 = r"H:\Amex Automation\t3nas\APPS\\"
 macro_2 = r"K:\t3nas\APPS\\"
 
-controller = AutomationController("H:/Amex", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",
-                                  r"H:\Amex Automtion\t3nas\APPS\\",
+controller = AutomationController("H:/Amex Automation", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",
+                                  r"H:\Amex Automation\t3nas\APPS\\",
                                   "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
 controller.process_invoices_worksheet()
 controller.process_transaction_details_worksheet()
