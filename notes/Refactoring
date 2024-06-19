@@ -25,3 +25,29 @@ class WorkflowFacade:
         processed_txs = self.tx_processor.process(transactions)
 
         # etc
+
+- Even though the patterns are class variables for constants that will be shared across instances of the class, it is unruly. Possibly encapsulating the constants in a new class --> data class
+  The patterns are not mutable.
+from dataclasses import dataclass
+
+@ dataclass
+class Patterns:
+    total_patterns: list
+    date_patterns: list
+    vendor_patterns: dict
+
+patterns = Patterns (
+    total_patterns=[
+      # total patterns
+    ],
+    date_patterns=[
+      # your date patterns
+    ],
+    vendor_patterns = {
+        # your vendor patterns
+    }
+)
+
+class PDF:
+    _patterns = patterns
+
