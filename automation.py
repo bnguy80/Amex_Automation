@@ -21,18 +21,22 @@ from tqdm import tqdm
 # https://pypi.org/project/pdf2image/
 # https://github.com/oschwartz10612/poppler-windows/releases
 
+
 # C:/Users/bnguyen/AppData/Local/Programs/Tesseract-OCR/tesseract.exe -Truth
 # C:/Program Files/Tesseract-OCR/tesseract.exe -computer
+
 pytesseract.pytesseract.tesseract_cmd = "C:/Users/bnguyen/AppData/Local/Programs/Tesseract-OCR/tesseract.exe"  # Explicitly set the ocr tesseract.exe path, need to also install it locally 6/15/2024
 
 # C:/Users/bnguyen/AppData/Local/Programs/poppler-24.02.0/Library/bin -Truth
 # C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin -computer
+
 poppler_path = "C:/Users/bnguyen/AppData/Local/Programs/poppler-24.02.0/Library/bin"  # Need to locally install it
 
 
 # # THIS IS FOR INVOICE2DATA USAGE 6/15/2024
 # # Set the path for pdftotext directly in the script
 # # C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin -computer
+
 # pdftotext_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin/"
 # os.environ['PATH'] += os.pathsep + pdftotext_path
 
@@ -666,6 +670,7 @@ class DataManipulation:
                 return  # Match found and processed, return early
 
         # Strategy 3: Match by vendor, date, and among a subset of transactions that when added together equal the amount from the invoice_row["Amount"]
+        # Grouped this way because we are trying to find invoices that are from the same purchase, however, they have been broken into multiple transactions on the AMEX Statement 6/18/2024.
 
         # Filter potential_matches by same "Description", "Date", "Vendor" from transaction_details_df
         # Ensure a datetime format for filtering and filter out already matched transactions
