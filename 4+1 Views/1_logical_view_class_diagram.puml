@@ -82,7 +82,9 @@ class DataManipulation {
 }
 
 class AutomationController {
-    note top: Acts as the facade, simplifying complex operations like PDF processing and data manipulation in Excel worksheets.
+    note: Acts as the facade, simplifying complex operations like PDF processing and data manipulation in Excel worksheets.
+    note: Managing workflow sequences (processing invoices and transactions).
+    note: Integrating different parts of the system (PDF handling, transaction processing, Excel integration).
     -- Class Variables --
     + XLOOKUP_TABLE_WORKSHEET_NAME: string
     + TEMPLATE_WORKBOOK_NAME: string

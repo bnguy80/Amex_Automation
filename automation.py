@@ -218,7 +218,7 @@ class PDF:
         self.date = None
         self.vendor = None
 
-    def _identify_vendor(self, pdf_text: str) -> Union[str, None]:
+    def _identify_vendor(self, pdf_text: str) -> Union[dict, None]:
         for vendor_identifier, patterns in self._VENDOR_PATTERNS.items():
             if vendor_identifier in pdf_text:  # Using the key directly in the search
                 self.vendor = vendor_identifier  # Optionally map to a more readable format if needed
@@ -257,7 +257,7 @@ class PDF:
         :param self: The instance of the class calling the method.
         :return: This method does not return any value. The extracted total amount is stored in the 'total' attribute of the calling instance.
         """
-        images = pdf2image.convert_from_path(self.pdf_path, poppler_path=poppler_path)
+        images = pdf2image.convert_from_path(self.pdf_path, poppler_path=poppler_path)  # Converts the PDF file into an image 6/18/2024
 
         for image in images:
             ocr_text = pytesseract.image_to_string(image)

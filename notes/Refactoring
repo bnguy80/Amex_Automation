@@ -1,0 +1,27 @@
+- Excel data manipulation, and transaction processing—three distinct responsibilities—it is likely that the facade class is handling too much.
+  Each of these responsibilities should ideally be handled by its own class.
+  This is a concept known as the Single Responsibility Principle, a core tenet of SOLID principles in object-oriented design.
+class PDFProcessor:
+    pass  # PDF processing functionality goes here
+
+
+class ExcelDataHandler:
+    pass  # Excel data manipulation functionality goes here
+
+
+class TransactionProcessor:
+    pass  # Transaction processing functionality goes here
+
+
+class WorkflowFacade:
+    def __init__(self):
+        self.pdf_processor = PDFProcessor()
+        self.xlsx_handler = ExcelDataHandler()
+        self.tx_processor = TransactionProcessor()
+
+    def process_workflow(self, pdf_file, xlsx_file, transactions):
+        pdf_data = self.pdf_processor.process(pdf_file)
+        xlsx_data = self.xlsx_handler.handle(xlsx_file)
+        processed_txs = self.tx_processor.process(transactions)
+
+        # etc
