@@ -1,5 +1,6 @@
 import os
 import re
+from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import combinations
 from typing import Union
@@ -25,12 +26,12 @@ from tqdm import tqdm
 # C:/Users/bnguyen/AppData/Local/Programs/Tesseract-OCR/tesseract.exe -Truth
 # C:/Program Files/Tesseract-OCR/tesseract.exe -computer
 
-pytesseract.pytesseract.tesseract_cmd = "C:/Users/bnguyen/AppData/Local/Programs/Tesseract-OCR/tesseract.exe"  # Explicitly set the ocr tesseract.exe path, need to also install it locally 6/15/2024
+pytesseract.pytesseract.tesseract_cmd = "C:/Program Files/Tesseract-OCR/tesseract.exe"  # Explicitly set the ocr tesseract.exe path, need to also install it locally 6/15/2024
 
 # C:/Users/bnguyen/AppData/Local/Programs/poppler-24.02.0/Library/bin -Truth
 # C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin -computer
 
-poppler_path = "C:/Users/bnguyen/AppData/Local/Programs/poppler-24.02.0/Library/bin"  # Need to locally install it
+poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin"  # Need to locally install it
 
 
 # # THIS IS FOR INVOICE2DATA USAGE 6/15/2024
@@ -261,7 +262,8 @@ class PDF:
         :param self: The instance of the class calling the method.
         :return: This method does not return any value. The extracted total amount is stored in the 'total' attribute of the calling instance.
         """
-        images = pdf2image.convert_from_path(self.pdf_path, poppler_path=poppler_path)  # Converts the PDF file into an image 6/18/2024
+        images = pdf2image.convert_from_path(self.pdf_path,
+                                             poppler_path=poppler_path)  # Converts the PDF file into an image 6/18/2024
 
         for image in images:
             ocr_text = pytesseract.image_to_string(image)
@@ -407,7 +409,8 @@ class PDFCollection:
     invoice_counter = 0
 
     def __init__(self):
-        self.pdf_collection_dataframe = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])  # Note The header names (File Name--> File name) is different compared to Invoice & Transaction Details 2 worksheets 6/15/2024
+        # Note The header names (File Name (Invoices)--> File name (Transaction Details 2) is different compared to Invoice & Transaction Details 2 worksheets 6/15/2024
+        self.pdf_collection_dataframe = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
         self.vendors_list = []
 
     def remove_pdf(self, pdf_name: str) -> None:
@@ -429,7 +432,8 @@ class PDFCollection:
     def reset_counter(self):
         self.invoice_counter = 0
 
-    def create_pdf_instances_set_path_name_total_date_vendor(self, pdf_path: str, pdf_name: str, start_date: str, end_date: str) -> None:
+    def create_pdf_instances_set_path_name_total_date_vendor(self, pdf_path: str, pdf_name: str, start_date: str,
+                                                             end_date: str) -> None:
 
         # Creates a PDF instance and sets the pdf invoice path and name first that is used later for further data extraction 6/15/2024
         pdf = PDF(pdf_path)
@@ -500,7 +504,8 @@ class PDFCollection:
 
         # Creating pdf instances; setting the path, name, total, date, vendor for each one. Then add it into the pdf_collection_dataframe 6/16/2024
         for _, row in data_df.iterrows():
-            self.create_pdf_instances_set_path_name_total_date_vendor(row['File Path'], row['File Name'], start_date, end_date)
+            self.create_pdf_instances_set_path_name_total_date_vendor(row['File Path'], row['File Name'], start_date,
+                                                                      end_date)
 
 
 class Worksheet:
@@ -509,12 +514,15 @@ class Worksheet:
         self.sheet = sheet
         self.worksheet_dataframe = pd.DataFrame()
 
+    # We will assume whichever sheet we are interacting with Invoices, Transactions Details 2, etc. the sheet.range starts at 'A7' 6/19/2024
     def read_data_as_dataframe(self):
         # Use xlwings to read data into a DataFrame, header True to interpret first row as column headers for the dataframe, index=False to make sure the first column is not interpreted as an index column
-        dataframe = self.worksheet_dataframe = self.sheet.range('A7').options(pd.DataFrame, expand='table', header=True, index=False).value
+        dataframe = self.worksheet_dataframe = self.sheet.range('A7').options(pd.DataFrame, expand='table', header=True,
+                                                                              index=False).value
 
         return dataframe
 
+    # We will assume whichever sheet we are interacting with Invoices, Transactions Details 2, etc. the sheet.range starts at 'A7' 6/19/2024
     def update_data_from_dataframe_to_sheet(self, data_df, progress_bar) -> None:
         # Assuming 'data_df' is a DataFrame with columns ['File Name', 'File Path', 'Amount', 'Vendor', 'Date']
 
@@ -555,6 +563,9 @@ class Workbook:
             self.worksheets[sheet.name] = Worksheet(sheet.name, sheet)
 
     def add_worksheet(self, worksheet_name: str) -> None:
+        """
+        Add a worksheet to the workbook that hasn't already been added into the worksheets dict.
+        """
         if worksheet_name not in self.worksheets:
             sheet = self.wb.sheets.add(worksheet_name)
             self.worksheets[worksheet_name] = Worksheet(worksheet_name, sheet)
@@ -588,118 +599,250 @@ class Workbook:
         macro_vba(macro_parameter_1, macro_parameter_2)
 
 
-class DataManipulation:
-    @staticmethod
-    def find_matching_transactions(invoice_df, transaction_df) -> None:
-        # Each transaction is matched with a unique row, "File Name" linked to a unique transaction, each row in invoice_df represents a distinct invoice PDF and only matches with one row in transaction_df
-        matched_transactions = set()  # This set will track matched transactions
-        matched_invoices = set()  # This set will track matched invoice indices.
+class MatchingStrategy(ABC):
+    @abstractmethod
+    def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+        pass
 
-        # Iterate over the invoice dataframe
-        for index, invoice_row in invoice_df.iterrows():
-            DataManipulation.match_transaction(invoice_row, transaction_df, matched_transactions, matched_invoices, index)
 
-        # After all the invoices have been processed in finding matches to transactions, filter and print unmatched matches 6/16/2024
-        unmatched_invoices = invoice_df.loc[~invoice_df.index.isin(matched_invoices)]
-        if not unmatched_invoices.empty:
-            print("\n")
-            print("Unmatched Invoices:")
-            print(tabulate(unmatched_invoices, headers='keys', tablefmt='psql'))
+class ExactMatchStrategy(MatchingStrategy):
+    def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+        vendor = invoice_row['Vendor']
+        total = invoice_row['Amount']
+        date = pd.to_datetime(invoice_row['Date'])
+        file_name = invoice_row['File Name']
+        file_path = invoice_row['File Path']
 
-    @staticmethod
-    def find_combinations(transactions, target_amount):
-        # Only consider combinations of up to 3 transactions to reduce complexity
-        for r in range(1, min(4, len(transactions) + 1)):
-            for combo in combinations(transactions, r):
-                if np.isclose(sum(item['Amount'] for item in combo), target_amount, atol=0.01):
-                    return combo
-        return None
-
-    @staticmethod
-    def match_transaction(invoice_row, transaction_details_df, matched_transactions, matched_invoices, index):
-        # Ensure "File path" column exists in the DataFrame
-        if 'File path' not in transaction_details_df.columns:
-            transaction_details_df['File path'] = None
-
-        # Extract relevant info from the invoice_row
-        invoice_row_vendor = invoice_row['Vendor']  # Extract the vendor from the invoice row
-        invoice_row_total = invoice_row[
-            'Amount']  # Extract the Amount from the invoice row to compare against the transaction total
-        invoice_row_date = pd.to_datetime(invoice_row['Date'])  # Ensure datetime format
-        invoice_row_file_name = invoice_row['File Name']  # Extract the file name from the invoice row
-        invoice_row_file_path = invoice_row['File Path']  # Extract the file path from the invoice row
-
-        # Basic filtering by vendor and not matched yet 6/15/2024
-        potential_matches_candidates = transaction_details_df[
-            (transaction_details_df['Vendor'].str.contains(invoice_row_vendor, case=False, na=False)) &
+        potential_matches = transaction_details_df[
+            (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &
             (~transaction_details_df.index.isin(matched_transactions))
             ]
 
         # Strategy 1: Exact match on Amount and Date
-        exact_matches = potential_matches_candidates[
-            (potential_matches_candidates['Amount'] == invoice_row_total) &
-            (pd.to_datetime(potential_matches_candidates['Date'], errors='coerce') == invoice_row_date)
+        exact_matches = potential_matches[
+            (potential_matches['Amount'] == total) &
+            (pd.to_datetime(potential_matches['Date'], errors='coerce') == date)
             ]
 
         if not exact_matches.empty:
             first_match_index = exact_matches.iloc[0].name
-            transaction_details_df.at[first_match_index, 'File name'] = invoice_row_file_name
+            transaction_details_df.at[first_match_index, 'File name'] = file_name
             transaction_details_df.at[first_match_index, 'Column1'] = "Amount & Date Match"
-            transaction_details_df.at[first_match_index, 'File path'] = invoice_row_file_path
+            transaction_details_df.at[first_match_index, 'File path'] = file_path
             matched_transactions.add(first_match_index)
-            matched_invoices.add(index)
+            matched_invoices.add(invoice_row.name)  # Use invoice_row.name if 'name' is the index or unique identifier
             print(f"Match found for Strategy 1 in transaction with id {first_match_index}!")
-            return  # Match found and processed, return early
+            return True
+        return False
 
-        # Strategy 2: Match by Vendor and Amount, ignoring date
-        if invoice_row_date is not pd.NaT:  # If date is a valid datetime
-            non_date_matches = potential_matches_candidates[
-                (potential_matches_candidates['Amount'] == invoice_row_total) &
-                (pd.to_datetime(potential_matches_candidates['Date'], errors='coerce') != invoice_row_date)
-                ]
 
-            # Include detail in "Column1" that user needs to manually check the match to make sure it is indeed the correct invoice even though the date does not match
-            if not non_date_matches.empty:
-                first_match_index = non_date_matches.iloc[0].name
-                transaction_details_df.at[first_match_index, 'File name'] = invoice_row_file_name
-                transaction_details_df.at[first_match_index, 'Column1'] = 'Amount & Non-Date Match'
-                transaction_details_df.at[first_match_index, 'File path'] = invoice_row_file_path
-                matched_transactions.add(first_match_index)
-                matched_invoices.add(index)
-                print(f"Match found for Strategy 2 in transaction with id {first_match_index}!")
-                return  # Match found and processed, return early
+class AmountAndNonDatesStrategy(MatchingStrategy):
 
-        # Strategy 3: Match by vendor, date, and among a subset of transactions that when added together equal the amount from the invoice_row["Amount"]
-        # Grouped this way because we are trying to find invoices that are from the same purchase, however, they have been broken into multiple transactions on the AMEX Statement 6/18/2024.
+    def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+        vendor = invoice_row['Vendor']
+        total = invoice_row['Amount']
+        date = pd.to_datetime(invoice_row['Date'])
+        file_name = invoice_row['File Name']
+        file_path = invoice_row['File Path']
 
-        # Filter potential_matches by same "Description", "Date", "Vendor" from transaction_details_df
-        # Ensure a datetime format for filtering and filter out already matched transactions
-        potential_combination_candidates_strategy_3 = transaction_details_df[
-            (transaction_details_df['Vendor'] == invoice_row_vendor) &
-            (pd.to_datetime(transaction_details_df['Date'], errors='coerce') == invoice_row_date) &
-            (~transaction_details_df.index.isin(matched_transactions))
-            ].reset_index(drop=False)  # Keep the original index to use it later 6/15/2024
+        # Filter potential matches by vendor, ensuring they are not previously matched in the matched_transactions set
+        potential_matches = transaction_details_df[
+            (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &   # Matches vendor name, case insensitive
+            (~transaction_details_df.index.isin(matched_transactions))  # Excludes transactions already matched
+            ]
 
-        # Group by 'Description', 'Vendor', and 'Date', then look for matching combinations within each group
-        for (_, group) in potential_combination_candidates_strategy_3.groupby(['Description', 'Vendor', 'Date']):
-            transactions_to_check = group.to_dict('records')  # Now includes 'index' from DataFrame
-            print("Potential Candidates Strategy 3")
-            print(tabulate(transactions_to_check, headers='keys', tablefmt='psql'))
-            combo = DataManipulation.find_combinations(transactions_to_check, invoice_row_total)
-            if combo:
-                for transaction in combo:
-                    # Use the 'index' key to identify the original row in transaction_details_df
-                    idx = transaction['index']  # 'index' is now explicitly included
-                    transaction_details_df.at[idx, 'File name'] = invoice_row_file_name
-                    transaction_details_df.at[idx, 'Column1'] = 'Combination Amount Match'
-                    transaction_details_df.at[idx, 'File path'] = invoice_row_file_path
-                    matched_transactions.add(idx)
-                    matched_invoices.add(index)
-                print(f"Match found for Strategy 3 in transactions with id {[t['index'] for t in combo]}!")
-                return  # Match found and processed, return early
+        # Strategy 2: Match on Amount with Dates that do not match the specified date
+        non_date_matches = potential_matches[
+            (potential_matches['Amount'] == total) &  # Matches exact amount
+            (pd.to_datetime(potential_matches['Date'], errors='coerce') != date)  # Excludes entries with the same date
+            ]
 
-        # No match found, set the File name to "None" and consider additional strategies or manual review 6/15/2024
-        print(f"No match found for {invoice_row_file_name} with Amount {invoice_row_total}. Consider manual review.")
+        if not non_date_matches.empty:
+            first_match_index = non_date_matches.iloc[0].name
+            transaction_details_df.at[first_match_index, 'File name'] = file_name
+            transaction_details_df.at[first_match_index, 'Column1'] = 'Amount & Non-Date Match'
+            transaction_details_df.at[first_match_index, 'File path'] = file_path
+            matched_transactions.add(first_match_index)
+            matched_invoices.add(invoice_row.name)  # Use invoice_row.name if 'name' is the index or unique identifier
+            print(f"Match found for Strategy 2 in transaction with id {first_match_index}!")
+            return True
+        return False
+
+
+class CombinationStrategy(MatchingStrategy):
+
+    def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+        vendor = invoice_row['Vendor']
+        total = invoice_row['Amount']
+        date = pd.to_datetime(invoice_row['Date'])
+        file_name = invoice_row['File Name']
+        file_path = invoice_row['File Path']
+
+        # Filter potential invoice matches by vendor and exact date, excluding those already matched in the matched_transactions set
+        potential_matches = transaction_details_df[
+            (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &  # Matches vendor name, case insensitive
+            (~transaction_details_df.index.isin(matched_transactions)) &  # Excludes indices that are already in matched_transactions
+            (pd.to_datetime(transaction_details_df['Date'], errors='coerce') == date)  # Matches exact date
+            ]
+
+        # Find combinations of transactions where the sum equals the invoice amount
+        for r in range(1, min(4, len(potential_matches) + 1)):  # Limiting to combinations of up to 3 for complexity management
+            for combo in combinations(potential_matches.itertuples(index=True), r):
+                if np.isclose(sum(item.Amount for item in combo), total, atol=0.01):
+                    # If a valid combination is found, mark all involved transactions
+                    for item in combo:
+                        idx = item.Index
+                        transaction_details_df.at[idx, 'File name'] = file_name
+                        transaction_details_df.at[idx, 'Column1'] = 'Combination Amount Match'
+                        transaction_details_df.at[idx, 'File path'] = file_path
+                        matched_transactions.add(idx)
+                        matched_invoices.add(
+                            invoice_row.name)  # Assuming 'name' is the DataFrame index or unique identifier
+
+                    print(f"Match found for Strategy 3 in transactions with ids {[item.Index for item in combo]}!")
+                    return True  # Stop after finding the first valid combination
+        return False
+
+
+class DataManipulation:
+
+    def __init__(self):
+        self.invoice_df = None
+        self.transaction_details_df = None
+        self.matched_transactions = set()  # This set will track matched transactions
+        self.matched_invoices = set()  # This set will track matched invoice indices.
+        self.strategies = [
+            ExactMatchStrategy(),
+            AmountAndNonDatesStrategy(),
+            CombinationStrategy()
+        ]
+
+    # @staticmethod
+    # def _find_combinations(transactions, target_amount):
+    #     # Only consider combinations of up to 3 transactions to reduce complexity
+    #     for r in range(1, min(4, len(transactions) + 1)):
+    #         for combo in combinations(transactions, r):
+    #             if np.isclose(sum(item['Amount'] for item in combo), target_amount, atol=0.01):
+    #                 return combo
+    #     return None
+
+    # def _match_transaction(self, invoice_row, index):
+    #     # Ensure "File path" column exists in the DataFrame; keep this here as it will make sure the dataframe will have all needed columns before processing 6/19/2024
+    #     if 'File path' not in self.transaction_details_df.columns:
+    #         self.transaction_details_df['File path'] = None
+    #
+    #     # Extract relevant info from the invoice_row
+    #     invoice_row_vendor = invoice_row['Vendor']  # Extract the vendor from the invoice row
+    #     invoice_row_total = invoice_row[
+    #         'Amount']  # Extract the Amount from the invoice row to compare against the transaction total
+    #     invoice_row_date = pd.to_datetime(invoice_row['Date'])  # Ensure datetime format
+    #     invoice_row_file_name = invoice_row['File Name']  # Extract the file name from the invoice row
+    #     invoice_row_file_path = invoice_row['File Path']  # Extract the file path from the invoice row
+    #
+    #     # Basic filtering by vendor and not matched yet 6/15/2024
+    #     potential_matches_candidates = self.transaction_details_df[
+    #         (self.transaction_details_df['Vendor'].str.contains(invoice_row_vendor, case=False, na=False)) &
+    #         (~self.transaction_details_df.index.isin(self.matched_transactions))
+    #         ]
+    #
+    #     # Strategy 1: Exact match on Amount and Date
+    #     exact_matches = potential_matches_candidates[
+    #         (potential_matches_candidates['Amount'] == invoice_row_total) &
+    #         (pd.to_datetime(potential_matches_candidates['Date'], errors='coerce') == invoice_row_date)
+    #         ]
+    #
+    #     if not exact_matches.empty:
+    #         first_match_index = exact_matches.iloc[0].name
+    #         self.transaction_details_df.at[first_match_index, 'File name'] = invoice_row_file_name
+    #         self.transaction_details_df.at[first_match_index, 'Column1'] = "Amount & Date Match"
+    #         self.transaction_details_df.at[first_match_index, 'File path'] = invoice_row_file_path
+    #         self.matched_transactions.add(first_match_index)
+    #         self.matched_invoices.add(index)
+    #         print(f"Match found for Strategy 1 in transaction with id {first_match_index}!")
+    #         return  # Match found and processed, return early
+    #
+    #     # Strategy 2: Match by Vendor and Amount, ignoring date
+    #     if invoice_row_date is not pd.NaT:  # If date is a valid datetime
+    #         non_date_matches = potential_matches_candidates[
+    #             (potential_matches_candidates['Amount'] == invoice_row_total) &
+    #             (pd.to_datetime(potential_matches_candidates['Date'], errors='coerce') != invoice_row_date)
+    #             ]
+    #
+    #         # Include detail in "Column1" that user needs to manually check the match to make sure it is indeed the correct invoice even though the date does not match
+    #         if not non_date_matches.empty:
+    #             first_match_index = non_date_matches.iloc[0].name
+    #             self.transaction_details_df.at[first_match_index, 'File name'] = invoice_row_file_name
+    #             self.transaction_details_df.at[first_match_index, 'Column1'] = 'Amount & Non-Date Match'
+    #             self.transaction_details_df.at[first_match_index, 'File path'] = invoice_row_file_path
+    #             self.matched_transactions.add(first_match_index)
+    #             self.matched_invoices.add(index)
+    #             print(f"Match found for Strategy 2 in transaction with id {first_match_index}!")
+    #             return  # Match found and processed, return early
+    #
+    #     # Strategy 3: Match by vendor, date, and among a subset of transactions that when added together equal the amount from the invoice_row["Amount"]
+    #     # Grouped this way because we are trying to find invoices that are from the same purchase, however, they have been broken into multiple transactions on the AMEX Statement 6/18/2024.
+    #
+    #     # Filter potential_matches by same "Description", "Date", "Vendor" from transaction_details_df
+    #     # Ensure a datetime format for filtering and filter out already matched transactions
+    #     potential_combination_candidates_strategy_3 = self.transaction_details_df[
+    #         (self.transaction_details_df['Vendor'] == invoice_row_vendor) &
+    #         (pd.to_datetime(self.transaction_details_df['Date'], errors='coerce') == invoice_row_date) &
+    #         (~self.transaction_details_df.index.isin(self.matched_transactions))
+    #         ].reset_index(drop=False)  # Keep the original index to use it later 6/15/2024
+    #
+    #     # Group by 'Description', 'Vendor', and 'Date', then look for matching combinations within each group
+    #     for (_, group) in potential_combination_candidates_strategy_3.groupby(['Description', 'Vendor', 'Date']):
+    #         transactions_to_check = group.to_dict('records')  # Now includes 'index' from DataFrame
+    #         print("Potential Candidates Strategy 3")
+    #         print(tabulate(transactions_to_check, headers='keys', tablefmt='psql'))
+    #         combo = DataManipulation._find_combinations(transactions_to_check, invoice_row_total)
+    #         if combo:
+    #             for transaction in combo:
+    #                 # Use the 'index' key to identify the original row in transaction_details_df
+    #                 idx = transaction['index']  # 'index' is now explicitly included
+    #                 self.transaction_details_df.at[idx, 'File name'] = invoice_row_file_name
+    #                 self.transaction_details_df.at[idx, 'Column1'] = 'Combination Amount Match'
+    #                 self.transaction_details_df.at[idx, 'File path'] = invoice_row_file_path
+    #                 self.matched_transactions.add(idx)
+    #                 self.matched_invoices.add(index)
+    #             print(f"Match found for Strategy 3 in transactions with id {[t['index'] for t in combo]}!")
+    #             return  # Match found and processed, return early
+    #
+    #     # No match found, set the File name to "None" and consider additional strategies or manual review 6/15/2024
+    #     print(f"No match found for {invoice_row_file_name} with Amount {invoice_row_total}. Consider manual review.")
+
+    def set_data(self, invoice_df: pd.DataFrame, transaction_details_df: pd.DataFrame) -> None:
+        self.invoice_df = invoice_df
+        self.transaction_details_df = transaction_details_df
+
+    # def find_matching_transactions(self) -> None:
+    #     # Each transaction is matched with a unique row, "File Name" linked to a unique transaction, each row in invoice_df represents a distinct invoice PDF and only matches with one row in transaction_df
+    #
+    #     # Iterate over the invoice dataframe
+    #     for index, invoice_row in self.invoice_df.iterrows():
+    #         self._match_transaction(invoice_row, index)
+    #
+    #     # After all the invoices have been processed in finding matches to transactions, filter and print unmatched matches 6/16/2024
+    #     unmatched_invoices = self.invoice_df.loc[~self.invoice_df.index.isin(self.matched_invoices)]
+    #     if not unmatched_invoices.empty:
+    #         print("\n")
+    #         print("Unmatched Invoices:")
+    #         print(tabulate(unmatched_invoices, headers='keys', tablefmt='psql'))
+
+    def find_matching_transactions(self):
+        # Iterate over each invoice row
+        for index, invoice_row in self.invoice_df.iterrows():
+            # Try to find a match using each strategy in sequence
+            for strategy in self.strategies:
+                if strategy.execute(invoice_row, self.transaction_details_df, self.matched_transactions,
+                                    self.matched_invoices):
+                    break  # If a match is found, break out of the loop and proceed to the next invoice
+
+        # After all invoices have been processed, print unmatched invoices
+        unmatched_invoices = self.invoice_df.loc[~self.invoice_df.index.isin(self.matched_invoices)]
+        if not unmatched_invoices.empty:
+            print("\nUnmatched Invoices:")
+            print(tabulate(unmatched_invoices, headers='keys', tablefmt='psql'))
 
 
 class AutomationController:
@@ -778,14 +921,16 @@ class AutomationController:
                                                                              self.end_date)
         pdf_collection_df = self.pdf_collection.get_pdf_collection_dataframe()
         num_updates = len(pdf_collection_df.index)
-        progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
+        progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data",
+                            bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
 
         # print(pdf_data.columns)
 
         # Resets the invoice counter
         self.pdf_collection.reset_counter()
 
-        invoice_worksheet.update_data_from_dataframe_to_sheet(pdf_collection_df, progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
+        invoice_worksheet.update_data_from_dataframe_to_sheet(pdf_collection_df,
+                                                              progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
 
         progress_bar.close()
 
@@ -828,9 +973,12 @@ class AutomationController:
         print(tabulate(transaction_details_worksheet_df, headers='keys', tablefmt='psql'))
         print("\n")
 
+        # Sets the preprocessed dataframes to the DataManipulation class to do further processing 6/19/2024.
+        self.manipulation.set_data(invoices_worksheet_df, transaction_details_worksheet_df)
+
         # Matches invoice files found in "Invoices" worksheet to "Transaction Details 2" worksheet transactions
         # Works through 3 strategies of 1: exact matching between vendor|date|amount 2: match between vendor|amount|non-matching date or 3: target total between subset of transactions that sum to amount of invoice
-        DataManipulation.find_matching_transactions(invoices_worksheet_df, transaction_details_worksheet_df)
+        self.manipulation.find_matching_transactions()
 
         # Call function to duplicate Cloudflare rows and update file names starting from index 8
         transaction_details_worksheet_df = self.duplicate_and_label_rows(transaction_details_worksheet_df)
@@ -845,12 +993,12 @@ class AutomationController:
 # r"H:\Amex Automation\t3nas\APPS\\" -Truth--> macro_parameter_1
 # r"K:\t3nas\APPS\\" -computer
 path_1 = "H:/Amex Automation"
-path_2 = "K:/B_Amex"
+path_2 = "C:/Users/brand/IdeaProjects/Amex Automation"
 macro_1 = r"H:\Amex Automation\t3nas\APPS\\"
-macro_2 = r"K:\t3nas\APPS\\"
+macro_2 = r"C:\Users\brand\IdeaProjects\Amex Automation\t3nas\APPS\\"
 
-controller = AutomationController("H:/Amex Automation", "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",
-                                  r"H:\Amex Automation\t3nas\APPS\\",
+controller = AutomationController(path_2, "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024",
+                                  macro_2,
                                   "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
-controller.process_invoices_worksheet()
+# controller.process_invoices_worksheet()
 controller.process_transaction_details_worksheet()

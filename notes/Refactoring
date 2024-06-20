@@ -51,3 +51,4 @@ patterns = Patterns (
 class PDF:
     _patterns = patterns
 
+Currently refactoring DataManipulation class...stop it from using combo = DataManipluation
