@@ -1,6 +1,7 @@
 - Excel data manipulation, and transaction processing—three distinct responsibilities—it is likely that the facade class is handling too much.
   Each of these responsibilities should ideally be handled by its own class.
   This is a concept known as the Single Responsibility Principle, a core tenet of SOLID principles in object-oriented design.
+
 class PDFProcessor:
     pass  # PDF processing functionality goes here
 
@@ -51,4 +52,4 @@ patterns = Patterns (
 class PDF:
     _patterns = patterns
 
-Currently refactoring DataManipulation class...stop it from using combo = DataManipluation
+Currently refactoring DataManipulation class...stop it from using combo = DataManipulation
