@@ -278,27 +278,6 @@ class PDF:
         self.total = self.FALL_BACK_TOTAL  # set to 666.66 6/15/2024
         return None
 
-    # def extract_total_date_with_invoice2data(self, start_date, end_date):
-    #     templates = read_templates('C:/Users/brand/IdeaProjects/Invoice_Reading/invoice2data_templates')
-    #     data = extract_data(self.pdf_path, templates=templates)
-    #
-    #     if data:
-    #         self.total = data['amount']
-    #         self.date = data['date'].strftime('%Y-%m-%d')
-    #     else:
-    #         # If the fields could not be found using invoice2data 6/15/2024
-    #         self.total = self.fall_back_total
-    #         self.date = self.fallback_date
-
-    # def process_pdf_total_date(self, start_date, end_date):
-    #     # First attempt to extract using invoice2data
-    #     self.extract_total_date_with_invoice2data(start_date, end_date)
-    #     # Check if fallback values are used and use OCR if they are
-    #     if self.total == self.fall_back_total:
-    #         self.extract_ocr_invoice_total()
-    #     if self.date == self.fallback_date:
-    #         self.extract_ocr_invoice_date(start_date, end_date)
-
     def _extract_pdf_invoice_date(self, start_date: str, end_date: str) -> Union[str, None]:
         """
         Extract invoice date from PDF file using vendor-specific patterns, with a fallback to general patterns.
@@ -711,6 +690,8 @@ class DataManipulation:
         self.transaction_details_df = None
         self.matched_transactions = set()  # This set will track matched transactions
         self.matched_invoices = set()  # This set will track matched invoice indices.
+
+        # The strategies used to match invoices and transactions; each invoice will go through each strategy one by one until a match is found 6/20/2024.
         self.strategies = [
             ExactMatchStrategy(),
             AmountAndNonDatesStrategy(),
@@ -821,8 +802,7 @@ class AutomationController:
         # Resets the invoice counter
         self.pdf_collection.reset_counter()
 
-        invoice_worksheet.update_data_from_dataframe_to_sheet(pdf_collection_df,
-                                                              progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
+        invoice_worksheet.update_data_from_dataframe_to_sheet(pdf_collection_df, progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
 
         progress_bar.close()
 
