@@ -71,19 +71,41 @@ class Workbook {
 }
 
 class DataManipulation {
-    note top: Handles the complex data manipulation tasks for AutomationController; acts as utility class
+    note top: Handles the complex data manipulation tasks for AutomationController; dependency injection used here
    -- Class Variable --
    - FORMATTING RULES: Dict // Dictionary of dictionaries for worksheets, rules, range_address, rule_type, rule_value, format_options
+   -- Instance Variables --
+   - invoice_df: pd.DataFrame = None
+   - transaction_details_df: pd.DataFrame = None
+   + matched_transactions: set
+   + matched_invoices: set
+   - strategies = List[MatchingStrategy]
    -- Methods --
-   + {static} find_matching_transactions(invoice_df: pandas.DataFrame, transaction_df: pandas.DataFrame): void
-   + {static} find_combinations(transaction, target_amount: float): void
-   + {static} match_transaction(invoice_row, transaction_details_df: pd.DataFrame, matched_transactions: set): void
+   + set_data(invoice_df: pd.DataFrame, transaction_details_df: pd.DataFrame): void
+   + find_matching_transactions(): void
    + apply_conditional_formatting_rule(workbook_name: string): void
 }
 
+interface MatchingStrategy {
+    + execute(...): void
+    + potential_matches(...): List
+}
+
+class ExactMatchStrategy {
+    + execute(...): void
+}
+
+class AmountAndNonDatesStrategy {
+    + execute(...): void
+}
+
+class CombinationStrategy {
+    + execute(...): void
+}
+
 class AutomationController {
-    note: Acts as the facade, simplifying complex operations like PDF processing and data manipulation in Excel worksheets.
-    note: Managing workflow sequences (processing invoices and transactions).
+    note: Acts as the facade
+    note: Coordinating workflow between different components (processing invoices and transactions). --> Need to refactor to outside of the class SRP 6/21/2024
     note: Integrating different parts of the system (PDF handling, transaction processing, Excel integration).
     -- Class Variables --
     + XLOOKUP_TABLE_WORKSHEET_NAME: string
@@ -93,8 +115,8 @@ class AutomationController {
     + LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: string
     -- Instance Variables --
     + workbooks_dict: dict<string, Workbook>
-    + pdf_collection: PDFCollection
-    + manipulation: DataManipulation
+    + pdf_collection: PDFCollection()
+    + manipulation: DataManipulation()
     + amex_path: string
     + amex_statement: string
     + start_date: string
@@ -112,10 +134,18 @@ class AutomationController {
     + process_transaction_details_worksheet(): void
 }
 
-Workbook *--> "1..*" Worksheet : contains >
-PDFCollection *--> "1..*" PDF : contains >
-AutomationController o--> Workbook : manages >
-AutomationController ..> DataManipulation: utilizes >
-AutomationController o--> PDFCollection : utilizes >
+Workbook *--> "1..*" Worksheet : contains
+PDFCollection *--> "1..*" PDF : contains
+
+AutomationController *--> Workbook : manages >
+AutomationController ..> DataManipulation: depends on >
+AutomationController *--> PDFCollection : utilizes >
+
+MatchingStrategy <|-- ExactMatchStrategy : concrete
+MatchingStrategy <|-- AmountAndNonDatesStrategy : concrete
+MatchingStrategy <|-- CombinationStrategy : concrete
+
+
+DataManipulation o--> MatchingStrategy : contains
 
 @enduml

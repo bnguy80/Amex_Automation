@@ -1,0 +1,54 @@
+from abc import ABC, abstractmethod
+
+from models.workbook import Workbook
+from update_strategies import InvoiceUpdateStrategy, TransactionDetails2UpdateStrategy
+
+
+class WorkbookManager(ABC):
+
+    def __init__(self, workbook_name: str, workbook_path: str):
+        self.workbook_name = workbook_name
+        self.workbook_path = workbook_path
+        self.workbook = Workbook(workbook_path)
+
+    @abstractmethod
+    def select_strategy(self, worksheet_name: str):
+        pass
+
+    @abstractmethod
+    def get_worksheet(self, worksheet_name: str):
+        pass
+
+
+class TemplateWorkbookManager(WorkbookManager):
+
+    def __init__(self, workbook_name, workbook_path):
+        super().__init__(workbook_name, workbook_path)
+
+    def select_strategy(self, worksheet_name: str):
+        if worksheet_name == "Invoices":
+            strategy = InvoiceUpdateStrategy()
+        elif worksheet_name == "Transaction Details 2":
+            strategy = TransactionDetails2UpdateStrategy()
+        else:
+            strategy = None
+
+        return strategy
+
+    def get_worksheet(self, worksheet_name: str):
+        worksheet = self.workbook.get_worksheet(worksheet_name)
+        strategy = self.select_strategy(worksheet_name)
+        worksheet.set_strategy(strategy)
+        return worksheet
+
+
+class AmexWorkbookManager(WorkbookManager):
+
+    def __init__(self, workbook_name, workbook_path):
+        super().__init__(workbook_name, workbook_path)
+
+    def select_strategy(self, worksheet_name: str):
+        pass
+
+    def get_worksheet(self, worksheet_name: str):
+        pass
