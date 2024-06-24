@@ -4,7 +4,7 @@ from tabulate import tabulate
 from matching_strategies import ExactMatchStrategy, AmountAndNonDatesStrategy, CombinationStrategy
 
 
-class DataManipulation:
+class InvoiceTransactionMatcher:
 
     def __init__(self, strategies):
         self.invoice_df = None
@@ -34,4 +34,4 @@ class DataManipulation:
             print(tabulate(unmatched_invoices, headers='keys', tablefmt='psql'))
 
 
-manipulation = DataManipulation([ExactMatchStrategy(), AmountAndNonDatesStrategy(), CombinationStrategy()])
+manipulation = InvoiceTransactionMatcher([ExactMatchStrategy(), AmountAndNonDatesStrategy(), CombinationStrategy()])

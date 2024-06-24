@@ -1,11 +1,28 @@
 from abc import abstractmethod, ABC
 from itertools import combinations
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 
 
 class MatchingStrategy(ABC):
+
+    def __init__(self) -> None:
+        self.vendor: str = None
+        self.total: float = None
+        self.date: str = None
+        self.file_name: str = None
+        self.file_path: str = None
+
+    def extract_data(self, invoice_row: pd.Series) -> Tuple:
+        self.vendor = invoice_row['Vendor']
+        self.total = invoice_row['Amount']
+        self.date = pd.to_datetime(invoice_row['Date'])
+        self.file_name = invoice_row['File Name']
+        self.file_path = invoice_row['File Path']
+        return self.vendor, self.total, self.date, self.file_name, self.file_path
+
     @abstractmethod
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
         pass
@@ -14,11 +31,13 @@ class MatchingStrategy(ABC):
 class ExactMatchStrategy(MatchingStrategy):
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
 
-        vendor = invoice_row['Vendor']
-        total = invoice_row['Amount']
-        date = pd.to_datetime(invoice_row['Date'])
-        file_name = invoice_row['File Name']
-        file_path = invoice_row['File Path']
+        # vendor = invoice_row['Vendor']
+        # total = invoice_row['Amount']
+        # date = pd.to_datetime(invoice_row['Date'])
+        # file_name = invoice_row['File Name']
+        # file_path = invoice_row['File Path']
+
+        vendor, total, date, file_name, file_path = self.extract_data(invoice_row)
 
         potential_matches: pd.DataFrame = transaction_details_df[
             (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &
@@ -47,11 +66,13 @@ class AmountAndNonDatesStrategy(MatchingStrategy):
 
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
 
-        vendor = invoice_row['Vendor']
-        total = invoice_row['Amount']
-        date = pd.to_datetime(invoice_row['Date'])
-        file_name = invoice_row['File Name']
-        file_path = invoice_row['File Path']
+        # vendor = invoice_row['Vendor']
+        # total = invoice_row['Amount']
+        # date = pd.to_datetime(invoice_row['Date'])
+        # file_name = invoice_row['File Name']
+        # file_path = invoice_row['File Path']
+
+        vendor, total, date, file_name, file_path = self.extract_data(invoice_row)
 
         # Filter potential matches by vendor, ensuring they are not previously matched in the matched_transactions set
         potential_matches: pd.DataFrame = transaction_details_df[
@@ -81,11 +102,13 @@ class CombinationStrategy(MatchingStrategy):
 
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
 
-        vendor = invoice_row['Vendor']
-        total = invoice_row['Amount']
-        date = pd.to_datetime(invoice_row['Date'])
-        file_name = invoice_row['File Name']
-        file_path = invoice_row['File Path']
+        # vendor = invoice_row['Vendor']
+        # total = invoice_row['Amount']
+        # date = pd.to_datetime(invoice_row['Date'])
+        # file_name = invoice_row['File Name']
+        # file_path = invoice_row['File Path']
+
+        vendor, total, date, file_name, file_path = self.extract_data(invoice_row)
 
         # Filter potential invoice matches by vendor and exact date, excluding those already matched in the matched_transactions set
         potential_matches: pd.DataFrame = transaction_details_df[

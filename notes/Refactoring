@@ -53,3 +53,5 @@ class PDF:
     _patterns = patterns
 
 Currently refactoring DataManipulation class...stop it from using combo = DataManipulation...Done 6/21/2024
+
+- FORMATTING RULES: Dict // Dictionary of dictionaries for worksheets, rules, range_address, rule_type, rule_value, format_options --> where to do this 6/23/2024?

@@ -101,10 +101,8 @@ class InvoiceUpdateStrategy{
 }
 
 
-class DataManipulation {
+class InvoiceTransactionMatcher {
     note top: Handles the complex data manipulation tasks for AutomationController; dependency injection used here
-   -- Class Variable --
-   - FORMATTING RULES: Dict // Dictionary of dictionaries for worksheets, rules, range_address, rule_type, rule_value, format_options
    -- Instance Variables --
    - invoice_df: pd.DataFrame = None
    - transaction_details_df: pd.DataFrame = None
@@ -117,9 +115,17 @@ class DataManipulation {
    + apply_conditional_formatting_rule(workbook_name: string): void
 }
 
-interface MatchingStrategy {
+abstract MatchingStrategy {
+    -- Instance Variables --
+    - vendor: string
+    - total: float
+    - date: string
+    - file_name: string
+    - file_path: string
+    -- Methods --
     + execute(...): void
-    + potential_matches(...): List
+    - extract_data(invoice_row: pd.Series): Tuple
+    - potential_matches(...): List
 }
 
 class ExactMatchStrategy {
@@ -147,7 +153,7 @@ class AutomationController {
     -- Instance Variables --
 '    + workbooks_dict: dict<string, Workbook>
     + pdf_collection: PDFCollection()
-    + manipulation: DataManipulation()
+    + manipulation: InvoiceTransactionMatcher()
     + amex_path: string
     + amex_statement: string
     + start_date: string
@@ -169,7 +175,7 @@ Workbook *--> "1..*" Worksheet : contains
 
 PDFCollection *--> "1..*" PDF : contains
 
-AutomationController *..> DataManipulation : depends on
+AutomationController *..> InvoiceTransactionMatcher : depends on
 AutomationController *..> WorkbookManager : depends on
 AutomationController *..> PDFCollection : utilize
 
@@ -177,7 +183,7 @@ MatchingStrategy <|-- ExactMatchStrategy : concrete
 MatchingStrategy <|-- AmountAndNonDatesStrategy : concrete
 MatchingStrategy <|-- CombinationStrategy : concrete
 
-DataManipulation o--> MatchingStrategy : contains
+InvoiceTransactionMatcher o..> MatchingStrategy : contains
 
 UpdateStrategy <|-- TransactionDetails2UpdateStrategy : concrete
 UpdateStrategy <|-- InvoiceUpdateStrategy : concrete
