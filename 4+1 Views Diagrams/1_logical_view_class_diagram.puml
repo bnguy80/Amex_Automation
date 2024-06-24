@@ -50,9 +50,11 @@ class Worksheet {
     - name: string
     - sheet: xlwings.Sheet // Usage needed to provide access to the underlying excel sheet, dataframe used as intermediary to manipulate data
     - worksheet_dataframe: pandas.DataFrame
+    - strategy: Strategy
     -- Methods --
+    + set_strategy(Strategy): void
     + read_data_as_dataframe(): pandas.DataFrame // Reads data from sheet reference to and returns a dataframe of the sheet
-    + update_data_from_dataframe_to_sheet(dataframe: pandas.DataFrame, progress_bar): void // writes manipulated dataframe back into Excel sheet and progress_bar from AutomationController method: update_worksheet_from_pdf_collection
+    + update_data_from_dataframe_to_sheet(dataframe: pandas.DataFrame, progress_bar): void // writes manipulated dataframe back into Excel sheet
 }
 
 class Workbook {
@@ -69,6 +71,35 @@ class Workbook {
     + save(save_path: None): void  // Method to save changes to the workbook to same location, but when parameter passed saves to different location
     + call_macro_workbook(macro_name: string, macro_parameter_1: None, macro_parameter_2: void): void
 }
+
+abstract class WorkbookManager {
+    + workbook_name: string
+    + workbook_path: string
+    + workbook : Workbook
+    + select_strategy(worksheet_name: String) : UpdateStrategy
+    + get_worksheet(worksheet_name: String) : Worksheet
+}
+
+class TemplateWorkbookManager{
+    + select_strategy(worksheet_name: String) : UpdateStrategy
+}
+
+class AmexWorkbookManager{
+    + select_strategy(worksheet_name: String) : UpdateStrategy
+}
+
+interface UpdateStrategy {
+    + update_worksheet(worksheet : Worksheet, data_df : DataFrame, progress_bar : ProgressBar) : void
+}
+
+class TransactionDetails2UpdateStrategy{
+    + update_worksheet(worksheet : Worksheet, data_df : DataFrame, progress_bar : ProgressBar) : void
+}
+
+class InvoiceUpdateStrategy{
+    + update_worksheet(worksheet : Worksheet, data_df : DataFrame, progress_bar : ProgressBar) : void
+}
+
 
 class DataManipulation {
     note top: Handles the complex data manipulation tasks for AutomationController; dependency injection used here
@@ -114,7 +145,7 @@ class AutomationController {
     + TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME: string
     + LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: string
     -- Instance Variables --
-    + workbooks_dict: dict<string, Workbook>
+'    + workbooks_dict: dict<string, Workbook>
     + pdf_collection: PDFCollection()
     + manipulation: DataManipulation()
     + amex_path: string
@@ -135,17 +166,29 @@ class AutomationController {
 }
 
 Workbook *--> "1..*" Worksheet : contains
+
 PDFCollection *--> "1..*" PDF : contains
 
-AutomationController *--> Workbook : manages >
-AutomationController ..> DataManipulation: depends on >
-AutomationController *--> PDFCollection : utilizes >
+AutomationController *..> DataManipulation : depends on
+AutomationController *..> WorkbookManager : depends on
+AutomationController *..> PDFCollection : utilize
 
 MatchingStrategy <|-- ExactMatchStrategy : concrete
 MatchingStrategy <|-- AmountAndNonDatesStrategy : concrete
 MatchingStrategy <|-- CombinationStrategy : concrete
 
-
 DataManipulation o--> MatchingStrategy : contains
+
+UpdateStrategy <|-- TransactionDetails2UpdateStrategy : concrete
+UpdateStrategy <|-- InvoiceUpdateStrategy : concrete
+
+Worksheet *--> UpdateStrategy : contain
+
+WorkbookManager <|-- TemplateWorkbookManager : concrete
+WorkbookManager <|-- AmexWorkbookManager  : concrete
+
+WorkbookManager "1" *--> "1" Workbook : creates
+
+
 
 @enduml

@@ -21,7 +21,6 @@ class AutomationController:
         self.amex_path = amex_path  # The directory where the AMEX Statement workbook is located 6/16/2024
         self.amex_statement = amex_statement_name  # This is the final workbook that the automation will put the data into; sent to Ana 6/15/2024.
 
-        # self.workbooks_dict = {}
         self.pdf_collection = PDFCollection()
         self.manipulation = manipulation  # Using a list of strategies to match invoices to transactions. ONLY ONE INSTANCE 6/22/2024.
 

@@ -12,8 +12,7 @@ class Worksheet:
     # We will assume whichever sheet we are interacting with Invoices, Transactions Details 2, etc. the sheet.range starts at 'A7' 6/19/2024
     def read_data_as_dataframe(self):
         # Use xlwings to read data into a DataFrame, header True to interpret first row as column headers for the dataframe, index=False to make sure the first column is not interpreted as an index column
-        dataframe = self.worksheet_dataframe = self.sheet.range('A7').options(pd.DataFrame, expand='table', header=True,
-                                                                              index=False).value
+        dataframe = self.worksheet_dataframe = self.sheet.range('A7').options(pd.DataFrame, expand='table', header=True, index=False).value
 
         if dataframe.empty:
             print("Could not read data from worksheet")
@@ -48,6 +47,7 @@ class Worksheet:
     #     self.sheet.range('A7').options(index=False).value = existing_data_df.reset_index(drop=True)
 
     # We will assume whichever sheet we are interacting with Invoices, Transactions Details 2, etc. the sheet.range starts at 'A7' 6/19/2024
+
     def update_data_from_dataframe_to_sheet(self, data_df, progress_bar) -> None:
         self.strategy.update_worksheet(self, data_df, progress_bar)
 

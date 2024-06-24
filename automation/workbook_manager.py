@@ -15,15 +15,14 @@ class WorkbookManager(ABC):
     def select_strategy(self, worksheet_name: str):
         pass
 
-    @abstractmethod
     def get_worksheet(self, worksheet_name: str):
-        pass
+        worksheet = self.workbook.get_worksheet(worksheet_name)
+        strategy = self.select_strategy(worksheet_name)
+        worksheet.set_strategy(strategy)
+        return worksheet
 
 
 class TemplateWorkbookManager(WorkbookManager):
-
-    def __init__(self, workbook_name, workbook_path):
-        super().__init__(workbook_name, workbook_path)
 
     def select_strategy(self, worksheet_name: str):
         if worksheet_name == "Invoices":
@@ -35,20 +34,8 @@ class TemplateWorkbookManager(WorkbookManager):
 
         return strategy
 
-    def get_worksheet(self, worksheet_name: str):
-        worksheet = self.workbook.get_worksheet(worksheet_name)
-        strategy = self.select_strategy(worksheet_name)
-        worksheet.set_strategy(strategy)
-        return worksheet
-
 
 class AmexWorkbookManager(WorkbookManager):
 
-    def __init__(self, workbook_name, workbook_path):
-        super().__init__(workbook_name, workbook_path)
-
     def select_strategy(self, worksheet_name: str):
-        pass
-
-    def get_worksheet(self, worksheet_name: str):
         pass
