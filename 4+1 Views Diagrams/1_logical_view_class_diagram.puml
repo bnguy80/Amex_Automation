@@ -20,6 +20,8 @@ class PDFCollectionManager {
     - vendors_list: list
     - start_date: string
     - end_date: string
+    - text_processor: PDFProcessor
+    - ocr_processor: PDFProcessor
     -- Methods --
     + remove_pdf(pdf_name: string): void
     + remove_all_pdf(): void
@@ -43,8 +45,6 @@ abstract PDFProcessor {
     -- Instance Variables --
     - start_date: string
     - end_date: string
-    - text_processor: PDFProcessor
-    - ocr_processor: PDFProcessor
     -- Methods --
     - identify_vendor(pdf_text: string): return patterns
     + extract_total(pdf: PDF): return pattern
@@ -72,7 +72,7 @@ class Worksheet {
     -- Methods --
     + set_strategy(Strategy): void
     + read_data_as_dataframe(): pandas.DataFrame // Reads data from sheet reference to and returns a dataframe of the sheet
-    + update_data_from_dataframe_to_sheet(dataframe: pandas.DataFrame, progress_bar): void // writes manipulated dataframe back into Excel sheet
+    + update_sheet(dataframe: pandas.DataFrame, progress_bar): void // writes manipulated dataframe back into Excel sheet
 }
 
 class Workbook {

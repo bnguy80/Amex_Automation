@@ -74,7 +74,7 @@ class AutomationController:
         # Resets the invoice counter
         self.pdf_collection.reset_counter()
 
-        invoice_worksheet.update_data_from_dataframe_to_sheet(pdf_collection_df, progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
+        invoice_worksheet.update_sheet(pdf_collection_df, progress_bar)  # Updates the Invoice worksheet with all the necessary fields for each pdf invoice 6/15/2024
 
         progress_bar.close()
 
@@ -135,7 +135,7 @@ class AutomationController:
         # Resets the invoice counter
         self.pdf_collection.reset_counter()
 
-        transaction_details_worksheet.update_data_from_dataframe_to_sheet(transaction_details_worksheet_df, progress_bar)
+        transaction_details_worksheet.update_sheet(transaction_details_worksheet_df, progress_bar)
 
         progress_bar.close()
 
