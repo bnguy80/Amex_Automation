@@ -16,6 +16,11 @@ class MatchingStrategy(ABC):
         self.file_path: str = None
 
     def extract_data(self, invoice_row: pd.Series) -> Tuple:
+        """
+        Extract data from the invoice_df row
+        :param invoice_row: pd.Series
+        :return: Tuple(vendor, total, date, file_name, file_path)
+        """
         self.vendor = invoice_row['Vendor']
         self.total = invoice_row['Amount']
         self.date = pd.to_datetime(invoice_row['Date'])
@@ -30,12 +35,6 @@ class MatchingStrategy(ABC):
 
 class ExactMatchStrategy(MatchingStrategy):
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
-
-        # vendor = invoice_row['Vendor']
-        # total = invoice_row['Amount']
-        # date = pd.to_datetime(invoice_row['Date'])
-        # file_name = invoice_row['File Name']
-        # file_path = invoice_row['File Path']
 
         vendor, total, date, file_name, file_path = self.extract_data(invoice_row)
 
@@ -66,12 +65,6 @@ class AmountAndNonDatesStrategy(MatchingStrategy):
 
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
 
-        # vendor = invoice_row['Vendor']
-        # total = invoice_row['Amount']
-        # date = pd.to_datetime(invoice_row['Date'])
-        # file_name = invoice_row['File Name']
-        # file_path = invoice_row['File Path']
-
         vendor, total, date, file_name, file_path = self.extract_data(invoice_row)
 
         # Filter potential matches by vendor, ensuring they are not previously matched in the matched_transactions set
@@ -101,12 +94,6 @@ class AmountAndNonDatesStrategy(MatchingStrategy):
 class CombinationStrategy(MatchingStrategy):
 
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
-
-        # vendor = invoice_row['Vendor']
-        # total = invoice_row['Amount']
-        # date = pd.to_datetime(invoice_row['Date'])
-        # file_name = invoice_row['File Name']
-        # file_path = invoice_row['File Path']
 
         vendor, total, date, file_name, file_path = self.extract_data(invoice_row)
 

@@ -3,45 +3,63 @@
 
 class PDF {
     note top: Stores extracted data from PDF files
-    -- Class Variables --
-    - TOTAL_PATTERNS: list
-    - DATE_PATTERNS: list
-    - VENDOR_PATTERNS: dict
-    - FALL_BACK_TOTAL: float
-    - FALL_BACK_DATE: datetime
-    - FALL_BACK_VENDOR: string
     -- Instance Variables --
     + pdf_name: string
     + file_path: string
     + total: float
     + date: date MM-DD-YYYY
     + vendor: string
-    -- Methods --
-    - identify_vendor(pdf_text): void
-    - extract_pdf_invoice_total(): return pattern
-    - extract_ocr_invoice_total(): return pattern
-    - extract_pdf_invoice_date(start_date, end_date): return pattern
-    - extract_ocr_invoice_date(start_date, end_date): return pattern
-    + process_total(): void // Calls the total extraction methods in the correct sequence extract_pdf_invoice_total and falls back to extract_ocr_invoice_total
-    + process_pdf_date(): void // Calls the date extraction methods in correct sequence extract_pdf_invoice_date and falls back to extract_ocr_invoice_date
-    + match_pdf_invoice_vendor(vendor_list: list): void // Sets the vendor of PDF instances if there is a match; vendor_list is provided from PDFCollection
 }
 
-class PDFCollection {
+class PDFCollectionManager {
     note top: Manages a collection of PDF objects, facilitating access by name
     -- Class Variables --
     - invoice_counter: int // Show progress when retrieving invoices
     -- Instance Variables --
     - pdfs_dataframe: pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
     - vendors_list: list
+    - start_date: string
+    - end_date: string
     -- Methods --
     + remove_pdf(pdf_name: string): void
     + remove_all_pdf(): void
     + get_pdf_collection_dataframe(): pdfs_dataframe: DataFrame
-    + reset_counter(): void
-    + create_pdf_instances_set_path_name_total_date_vendor(file_path: string, pdf_name: string, start_date: string, end_date: string): void
+    + reset_counter(pdf: PDF): void
+    + process_total(pdf: PDF): void // Calls the total extraction methods in the correct sequence
+    + process_pdf_date(): void // Calls the date extraction methods in correct sequence
+    + add_invoice_to_collection(file_path: string, pdf_name: string): void
     + populate_pdf_collections_vendors_list_from_xlookup_worksheet(xlookup_table_worksheet_name: Worksheet): void ---Make sure correct column!!!
-    + populate_pdf_collection_dataframe_from_worksheet(worksheet_name: string, start_date: string, end_date: string): void
+    + populate_pdf_collection_dataframe_from_worksheet(worksheet_name: string): void
+}
+
+abstract PDFProcessor {
+    -- Class Variables --
+    - TOTAL_PATTERNS = List
+    - DATE_PATTERNS = List
+    - VENDOR_PATTERNS = dict
+    - FALL_BACK_TOTAL = float
+    - FALL_BACK_DATE = datetime
+    - FALL_BACK_VENDOR = string
+    -- Instance Variables --
+    - start_date: string
+    - end_date: string
+    - text_processor: PDFProcessor
+    - ocr_processor: PDFProcessor
+    -- Methods --
+    - identify_vendor(pdf_text: string): return patterns
+    + extract_total(pdf: PDF): return pattern
+    + extract_date(pdf: PDF): return pattern
+    + match_pdf_invoice_vendor(pdf: PDF, vendor_list: list): void // Sets the vendor of PDF instances if there is a match; vendor_list is provided from PDFCollectionManager
+}
+
+class PDFPlumberProcessor {
+    + extract_total(...): pattern
+    + extract_date(...): pattern
+}
+
+class PDFOCRProcessor {
+    + extract_total(...): pattern
+    + extract_date(...): pattern
 }
 
 class Worksheet {
@@ -76,16 +94,16 @@ abstract class WorkbookManager {
     + workbook_name: string
     + workbook_path: string
     + workbook : Workbook
-    + select_strategy(worksheet_name: String) : UpdateStrategy
+    + select_worksheet_strategy(worksheet_name: String) : UpdateStrategy
     + get_worksheet(worksheet_name: String) : Worksheet
 }
 
 class TemplateWorkbookManager{
-    + select_strategy(worksheet_name: String) : UpdateStrategy
+    + select_worksheet_strategy(...) : UpdateStrategy
 }
 
 class AmexWorkbookManager{
-    + select_strategy(worksheet_name: String) : UpdateStrategy
+    + select_worksheet_strategy(...) : UpdateStrategy
 }
 
 interface UpdateStrategy {
@@ -93,11 +111,11 @@ interface UpdateStrategy {
 }
 
 class TransactionDetails2UpdateStrategy{
-    + update_worksheet(worksheet : Worksheet, data_df : DataFrame, progress_bar : ProgressBar) : void
+    + update_worksheet(...) : void
 }
 
 class InvoiceUpdateStrategy{
-    + update_worksheet(worksheet : Worksheet, data_df : DataFrame, progress_bar : ProgressBar) : void
+    + update_worksheet(...) : void
 }
 
 
@@ -123,36 +141,36 @@ abstract MatchingStrategy {
     - file_name: string
     - file_path: string
     -- Methods --
-    + execute(...): void
-    - extract_data(invoice_row: pd.Series): Tuple
     - potential_matches(...): List
+    - extract_data(invoice_row: pd.Series): Tuple
+    + execute(invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: set, matched_invoices: set): boolean
 }
 
 class ExactMatchStrategy {
-    + execute(...): void
+    + execute(...): boolean
 }
 
 class AmountAndNonDatesStrategy {
-    + execute(...): void
+    + execute(...): boolean
 }
 
 class CombinationStrategy {
-    + execute(...): void
+    + execute(...): boolean
 }
 
 class AutomationController {
     note: Acts as the facade
-    note: Coordinating workflow between different components (processing invoices and transactions). --> Need to refactor to outside of the class SRP 6/21/2024
+    note: Coordinating workflow between different components (processing invoices and transactions). --> Need to refactor to outside the class SRP 6/21/2024
     note: Integrating different parts of the system (PDF handling, transaction processing, Excel integration).
     -- Class Variables --
-    + XLOOKUP_TABLE_WORKSHEET_NAME: string
-    + TEMPLATE_WORKBOOK_NAME: string
-    + TEMPLATE_INVOICE_WORKSHEET_NAME: string
-    + TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME: string
-    + LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: string
+    - XLOOKUP_TABLE_WORKSHEET_NAME: string
+    - TEMPLATE_WORKBOOK_NAME: string
+    - TEMPLATE_INVOICE_WORKSHEET_NAME: string
+    - TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME: string
+    - LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: string
     -- Instance Variables --
 '    + workbooks_dict: dict<string, Workbook>
-    + pdf_collection: PDFCollection()
+    + pdf_collection: PDFCollectionManager(start_date, end_date)
     + manipulation: InvoiceTransactionMatcher()
     + amex_path: string
     + amex_statement: string
@@ -161,7 +179,7 @@ class AutomationController {
     + folder_path_macro: string
     + month_folder_macro: string
     -- Methods --
-    + {static} duplicate_and_label_rows(DataFrame, string, int)
+    + {static} duplicate_and_label_rows(DataFrame, string, int): pd.DataFrame
     + open_workbook(path: string, workbook_name: string): Workbook  // New method to open a workbook by path
     + get_workbook(workbook_name: string): workbooks
     + save_selected_workbook(workbook_name: string, save_path: None): void  // New method to save a specific workbook; if save_path parameter passed saves to different location
@@ -173,28 +191,31 @@ class AutomationController {
 
 Workbook *--> "1..*" Worksheet : contains
 
-PDFCollection *--> "1..*" PDF : contains
+PDFCollectionManager *--> "1..*" PDF : contains
+PDFCollectionManager o..> PDFProcessor : utilize
 
 AutomationController *..> InvoiceTransactionMatcher : depends on
 AutomationController *..> WorkbookManager : depends on
-AutomationController *..> PDFCollection : utilize
+AutomationController *..> PDFCollectionManager : utilize
 
 MatchingStrategy <|-- ExactMatchStrategy : concrete
 MatchingStrategy <|-- AmountAndNonDatesStrategy : concrete
 MatchingStrategy <|-- CombinationStrategy : concrete
 
-InvoiceTransactionMatcher o..> MatchingStrategy : contains
+InvoiceTransactionMatcher o..> MatchingStrategy : utilize
 
 UpdateStrategy <|-- TransactionDetails2UpdateStrategy : concrete
 UpdateStrategy <|-- InvoiceUpdateStrategy : concrete
 
-Worksheet *--> UpdateStrategy : contain
+Worksheet *..> UpdateStrategy : contain
 
 WorkbookManager <|-- TemplateWorkbookManager : concrete
 WorkbookManager <|-- AmexWorkbookManager  : concrete
 
 WorkbookManager "1" *--> "1" Workbook : creates
+WorkbookManager ..> UpdateStrategy : sets
 
-
+PDFProcessor <|-- PDFPlumberProcessor : concrete
+PDFProcessor <|-- PDFOCRProcessor : concrete
 
 @enduml

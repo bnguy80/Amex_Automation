@@ -5,8 +5,8 @@ from tabulate import tabulate
 from tqdm import tqdm
 
 from workbook_manager import TemplateWorkbookManager
-from models.pdf_collection import PDFCollection
-from data_manipulation import manipulation
+from pdf_collection_manager import PDFCollectionManager
+from invoice_transaction_matcher import manipulation
 
 
 class AutomationController:
@@ -21,7 +21,9 @@ class AutomationController:
         self.amex_path = amex_path  # The directory where the AMEX Statement workbook is located 6/16/2024
         self.amex_statement = amex_statement_name  # This is the final workbook that the automation will put the data into; sent to Ana 6/15/2024.
 
-        self.pdf_collection = PDFCollection()
+        # Start date of Amex Statement transactions
+        # End date of Amex Statement transactions
+        self.pdf_collection = PDFCollectionManager(start_date, end_date)
         self.manipulation = manipulation  # Using a list of strategies to match invoices to transactions. ONLY ONE INSTANCE 6/22/2024.
 
         self.template_workbook_path = os.path.join(self.amex_path, self.TEMPLATE_WORKBOOK_NAME)
@@ -30,12 +32,11 @@ class AutomationController:
         self.amex_workbook_path = os.path.join(self.amex_path, self.amex_statement)
         # self.amex_workbook_manager = AmexWorkbookManager(self.amex_statement, self.amex_workbook_path)
 
-        self.start_date = start_date  # Start date of Amex Statement transactions
-        self.end_date = end_date  # End date of Amex Statement transactions
         self.macro_parameter_1 = macro_parameter_1
         self.macro_parameter_2 = macro_parameter_2
 
     @staticmethod
+    # This adds in the duplicate CLOUDFLARE transaction row, do not add in via manual manipulation 6/24/2024.
     def duplicate_and_label_rows(df):
         # Find indices of 'CLOUDFLARE' rows to duplicate
         cloudflare_indices = df[df['Vendor'] == 'CLOUDFLARE'].index.tolist()
@@ -63,12 +64,10 @@ class AutomationController:
         self.pdf_collection.populate_pdf_collections_vendors_list_from_xlookup_worksheet(xlookup_table_worksheet)
 
         # This step populates the pdf_collection_dataframe with all the pdf data 6/16/2024
-        self.pdf_collection.populate_pdf_collection_dataframe_from_worksheet(invoice_worksheet, self.start_date,
-                                                                             self.end_date)
+        self.pdf_collection.populate_pdf_collection_dataframe_from_worksheet(invoice_worksheet)
         pdf_collection_df = self.pdf_collection.get_pdf_collection_dataframe()
         num_updates = len(pdf_collection_df.index)
-        progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data",
-                            bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
+        progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
 
         # print(pdf_data.columns)
 
@@ -142,15 +141,15 @@ class AutomationController:
 
 
 # "H:/Amex Automation" Automation Truth--> amex_path
-# "C:/Users/brand/IdeaProjects/Amex Automation" -computer
+# "C:/Users/brand/IdeaProjects/Amex Automation DATA" -computer
 # r"H:\Amex Automation\t3nas\APPS\\" -Truth--> macro_parameter_1
-# r"K:\t3nas\APPS\\" -computer
+# r"C:\Users\brand\IdeaProjects\Amex Automation DATA\t3nas\APPS\\" -computer
 path_truth = "H:/Amex Automation"
-path_computer = "C:/Users/brand/IdeaProjects/Amex Automation"
+path_computer = "C:/Users/brand/IdeaProjects/Amex Automation DATA"
 macro_truth = r"H:\Amex Automation\t3nas\APPS\\"
-macro_computer = r"C:\Users\brand\IdeaProjects\Amex Automation\t3nas\APPS\\"
+macro_computer = r"C:\Users\brand\IdeaProjects\Amex Automation DATA\t3nas\APPS\\"
 
 controller = AutomationController(path_computer, "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024", macro_computer, "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
 
-# controller.process_invoices_worksheet()
+controller.process_invoices_worksheet()
 controller.process_transaction_details_worksheet()

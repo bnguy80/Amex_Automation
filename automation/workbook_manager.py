@@ -12,19 +12,19 @@ class WorkbookManager(ABC):
         self.workbook = Workbook(workbook_path)
 
     @abstractmethod
-    def select_strategy(self, worksheet_name: str):
+    def select_worksheet_strategy(self, worksheet_name: str):
         pass
 
     def get_worksheet(self, worksheet_name: str):
         worksheet = self.workbook.get_worksheet(worksheet_name)
-        strategy = self.select_strategy(worksheet_name)
+        strategy = self.select_worksheet_strategy(worksheet_name)
         worksheet.set_strategy(strategy)
         return worksheet
 
 
 class TemplateWorkbookManager(WorkbookManager):
 
-    def select_strategy(self, worksheet_name: str):
+    def select_worksheet_strategy(self, worksheet_name: str):
         if worksheet_name == "Invoices":
             strategy = InvoiceUpdateStrategy()
         elif worksheet_name == "Transaction Details 2":
@@ -37,5 +37,5 @@ class TemplateWorkbookManager(WorkbookManager):
 
 class AmexWorkbookManager(WorkbookManager):
 
-    def select_strategy(self, worksheet_name: str):
+    def select_worksheet_strategy(self, worksheet_name: str):
         pass
