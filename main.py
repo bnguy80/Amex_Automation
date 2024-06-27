@@ -2,7 +2,7 @@ import sys
 import typer
 from typing import Optional
 from rich.console import Console
-from automation import AutomationController
+from automation.automation import AutomationController
 
 app = typer.Typer()
 console = Console()

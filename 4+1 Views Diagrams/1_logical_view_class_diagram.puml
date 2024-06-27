@@ -145,7 +145,7 @@ abstract MatchingStrategy {
     - file_path: string
     -- Methods --
     - potential_matches(...): List
-    - extract_data(invoice_row: pd.Series): Tuple
+    - load_data(invoice_row: pd.Series): Tuple
     + execute(invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: set, matched_invoices: set): boolean
 }
 

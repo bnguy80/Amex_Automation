@@ -68,6 +68,9 @@ class PDFProcessor(ABC):
             'total': [
                 r'Regular monthly charges\s+\$([\d\.,]+)',
                 # Add other total patterns for Comcast
+            ],
+            'vendor': [
+                'COMCAST'
             ]
         },
         # Comcast Cable
@@ -77,6 +80,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total Amount Due(?: \(USD\))?:?\s+\$?\S?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'COMCAST'
             ]
         },
         'adobe': {
@@ -85,6 +91,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'ADOBE'
             ]
         },
         # Amazon invoices can only use OCR
@@ -94,6 +103,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'AMAZON'
             ]
         },
         # Apple
@@ -103,6 +115,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'APPLE'
             ]
         },
         'calendy': {
@@ -112,6 +127,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'CALENDLY'
             ]
         },
         'cbt': {
@@ -120,6 +138,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total\s+\(in USD\)\s*:? ?\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'CBT'
             ]
         },
         'cloudflare': {
@@ -128,6 +149,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'CLOUDFLARE'
             ]
         },
         'comptia': {
@@ -136,6 +160,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'COMPTIA'
             ]
         },
         'deft.com': {
@@ -144,6 +171,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'SERVER'
             ]
         },
         'dell!': {
@@ -152,6 +182,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'DELL'
             ]
         },
         # Granite
@@ -161,6 +194,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'TOTAL AMOUNT DUE:\s*\$([\d,]+\.?\d*)'
+            ],
+            'vendor': [
+                'GRANITE'
             ]
         },
         'lastpass': {
@@ -169,6 +205,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'LASTPASS'
             ]
         },
         'Microsoft Corporation': {
@@ -177,6 +216,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'MSFT'
             ]
         },
         'relic': {
@@ -185,6 +227,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Invoice Total\s+\$(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'RELIC'
             ]
         },
         'www.serversupply.com': {
@@ -193,6 +238,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'SERVER'
             ]
         },
         # Special case, need OCR but still try as it is not a PDF but an image 6/24/2024.
@@ -211,6 +259,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Amount Due(?: \(USD\))?:?\s+\$?\S?(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'CDW'
             ]
         },
         # Special case where it does not have the correct character mapping so cid:15...etc. is extracted from pdfplumber instead 6/24/2024
@@ -220,6 +271,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Order total\s+\$(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'EBAY'
             ]
         },
         # OTTERAI 6/24/2024
@@ -231,6 +285,9 @@ class PDFProcessor(ABC):
             'total': [
                 r'Amount due\s+\$(\d[\d,]*\.\d{2})',
                 r'Total refunded without credit note\s+\$(\d[\d,]*\.\d{2})'
+            ],
+            'vendor': [
+                'OTTERAI'
             ]
         },
         # SYMPREX 6/24/2024
@@ -240,6 +297,9 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total:\s+([0-9,]+\.\d{2})\s+USD'
+            ],
+            'vendor': [
+                'SYMPREX'
             ]
         }
     }
