@@ -61,22 +61,21 @@ class ExactMatchStrategy(MatchingStrategy):
         return False
 
 
-class AmountAndNonDatesStrategy(MatchingStrategy):
+class ExactAmountAndExcludeDateStrategy(MatchingStrategy):
 
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
 
         vendor, total, date, file_name, file_path = self.extract_data(invoice_row)
 
-        # Filter potential matches by vendor, ensuring they are not previously matched in the matched_transactions set
+        # Filter potential matches by vendor that match to invoice, ensuring they are not previously matched in the matched_transactions set
         potential_matches: pd.DataFrame = transaction_details_df[
             (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &  # Matches vendor name, case insensitive
             (~transaction_details_df.index.isin(matched_transactions))  # Excludes transactions already matched
             ]
 
-        # Strategy 2: Match on Amount with Dates that do not match the specified date
+        # Strategy 2: Match on Amount and Excludes Date
         non_date_matches: pd.DataFrame = potential_matches[
-            (potential_matches['Amount'] == total) &  # Matches exact amount
-            (pd.to_datetime(potential_matches['Date'], errors='coerce') != date)  # Excludes entries with the same date
+            (potential_matches['Amount'] == total) # Matches exact amount
             ]
 
         if not non_date_matches.empty:
@@ -116,8 +115,7 @@ class CombinationStrategy(MatchingStrategy):
                         transaction_details_df.at[idx, 'Column1'] = 'Combination Amount Match'
                         transaction_details_df.at[idx, 'File path'] = file_path
                         matched_transactions.add(idx)
-                        matched_invoices.add(
-                            invoice_row.name)  # Assuming 'name' is the DataFrame index or unique identifier
+                        matched_invoices.add(invoice_row.name)  # Assuming 'name' is the DataFrame index or unique identifier
 
                     print(f"Match found for Strategy 3 in transactions with ids {[item.Index for item in combo]}!")
                     return True  # Stop after finding the first valid combination

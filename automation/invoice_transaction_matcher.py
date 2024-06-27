@@ -1,7 +1,7 @@
 from tabulate import tabulate
 
 
-from matching_strategies import ExactMatchStrategy, AmountAndNonDatesStrategy, CombinationStrategy
+from matching_strategies import ExactMatchStrategy, ExactAmountAndExcludeDateStrategy, CombinationStrategy
 
 
 class InvoiceTransactionMatcher:
@@ -34,4 +34,4 @@ class InvoiceTransactionMatcher:
             print(tabulate(unmatched_invoices, headers='keys', tablefmt='psql'))
 
 
-manipulation = InvoiceTransactionMatcher([ExactMatchStrategy(), AmountAndNonDatesStrategy(), CombinationStrategy()])
+manipulation = InvoiceTransactionMatcher([ExactMatchStrategy(), ExactAmountAndExcludeDateStrategy(), CombinationStrategy()])

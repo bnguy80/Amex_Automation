@@ -260,6 +260,10 @@ class PDFProcessor(ABC):
     def extract_date(self, pdf):
         pass
 
+    @abstractmethod
+    def extract_vendor(self, pdf):
+        pass
+
     def _identify_vendor(self, pdf_text: str) -> Union[dict, None]:
         for vendor_identifier, patterns in self._VENDOR_PATTERNS.items():
             if vendor_identifier in pdf_text:
@@ -335,6 +339,9 @@ class PDFPlumberProcessor(PDFProcessor):
         pdf.date = self._FALL_BACK_DATE
         return None
 
+    def extract_vendor(self, pdf):
+        pass
+
 
 class PDFOCRProcessor(PDFProcessor):
 
@@ -371,3 +378,6 @@ class PDFOCRProcessor(PDFProcessor):
                         return pattern
             pdf.date = self._FALL_BACK_DATE
             return None
+
+    def extract_vendor(self, pdf):
+        pass

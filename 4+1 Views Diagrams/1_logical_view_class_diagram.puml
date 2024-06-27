@@ -49,17 +49,20 @@ abstract PDFProcessor {
     - identify_vendor(pdf_text: string): return patterns
     + extract_total(pdf: PDF): return pattern
     + extract_date(pdf: PDF): return pattern
+    + extract_vendor(pdf: PDF): return pattern
     + match_pdf_invoice_vendor(pdf: PDF, vendor_list: list): void // Sets the vendor of PDF instances if there is a match; vendor_list is provided from PDFCollectionManager
 }
 
 class PDFPlumberProcessor {
     + extract_total(...): pattern
     + extract_date(...): pattern
+    + extract_vendor(...): pattern
 }
 
 class PDFOCRProcessor {
     + extract_total(...): pattern
     + extract_date(...): pattern
+    + extract(vendor...): pattern
 }
 
 class Worksheet {
@@ -150,7 +153,7 @@ class ExactMatchStrategy {
     + execute(...): boolean
 }
 
-class AmountAndNonDatesStrategy {
+class ExactAmountAndExcludeDateStrategy {
     + execute(...): boolean
 }
 
