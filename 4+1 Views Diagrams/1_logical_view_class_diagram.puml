@@ -17,7 +17,6 @@ class PDFCollectionManager {
     - invoice_counter: int // Show progress when retrieving invoices
     -- Instance Variables --
     - pdfs_dataframe: pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
-    - vendors_list: list
     - start_date: string
     - end_date: string
     - text_processor: PDFProcessor
@@ -27,11 +26,10 @@ class PDFCollectionManager {
     + remove_all_pdf(): void
     + get_pdf_collection_dataframe(): pdfs_dataframe: DataFrame
     + reset_counter(pdf: PDF): void
-    + process_total(pdf: PDF): void // Calls the total extraction methods in the correct sequence
-    + process_pdf_date(): void // Calls the date extraction methods in correct sequence
-    + add_invoice_to_collection(file_path: string, pdf_name: string): void
-    + populate_pdf_collections_vendors_list_from_xlookup_worksheet(xlookup_table_worksheet_name: Worksheet): void ---Make sure correct column!!!
-    + populate_pdf_collection_dataframe_from_worksheet(worksheet_name: string): void
+    - process_total(pdf: PDF): void // Calls the total extraction methods in the correct sequence
+    - process_pdf_date(): void // Calls the date extraction methods in correct sequence
+    - extract_data_add_invoice_to_collection(file_path: string, pdf_name: string): void
+    + extract_pdf_data_populate_pdm_df(invoice_worksheet: Worksheet, xlookup_table_worksheet: Worksheet): void
 }
 
 abstract PDFProcessor {
@@ -45,24 +43,22 @@ abstract PDFProcessor {
     -- Instance Variables --
     - start_date: string
     - end_date: string
+    - vendors_list: List
     -- Methods --
-    - identify_vendor(pdf_text: string): return patterns
+    - get_vendor_patterns(pdf_text: string): return patterns
     + extract_total(pdf: PDF): return pattern
     + extract_date(pdf: PDF): return pattern
-    + extract_vendor(pdf: PDF): return pattern
-    + match_pdf_invoice_vendor(pdf: PDF, vendor_list: list): void // Sets the vendor of PDF instances if there is a match; vendor_list is provided from PDFCollectionManager
+    + get_vendors_from_xlookup_worksheet(xlookup_table_worksheet: Worksheet): void // populates the vendors_list to be able to find pdf.vendor.
 }
 
 class PDFPlumberProcessor {
     + extract_total(...): pattern
     + extract_date(...): pattern
-    + extract_vendor(...): pattern
 }
 
 class PDFOCRProcessor {
     + extract_total(...): pattern
     + extract_date(...): pattern
-    + extract(vendor...): pattern
 }
 
 class Worksheet {
@@ -129,20 +125,16 @@ class InvoiceTransactionMatcher {
    - transaction_details_df: pd.DataFrame = None
    + matched_transactions: set
    + matched_invoices: set
-   - strategies = List[MatchingStrategy]
+   - primary_strategies = List[MatchingStrategy]
+   - fallback_strategy = MatchingStrategy
    -- Methods --
    + set_data(invoice_df: pd.DataFrame, transaction_details_df: pd.DataFrame): void
    + find_matching_transactions(): void
+   + sequence_file_names(): void
    + apply_conditional_formatting_rule(workbook_name: string): void
 }
 
 abstract MatchingStrategy {
-    -- Instance Variables --
-    - vendor: string
-    - total: float
-    - date: string
-    - file_name: string
-    - file_path: string
     -- Methods --
     - potential_matches(...): List
     - load_data(invoice_row: pd.Series): Tuple
@@ -161,6 +153,10 @@ class CombinationStrategy {
     + execute(...): boolean
 }
 
+class VendorOnlyStrategy {
+    + execute(...): boolean
+}
+
 class AutomationController {
     note: Acts as the facade
     note: Coordinating workflow between different components (processing invoices and transactions). --> Need to refactor to outside the class SRP 6/21/2024
@@ -173,8 +169,8 @@ class AutomationController {
     - LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: string
     -- Instance Variables --
 '    + workbooks_dict: dict<string, Workbook>
-    + pdf_collection: PDFCollectionManager(start_date, end_date)
-    + manipulation: InvoiceTransactionMatcher()
+    + pdm: PDFCollectionManager(start_date, end_date)
+    + itm: InvoiceTransactionMatcher()
     + amex_path: string
     + amex_statement: string
     + start_date: string
@@ -182,13 +178,10 @@ class AutomationController {
     + folder_path_macro: string
     + month_folder_macro: string
     -- Methods --
-    + {static} duplicate_and_label_rows(DataFrame, string, int): pd.DataFrame
     + open_workbook(path: string, workbook_name: string): Workbook  // New method to open a workbook by path
     + get_workbook(workbook_name: string): workbooks
     + save_selected_workbook(workbook_name: string, save_path: None): void  // New method to save a specific workbook; if save_path parameter passed saves to different location
-    + duplicate_and_label_rows(pandas.DataFrame): pandas.DataFrame
-    + update_invoices_worksheet_with_all_extracted_data(): void // Reliant on process_invoices_worksheet() get pandas.DataFrame that will update the invoices worksheet
-    + process_invoices_worksheet(): void // Processes the Invoice Worksheet from start to finish.
+    + process_invoices_worksheet(): void // Processes the Invoice Worksheet with data extracted and uploaded into PDFCollectionManager dataframe
     + process_transaction_details_worksheet(): void
 }
 
@@ -202,8 +195,9 @@ AutomationController *..> WorkbookManager : depends on
 AutomationController *..> PDFCollectionManager : utilize
 
 MatchingStrategy <|-- ExactMatchStrategy : concrete
-MatchingStrategy <|-- AmountAndNonDatesStrategy : concrete
+MatchingStrategy <|-- ExactAmountAndExcludeDateStrategy : concrete
 MatchingStrategy <|-- CombinationStrategy : concrete
+MatchingStrategy <|-- VendorOnlyStrategy : concrete
 
 InvoiceTransactionMatcher o..> MatchingStrategy : utilize
 

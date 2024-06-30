@@ -68,9 +68,6 @@ class PDFProcessor(ABC):
             'total': [
                 r'Regular monthly charges\s+\$([\d\.,]+)',
                 # Add other total patterns for Comcast
-            ],
-            'vendor': [
-                'COMCAST'
             ]
         },
         # Comcast Cable
@@ -80,9 +77,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total Amount Due(?: \(USD\))?:?\s+\$?\S?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'COMCAST'
             ]
         },
         'adobe': {
@@ -91,9 +85,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'ADOBE'
             ]
         },
         # Amazon invoices can only use OCR
@@ -103,9 +94,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'AMAZON'
             ]
         },
         # Apple
@@ -115,9 +103,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'APPLE'
             ]
         },
         'calendy': {
@@ -127,9 +112,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'CALENDLY'
             ]
         },
         'cbt': {
@@ -137,10 +119,7 @@ class PDFProcessor(ABC):
                 r'\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}'
             ],
             'total': [
-                r'Total\s+\(in USD\)\s*:? ?\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'CBT'
+                r'Total \(in USD\)\s*:?\s*\$?(\d{1,3}(?:,\d{3})*\.\d{2})'
             ]
         },
         'cloudflare': {
@@ -149,9 +128,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'CLOUDFLARE'
             ]
         },
         'comptia': {
@@ -160,9 +136,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'COMPTIA'
             ]
         },
         'deft.com': {
@@ -171,9 +144,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'SERVER'
             ]
         },
         'dell!': {
@@ -182,9 +152,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'DELL'
             ]
         },
         # Granite
@@ -194,9 +161,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'TOTAL AMOUNT DUE:\s*\$([\d,]+\.?\d*)'
-            ],
-            'vendor': [
-                'GRANITE'
             ]
         },
         'lastpass': {
@@ -205,9 +169,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'LASTPASS'
             ]
         },
         'Microsoft Corporation': {
@@ -216,9 +177,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'MSFT'
             ]
         },
         'relic': {
@@ -227,9 +185,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Invoice Total\s+\$(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'RELIC'
             ]
         },
         'www.serversupply.com': {
@@ -238,9 +193,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'SERVER'
             ]
         },
         # Special case, need OCR but still try as it is not a PDF but an image 6/24/2024.
@@ -259,9 +211,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Amount Due(?: \(USD\))?:?\s+\$?\S?(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'CDW'
             ]
         },
         # Special case where it does not have the correct character mapping so cid:15...etc. is extracted from pdfplumber instead 6/24/2024
@@ -271,9 +220,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Order total\s+\$(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'EBAY'
             ]
         },
         # OTTERAI 6/24/2024
@@ -285,9 +231,6 @@ class PDFProcessor(ABC):
             'total': [
                 r'Amount due\s+\$(\d[\d,]*\.\d{2})',
                 r'Total refunded without credit note\s+\$(\d[\d,]*\.\d{2})'
-            ],
-            'vendor': [
-                'OTTERAI'
             ]
         },
         # SYMPREX 6/24/2024
@@ -297,9 +240,6 @@ class PDFProcessor(ABC):
             ],
             'total': [
                 r'Total:\s+([0-9,]+\.\d{2})\s+USD'
-            ],
-            'vendor': [
-                'SYMPREX'
             ]
         }
     }
@@ -311,6 +251,7 @@ class PDFProcessor(ABC):
     def __init__(self, start_date, end_date):
         self.start_date = start_date
         self.end_date = end_date
+        self.vendors_list = []
 
     @abstractmethod
     def extract_total(self, pdf):
@@ -320,23 +261,41 @@ class PDFProcessor(ABC):
     def extract_date(self, pdf):
         pass
 
-    @abstractmethod
-    def extract_vendor(self, pdf):
-        pass
-
-    def _identify_vendor(self, pdf_text: str) -> Union[dict, None]:
+    def _get_vendor_patterns(self, pdf_text: str) -> Union[dict, None]:
         for vendor_identifier, patterns in self._VENDOR_PATTERNS.items():
             if vendor_identifier in pdf_text:
                 return patterns
             else:
                 return None
 
-    def match_pdf_invoice_vendor(self, pdf, vendors_list):
+    def get_vendors_from_xlookup_worksheet(self, xlookup_table_worksheet) -> None:
+
+        self.vendors_list.clear()  # Clear existing vendors to avoid duplication
+        sheet = xlookup_table_worksheet.sheet
+        vendors_range = sheet.range('A8:A' + str(sheet.cells.last_cell.row)).value
+
+        if isinstance(vendors_range, list):
+            # Iterate over the list and stop if a None value is encountered
+            for vendor in vendors_range:
+                # Check if the vendor is a tuple and has a non-None first element
+                if isinstance(vendor, tuple) and vendor[0] is not None:
+                    self.vendors_list.append(vendor[0])
+                # Check if the vendor is not a tuple and is not None
+                elif not isinstance(vendor, tuple) and vendor is not None:
+                    self.vendors_list.append(vendor)
+                # Break the loop if None is encountered
+                else:
+                    break
+        elif vendors_range is not None:
+            # If vendors_range is a single value (string or tuple), turn it into a list
+            self.vendors_list = [vendors_range[0]] if isinstance(vendors_range, tuple) else [vendors_range]
+
+    def extract_vendor(self, pdf):
 
         lower_file_name = pdf.pdf_name.lower()
         matched_vendor = None
 
-        for vendor in vendors_list:
+        for vendor in self.vendors_list:
             if vendor is None:
                 continue
 
@@ -355,89 +314,106 @@ class PDFPlumberProcessor(PDFProcessor):
 
     def extract_total(self, pdf):
 
-        with pdfplumber.open(pdf.pdf_path) as pdf_text:
-            text = ' '.join(page.extract_text() or '' for page in pdf_text.pages)
+        try:
+            with pdfplumber.open(pdf.pdf_path) as pdf_text:
+                text = ' '.join(page.extract_text() or '' for page in pdf_text.pages)
 
-        vendor_info = self._identify_vendor(text)
-        if vendor_info and 'total ' in vendor_info:
-            total_patterns = vendor_info['total ']
-        else:
-            total_patterns = self._TOTAL_PATTERNS
+            vendor_info = self._get_vendor_patterns(text)
+            if vendor_info and 'total ' in vendor_info:
+                total_patterns = vendor_info['total ']
+            else:
+                total_patterns = self._TOTAL_PATTERNS
 
-        # Search for the total using the determined patterns
-        for pattern in total_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)  # Ignore case sensitivity 6/24/2024
-            if match:
-                pdf.total = float(match.group(1).replace(',', ''))
-                return pattern  # Return the pattern used for matching
-        # No match was found for total
-        pdf.total = self._FALL_BACK_TOTAL
-        return None
-
-    def extract_date(self, pdf):
-
-        start_date = dateparser.parse(self.start_date)
-        end_date = dateparser.parse(self.end_date)
-
-        with pdfplumber.open(pdf.pdf_path) as pdf_text:
-            text = ' '.join(page.extract_text() or '' for page in pdf_text.pages)
-
-        vendor_info = self._identify_vendor(text)
-        if vendor_info and 'date ' in vendor_info:
-            date_patterns = vendor_info['date ']
-        else:
-            date_patterns = self._DATE_PATTERNS
-
-        for pattern in date_patterns:
-            dates = re.findall(pattern, text)
-            for date_text in dates:
-                parsed_date = dateparser.parse(date_text)
-                if parsed_date and start_date <= parsed_date <= end_date:
-                    formatted_date = parsed_date.strftime('%Y-%m-%d')
-                    pdf.date = formatted_date
-                    return pattern
-        pdf.date = self._FALL_BACK_DATE
-        return None
-
-    def extract_vendor(self, pdf):
-        pass
-
-
-class PDFOCRProcessor(PDFProcessor):
-
-    def extract_total(self, pdf):
-
-        images = pdf2image.convert_from_path(pdf.pdf_path, poppler_path=poppler_path)
-
-        for image in images:
-            ocr_text = pytesseract.image_to_string(image)
-            for pattern in self._TOTAL_PATTERNS:
-                match = re.search(pattern, ocr_text, re.IGNORECASE)
+            # Search for the total using the determined patterns
+            for pattern in total_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)  # Ignore case sensitivity 6/24/2024
                 if match:
-                    pdf.total = float(match.group(1).replace(',', ''))
-                    return pattern
-        pdf.total = self._FALL_BACK_TOTAL
-        return None
+                    extracted_value = match.group(1).replace(',', '')
+                    try:
+                        pdf.total = float(extracted_value)
+                        return pattern  # Return the pattern used for matching
+                    except ValueError as ex:
+                        raise ValueError(f"Invalid data encountered, unable to convert '{extracted_value}' to float.") from ex
+            # No match was found for total
+            pdf.total = self._FALL_BACK_TOTAL
+            return None
+        except FileNotFoundError as ex2:
+            raise FileNotFoundError(f"File not found while extracting PDF data: {pdf.pdf_path}") from ex2
 
     def extract_date(self, pdf):
 
-        start_date = dateparser.parse(self.start_date)
-        end_date = dateparser.parse(self.end_date)
+        try:
+            start_date = dateparser.parse(self.start_date)
+            end_date = dateparser.parse(self.end_date)
 
-        images = pdf2image.convert_from_path(pdf.pdf_path, poppler_path=poppler_path)
+            with pdfplumber.open(pdf.pdf_path) as pdf_text:
+                text = ' '.join(page.extract_text() or '' for page in pdf_text.pages)
 
-        for image in images:
-            ocr_text = pytesseract.image_to_string(image)
-            for pattern in self._DATE_PATTERNS:
-                dates = re.findall(pattern, ocr_text)
+            vendor_info = self._get_vendor_patterns(text)
+            if vendor_info and 'date ' in vendor_info:
+                date_patterns = vendor_info['date ']
+            else:
+                date_patterns = self._DATE_PATTERNS
+
+            for pattern in date_patterns:
+                dates = re.findall(pattern, text)
                 for date_text in dates:
                     parsed_date = dateparser.parse(date_text)
                     if parsed_date and start_date <= parsed_date <= end_date:
                         formatted_date = parsed_date.strftime('%Y-%m-%d')
                         pdf.date = formatted_date
                         return pattern
+
             pdf.date = self._FALL_BACK_DATE
             return None
+        except FileNotFoundError as ex:
+            raise FileNotFoundError(f"File not found while extracting PDF data: {pdf.pdf_path}") from ex
 
-    def extract_vendor(self, pdf):
-        pass
+
+class PDFOCRProcessor(PDFProcessor):
+
+    def extract_total(self, pdf):
+
+        try:
+            images = pdf2image.convert_from_path(pdf.pdf_path, poppler_path=poppler_path)
+
+            for image in images:
+                ocr_text = pytesseract.image_to_string(image)
+                for pattern in self._TOTAL_PATTERNS:
+                    match = re.search(pattern, ocr_text, re.IGNORECASE)
+                    if match:
+                        extracted_value = match.group(1).replace(',', '')
+                        try:
+                            pdf.total = float(extracted_value)
+                            return pattern
+                        except ValueError as ex:
+                            raise ValueError(f"Invalid data encountered, unable to convert '{extracted_value}' to float.") from ex
+
+            pdf.total = self._FALL_BACK_TOTAL
+            return None
+        except FileNotFoundError as ex2:
+            raise FileNotFoundError(f"File not found while extracting PDF data: {pdf.pdf_path}") from ex2
+
+    def extract_date(self, pdf):
+
+        try:
+            start_date = dateparser.parse(self.start_date)
+            end_date = dateparser.parse(self.end_date)
+            images = pdf2image.convert_from_path(pdf.pdf_path, poppler_path=poppler_path)
+
+            for image in images:
+                ocr_text = pytesseract.image_to_string(image)
+                for pattern in self._DATE_PATTERNS:
+                    dates = re.findall(pattern, ocr_text)
+                    for date_text in dates:
+                        parsed_date = dateparser.parse(date_text)
+                        if parsed_date and start_date <= parsed_date <= end_date:
+                            formatted_date = parsed_date.strftime('%Y-%m-%d')
+                            pdf.date = formatted_date
+                            return pattern
+
+            pdf.date = self._FALL_BACK_DATE
+            return None
+        except FileNotFoundError as ex:
+            raise FileNotFoundError(f"File not found while extracting PDF data: {pdf.pdf_path}") from ex
+
