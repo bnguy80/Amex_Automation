@@ -8,7 +8,7 @@ import pandas as pd
 
 class MatchingStrategy(ABC):
 
-    # Static method cannot be overridden by implementations 6/27/2024
+    # Static method can't be overridden by implementations 6/27/2024
     @staticmethod
     def load_data(invoice_row: pd.Series) -> Tuple:
         """
@@ -63,7 +63,7 @@ class ExactAmountAndExcludeDateStrategy(MatchingStrategy):
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
         vendor, total, date, file_name, file_path = self.load_data(invoice_row)
 
-        # Filter potential matches by vendor that match to invoice, ensuring they are not previously matched in the matched_transactions set
+        # Filter potential matches by vendor that match to invoice, ensuring they aren't previously matched in the matched_transactions set
         potential_matches: pd.DataFrame = transaction_details_df[
             (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &  # Matches vendor name, case insensitive
             (~transaction_details_df.index.isin(matched_transactions))  # Excludes transactions already matched

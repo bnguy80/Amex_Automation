@@ -6,9 +6,17 @@ class PDF {
     -- Instance Variables --
     + pdf_name: string
     + file_path: string
-    + total: float
-    + date: date MM-DD-YYYY
+    - total: float
+    - date: datetime.date YYYY-MM-DD
     + vendor: string
+    -- Properties--
+    + date(extracted_date: Union[string, datetime.date]): void
+    + total(extracted_total: Union[string, int, float]): void
+}
+
+class PDFError {
+    -message: string
+    -original_exception: Exception
 }
 
 class PDFCollectionManager {
@@ -186,6 +194,8 @@ class AutomationController {
 }
 
 Workbook *--> "1..*" Worksheet : contains
+
+PDF ..> PDFError : throws
 
 PDFCollectionManager *--> "1..*" PDF : contains
 PDFCollectionManager o..> PDFProcessor : utilize

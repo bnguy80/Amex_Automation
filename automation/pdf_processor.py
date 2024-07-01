@@ -1,5 +1,5 @@
+import datetime
 from abc import abstractmethod, ABC
-from datetime import datetime
 from typing import Union
 
 import pdfplumber
@@ -36,7 +36,7 @@ poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin"  # 
 # os.environ['PATH'] += os.pathsep + pdftotext_path
 
 class PDFProcessor(ABC):
-    # Static fallback patterns for pdfplumber and OCR; DO NOT CHANGE ORDER!
+    # Static fallback patterns for pdfplumber and OCR; DON'T CHANGE ORDER!
     _TOTAL_PATTERNS = [
         r"Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})",
         r"Total amount due(?: \(USD\))?:?\s+\$?\S?(\d[\d,]*\.\d{2})",
@@ -49,7 +49,7 @@ class PDFProcessor(ABC):
         r"Order total\s+\$(\d[\d,]*\.\d{2})"
     ]
 
-    # Static fallback patterns for pdfplumber and OCR; DO NOT CHANGE ORDER!
+    # Static fallback patterns for pdfplumber and OCR; DON'T CHANGE ORDER!
     _DATE_PATTERNS = [
         r'\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}',
         r'\d{1,2}[\/-][A-Za-z]{3}[\/-]\d{2,4}',
@@ -106,7 +106,7 @@ class PDFProcessor(ABC):
             ]
         },
         'calendy': {
-            # Special case, cannot find it via OCR, but still try
+            # Special case can't find it via OCR, but still try
             'date': [
                 r'[A-Za-z]{3}\.?\s\d{1,2},\s\d{4}'
             ],
@@ -114,7 +114,8 @@ class PDFProcessor(ABC):
                 r'Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})'
             ]
         },
-        'cbt': {
+        # CBT
+        'sales@cbtnuggets.com': {
             'date': [
                 r'\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}'
             ],
@@ -213,7 +214,7 @@ class PDFProcessor(ABC):
                 r'Amount Due(?: \(USD\))?:?\s+\$?\S?(\d[\d,]*\.\d{2})'
             ]
         },
-        # Special case where it does not have the correct character mapping so cid:15...etc. is extracted from pdfplumber instead 6/24/2024
+        # Special case where it doesn't have the correct character mapping, so cid:15...etc. is extracted from pdfplumber instead 6/24/2024
         'EBAY': {
             'date': [
                 r'Placed On:\s+([A-Za-z]{3}\.?\s\d{1,2},\s\d{4})'
@@ -244,9 +245,9 @@ class PDFProcessor(ABC):
         }
     }
 
-    _FALL_BACK_TOTAL = float(666.66)  # DO NOT CHANGE 6/16/2024
-    _FALL_BACK_DATE = datetime(1999, 1, 1)  # DO NOT CHANGE 6/16/2024
-    _FALL_BACK_VENDOR = 'Unknown'  # DO NOT CHANGE 6/16/2024
+    _FALL_BACK_TOTAL = float(666.66)  # DON'T CHANGE 6/16/2024
+    _FALL_BACK_DATE = datetime.date(1999, 1, 1)  # DON'T CHANGE 6/16/2024
+    _FALL_BACK_VENDOR = 'Unknown'  # DON'T CHANGE 6/16/2024
 
     def __init__(self, start_date, end_date):
         self.start_date = start_date
@@ -265,8 +266,7 @@ class PDFProcessor(ABC):
         for vendor_identifier, patterns in self._VENDOR_PATTERNS.items():
             if vendor_identifier in pdf_text:
                 return patterns
-            else:
-                return None
+        return None
 
     def get_vendors_from_xlookup_worksheet(self, xlookup_table_worksheet) -> None:
 
@@ -329,16 +329,13 @@ class PDFPlumberProcessor(PDFProcessor):
                 match = re.search(pattern, text, re.IGNORECASE)  # Ignore case sensitivity 6/24/2024
                 if match:
                     extracted_value = match.group(1).replace(',', '')
-                    try:
-                        pdf.total = float(extracted_value)
-                        return pattern  # Return the pattern used for matching
-                    except ValueError as ex:
-                        raise ValueError(f"Invalid data encountered, unable to convert '{extracted_value}' to float.") from ex
-            # No match was found for total
+                    pdf.total = extracted_value
+                    return pattern  # Return the pattern used for matching
+            # No match was found for the total
             pdf.total = self._FALL_BACK_TOTAL
             return None
-        except FileNotFoundError as ex2:
-            raise FileNotFoundError(f"File not found while extracting PDF data: {pdf.pdf_path}") from ex2
+        except FileNotFoundError as ex:
+            raise FileNotFoundError(f"File not found while extracting PDF data: {pdf.pdf_path}") from ex
 
     def extract_date(self, pdf):
 
@@ -360,10 +357,8 @@ class PDFPlumberProcessor(PDFProcessor):
                 for date_text in dates:
                     parsed_date = dateparser.parse(date_text)
                     if parsed_date and start_date <= parsed_date <= end_date:
-                        formatted_date = parsed_date.strftime('%Y-%m-%d')
-                        pdf.date = formatted_date
+                        pdf.date = parsed_date
                         return pattern
-
             pdf.date = self._FALL_BACK_DATE
             return None
         except FileNotFoundError as ex:
@@ -383,16 +378,12 @@ class PDFOCRProcessor(PDFProcessor):
                     match = re.search(pattern, ocr_text, re.IGNORECASE)
                     if match:
                         extracted_value = match.group(1).replace(',', '')
-                        try:
-                            pdf.total = float(extracted_value)
-                            return pattern
-                        except ValueError as ex:
-                            raise ValueError(f"Invalid data encountered, unable to convert '{extracted_value}' to float.") from ex
-
+                        pdf.total = extracted_value
+                        return pattern
             pdf.total = self._FALL_BACK_TOTAL
             return None
-        except FileNotFoundError as ex2:
-            raise FileNotFoundError(f"File not found while extracting PDF data: {pdf.pdf_path}") from ex2
+        except FileNotFoundError as ex:
+            raise FileNotFoundError(f"File not found while extracting PDF data: {pdf.pdf_path}") from ex
 
     def extract_date(self, pdf):
 
@@ -408,12 +399,9 @@ class PDFOCRProcessor(PDFProcessor):
                     for date_text in dates:
                         parsed_date = dateparser.parse(date_text)
                         if parsed_date and start_date <= parsed_date <= end_date:
-                            formatted_date = parsed_date.strftime('%Y-%m-%d')
-                            pdf.date = formatted_date
+                            pdf.date = parsed_date
                             return pattern
-
             pdf.date = self._FALL_BACK_DATE
             return None
         except FileNotFoundError as ex:
             raise FileNotFoundError(f"File not found while extracting PDF data: {pdf.pdf_path}") from ex
-

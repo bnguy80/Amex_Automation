@@ -20,7 +20,7 @@ class Workbook:
 
     def add_worksheet(self, worksheet_name: str) -> None:
         """
-        Add a worksheet to the workbook that hasn't already been added into the worksheets dict.
+        Add a worksheet to the workbook that hasn't already been added into the worksheets' dict.
         """
         if worksheet_name not in self.worksheets:
             sheet = self.workbook.sheets.add(worksheet_name)
@@ -54,7 +54,7 @@ class Workbook:
 
     def save(self, save_path: str = None) -> None:
         """
-        Save to a specific path when specified, or just save at the current location
+        Save to a specific path when specified or just save at the current location
 
         :param save_path: String
         :return: None

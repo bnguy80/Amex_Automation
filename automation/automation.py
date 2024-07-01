@@ -6,6 +6,7 @@ from tqdm import tqdm
 from workbook_manager import TemplateWorkbookManager
 from pdf_collection_manager import PDFCollectionManager
 from invoice_transaction_matcher import invoice_transaction_matcher
+from utils.util_functions import print_dataframe
 
 
 class AutomationController:
@@ -35,7 +36,7 @@ class AutomationController:
         self.macro_parameter_2 = macro_parameter_2
 
     def process_invoices_worksheet(self):
-        # Get initial invoice names and invoice file paths for "Invoices" worksheet of Template workbook
+        # Get initial invoice names and invoice file paths for the "Invoices" worksheet of Template workbook
         self.template_workbook_manager.workbook.call_macro_workbook(self.LIST_INVOICE_NAME_AND_PATH_MACRO_NAME, self.macro_parameter_1, self.macro_parameter_2)
 
         invoice_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
@@ -49,8 +50,6 @@ class AutomationController:
 
         num_updates = len(pdf_collection_df.index)
         progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
-
-        # print(pdf_data.columns)
 
         # Resets the invoice counter
         self.pdm.reset_counter()
@@ -69,18 +68,14 @@ class AutomationController:
 
         # Convert the Invoice worksheet into DataFrame
         invoices_worksheet_df = invoices_worksheet.read_data_as_dataframe()
-        print("Invoices DataFrame Before Matching Process")
-        print(tabulate(invoices_worksheet_df, headers='keys', tablefmt='psql'))
-        print("\n")
+        print_dataframe(invoices_worksheet_df, "Invoices DataFrame Before Matching Process:")
 
         # Convert Transaction Details 2 worksheet into DataFrame
         transaction_details_worksheet_df = transaction_details_worksheet.read_data_as_dataframe()
         # Print the transaction details DataFrame before matching
-        print("Transaction Details 2 DataFrame Before Matching Process:")
-        print(tabulate(transaction_details_worksheet_df, headers='keys', tablefmt='psql'))
-        print("\n")
+        print_dataframe(transaction_details_worksheet_df, "Transaction Details 2 DataFrame Before Matching Process:")
 
-        # Update with 'File path' column to the end if it is not already present.
+        # Update with the 'File path' column to the end if it isn't already present.
         if 'File path' not in transaction_details_worksheet_df.columns:
             transaction_details_worksheet_df['File path'] = ''
 
@@ -92,17 +87,14 @@ class AutomationController:
         # Fallback strategy of matching only by vendor after going through primary strategies
         self.itm.find_matching_transactions()
 
-        # Sequence the 'File name' of invoices that matches were found for, starting at index 8 6/29/2024
+        # Sequence the 'File name' column of invoices that matches were found for transaction_details_df, starting at index 8 6/29/2024
         self.itm.sequence_file_names()
 
         # Drop the 'File path' column from the transaction_details_worksheet_df 6/23/2024
         if 'File path' in transaction_details_worksheet_df.columns:
             transaction_details_worksheet_df = transaction_details_worksheet_df.drop('File path', axis=1)
 
-        print("\n")
-        print("Transaction Details 2 DataFrame After Matching and Duplication Process")
-        print(tabulate(transaction_details_worksheet_df, headers='keys', tablefmt='psql'))
-        print("\n")
+        print_dataframe(transaction_details_worksheet_df, "Transaction Details 2 DataFrame After Matching Sequencing File names:")
 
         num_updates = len(transaction_details_worksheet_df.index)
         progress_bar = tqdm(total=num_updates, desc="Updating Transaction Details 2 Worksheet From Matched Invoices", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
