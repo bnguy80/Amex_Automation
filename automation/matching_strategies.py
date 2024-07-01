@@ -8,6 +8,10 @@ import pandas as pd
 
 class MatchingStrategy(ABC):
 
+    @abstractmethod
+    def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+        pass
+
     # Static method can't be overridden by implementations 6/27/2024
     @staticmethod
     def load_data(invoice_row: pd.Series) -> Tuple:
@@ -24,28 +28,21 @@ class MatchingStrategy(ABC):
 
         return vendor, total, date, file_name, file_path
 
-    @abstractmethod
-    def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
-        pass
-
 
 class ExactMatchStrategy(MatchingStrategy):
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+
         vendor, total, date, file_name, file_path = self.load_data(invoice_row)
 
-        potential_matches: pd.DataFrame = transaction_details_df[
-            (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &
-            (~transaction_details_df.index.isin(matched_transactions))
-            ]
+        found_match: pd.DataFrame = transaction_details_df[
+            (~transaction_details_df.index.isin(matched_transactions)) &  # Excludes transactions already matched
+            (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &  # Flexible, case-insensitive matching
+            (transaction_details_df['Amount'] == total) &
+            (pd.to_datetime(transaction_details_df['Date'], errors='coerce') == date)
+        ]
 
-        # Strategy 1: Exact match on Amount and Date
-        exact_matches: pd.DataFrame = potential_matches[
-            (potential_matches['Amount'] == total) &
-            (pd.to_datetime(potential_matches['Date'], errors='coerce') == date)
-            ]
-
-        if not exact_matches.empty:
-            first_match_index = exact_matches.iloc[0].name
+        if not found_match.empty:
+            first_match_index = found_match.iloc[0].name
             transaction_details_df.at[first_match_index, 'File name'] = file_name
             transaction_details_df.at[first_match_index, 'Column1'] = "Amount & Date Match"
             transaction_details_df.at[first_match_index, 'File path'] = file_path
@@ -61,21 +58,18 @@ class ExactMatchStrategy(MatchingStrategy):
 class ExactAmountAndExcludeDateStrategy(MatchingStrategy):
 
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+
         vendor, total, date, file_name, file_path = self.load_data(invoice_row)
 
         # Filter potential matches by vendor that match to invoice, ensuring they aren't previously matched in the matched_transactions set
-        potential_matches: pd.DataFrame = transaction_details_df[
+        found_match: pd.DataFrame = transaction_details_df[
+            (~transaction_details_df.index.isin(matched_transactions)) &  # Excludes transactions already matched
             (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &  # Matches vendor name, case insensitive
-            (~transaction_details_df.index.isin(matched_transactions))  # Excludes transactions already matched
-            ]
-
-        # Strategy 2: Match on Amount and Excludes Date
-        non_date_matches: pd.DataFrame = potential_matches[
-            (potential_matches['Amount'] == total)  # Matches exact amount
+            (transaction_details_df['Amount'] == total)
         ]
 
-        if not non_date_matches.empty:
-            first_match_index = non_date_matches.iloc[0].name
+        if not found_match.empty:
+            first_match_index = found_match.iloc[0].name
             transaction_details_df.at[first_match_index, 'File name'] = file_name
             transaction_details_df.at[first_match_index, 'Column1'] = 'Amount & Non-Date Match'
             transaction_details_df.at[first_match_index, 'File path'] = file_path
@@ -96,14 +90,13 @@ class CombinationStrategy(MatchingStrategy):
 
         # Filter potential invoice matches by vendor and exact date, excluding those already matched in the matched_transactions set
         potential_matches: pd.DataFrame = transaction_details_df[
-            (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &  # Matches vendor name, case insensitive
             (~transaction_details_df.index.isin(matched_transactions)) &  # Excludes transactions that are already in matched_transactions
+            (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &  # Matches vendor name, case insensitive
             (pd.to_datetime(transaction_details_df['Date'], errors='coerce') == date)  # Matches exact date
-            ]
+        ]
 
         # Find combinations of transactions where the sum equals the invoice amount
-        for r in range(1, min(4,
-                              len(potential_matches) + 1)):  # Limiting to combinations of up to 3 for complexity management
+        for r in range(1, min(4, len(potential_matches) + 1)):  # Limiting to combinations of up to 3 for complexity management
             for combo in combinations(potential_matches.itertuples(index=True), r):
                 if np.isclose(sum(item.Amount for item in combo), total, atol=0.01):
                     # If a valid combination is found, mark all involved transactions
@@ -113,8 +106,7 @@ class CombinationStrategy(MatchingStrategy):
                         transaction_details_df.at[idx, 'Column1'] = 'Combination Amount Match'
                         transaction_details_df.at[idx, 'File path'] = file_path
                         matched_transactions.add(idx)
-                        matched_invoices.add(
-                            invoice_row.name)  # Assuming 'name' is the DataFrame index or unique identifier
+                        matched_invoices.add(invoice_row.name)  # Assuming 'name' is the DataFrame index or unique identifier
 
                         print(f"Match found for Strategy 3 in transactions with ids {[item.Index for item in combo]}!")
                         return True  # Stop after finding the first valid combination
@@ -130,19 +122,14 @@ class VendorOnlyStrategy(MatchingStrategy):
 
         vendor, total, date, file_name, file_path = self.load_data(invoice_row)
 
-        # Filter for potential matches where 'File name' field is empty, indicating they haven't been matched yet
-        potential_matches = transaction_details_df[
-            (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False)) &
-            (transaction_details_df['File name'].isnull()) &
-            (~transaction_details_df.index.isin(matched_transactions))
-            ]
-
-        vendor_only_matches = potential_matches[
-            (potential_matches['Vendor'] == vendor)
+        found_match = transaction_details_df[
+            (~transaction_details_df.index.isin(matched_transactions)) &
+            (transaction_details_df['File name'].isnull()) &  # Filter for potential matches where the 'File name' field is empty, indicating they haven't been matched yet
+            (transaction_details_df['Vendor'].str.contains(vendor, case=False, na=False))  # Matches vendor name, case insensitive
         ]
 
-        if not vendor_only_matches.empty:
-            first_match_index = vendor_only_matches.iloc[0].name
+        if not found_match.empty:
+            first_match_index = found_match.iloc[0].name
             transaction_details_df.at[first_match_index, 'File name'] = file_name
             transaction_details_df.at[first_match_index, 'Column1'] = 'Vendor Only'
             transaction_details_df.at[first_match_index, 'File path'] = file_path

@@ -54,7 +54,7 @@ class Workbook:
 
     def save(self, save_path: str = None) -> None:
         """
-        Save to a specific path when specified or just save at the current location
+        Save to a specific path when specified or save at the current location
 
         :param save_path: String
         :return: None

@@ -53,10 +53,11 @@ abstract PDFProcessor {
     - end_date: string
     - vendors_list: List
     -- Methods --
+    + {abstract} extract_total(pdf: PDF): return pattern
+    + {abstract} extract_date(pdf: PDF): return pattern
     - get_vendor_patterns(pdf_text: string): return patterns
-    + extract_total(pdf: PDF): return pattern
-    + extract_date(pdf: PDF): return pattern
-    + get_vendors_from_xlookup_worksheet(xlookup_table_worksheet: Worksheet): void // populates the vendors_list to be able to find pdf.vendor.
+    + get_vendors_from_xlookup_worksheet(xlookup_table_worksheet: Worksheet): void // populates the vendors_list to be able to extract pdf.vendor.
+    + extract_vendor(pdf: PDF): void
 }
 
 class PDFPlumberProcessor {
@@ -101,7 +102,7 @@ abstract class WorkbookManager {
     + workbook_name: string
     + workbook_path: string
     + workbook : Workbook
-    + select_worksheet_strategy(worksheet_name: String) : UpdateStrategy
+    + {abstract} select_worksheet_strategy(worksheet_name: String) : UpdateStrategy
     + get_worksheet(worksheet_name: String) : Worksheet
 }
 
@@ -114,7 +115,7 @@ class AmexWorkbookManager{
 }
 
 interface UpdateStrategy {
-    + update_worksheet(worksheet : Worksheet, data_df : DataFrame, progress_bar : ProgressBar) : void
+    + {abstract} update_worksheet(worksheet : Worksheet, data_df : DataFrame, progress_bar : ProgressBar) : void
 }
 
 class TransactionDetails2UpdateStrategy{
@@ -133,7 +134,7 @@ class InvoiceTransactionMatcher {
    - transaction_details_df: pd.DataFrame = None
    + matched_transactions: set
    + matched_invoices: set
-   - primary_strategies = List[MatchingStrategy]
+   - primary_strategy = MatchingStrategy
    - fallback_strategy = MatchingStrategy
    -- Methods --
    + set_data(invoice_df: pd.DataFrame, transaction_details_df: pd.DataFrame): void
@@ -144,9 +145,8 @@ class InvoiceTransactionMatcher {
 
 abstract MatchingStrategy {
     -- Methods --
-    - potential_matches(...): List
+    + {abstract} execute(invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: set, matched_invoices: set): boolean
     - load_data(invoice_row: pd.Series): Tuple
-    + execute(invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: set, matched_invoices: set): boolean
 }
 
 class ExactMatchStrategy {
@@ -177,18 +177,17 @@ class AutomationController {
     - LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: string
     -- Instance Variables --
 '    + workbooks_dict: dict<string, Workbook>
-    + pdm: PDFCollectionManager(start_date, end_date)
-    + itm: InvoiceTransactionMatcher()
     + amex_path: string
     + amex_statement: string
-    + start_date: string
-    + end_date: string
+    + template_workbook_path: string
+    + amex_workbook_path: string
     + folder_path_macro: string
     + month_folder_macro: string
+    + pcm: PDFCollectionManager(start_date, end_date)
+    + itm: InvoiceTransactionMatcher()
+    + twm: TemplateWorkbookManager()
+    + awm: AmexWorkbookManager()
     -- Methods --
-    + open_workbook(path: string, workbook_name: string): Workbook  // New method to open a workbook by path
-    + get_workbook(workbook_name: string): workbooks
-    + save_selected_workbook(workbook_name: string, save_path: None): void  // New method to save a specific workbook; if save_path parameter passed saves to different location
     + process_invoices_worksheet(): void // Processes the Invoice Worksheet with data extracted and uploaded into PDFCollectionManager dataframe
     + process_transaction_details_worksheet(): void
 }

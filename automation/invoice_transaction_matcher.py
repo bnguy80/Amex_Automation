@@ -6,14 +6,14 @@ from utils.util_functions import print_dataframe
 
 class InvoiceTransactionMatcher:
 
-    def __init__(self, primary_strategies: list, fallback_strategy):
+    def __init__(self, primary_strategy, fallback_strategy):
         self.invoice_df = None
         self.transaction_details_df = None
         self.matched_transactions = set()  # This set will track matched transactions
         self.matched_invoices = set()  # This set will track matched invoice indexes.
 
         # The strategies used to match invoices and transactions; each invoice will go through each strategy one by one until a match is found 6/20/2024.
-        self.primary_strategies: list = primary_strategies
+        self.primary_strategy = primary_strategy
         # After the pass through of primary strategies to match invoices and transactions; match with a broader approach
         self.fallback_strategy = fallback_strategy
 
@@ -25,15 +25,21 @@ class InvoiceTransactionMatcher:
         # First pass: Iterate over each invoice row and attempt to match using primary strategies
         for index, invoice_row in self.invoice_df.iterrows():
             # Try to find a match using each strategy in sequence
-            for strategy in self.primary_strategies:
-                if strategy.execute(invoice_row, self.transaction_details_df, self.matched_transactions,
-                                    self.matched_invoices):
+            for strategy in self.primary_strategy:
+                if strategy.execute(invoice_row,
+                                    self.transaction_details_df,
+                                    self.matched_transactions,
+                                    self.matched_invoices
+                                    ):
                     break  # If a match is found, break out of the loop and proceed to the next invoice
 
         # Second pass: Apply the fallback strategy only to unmatched invoices and where transaction_details_df "File name" is empty
         for index, invoice_row in self.invoice_df.iterrows():
-            if self.fallback_strategy.execute(invoice_row, self.transaction_details_df, self.matched_transactions,
-                                              self.matched_invoices):
+            if self.fallback_strategy.execute(invoice_row,
+                                              self.transaction_details_df,
+                                              self.matched_transactions,
+                                              self.matched_invoices
+                                              ):
                 continue  # If a match is found, proceed to the next unmatched invoice after finding a match
 
         # After invoices that could've been matched are matched, print unmatched invoices
@@ -48,5 +54,4 @@ class InvoiceTransactionMatcher:
                 i, 'File name'] = f"{8 + i} - {self.transaction_details_df.loc[i, 'File name']}"
 
 
-invoice_transaction_matcher = InvoiceTransactionMatcher(
-    [ExactMatchStrategy(), ExactAmountAndExcludeDateStrategy(), CombinationStrategy()], VendorOnlyStrategy())
+invoice_transaction_matcher = InvoiceTransactionMatcher([ExactMatchStrategy(), ExactAmountAndExcludeDateStrategy(), CombinationStrategy()], VendorOnlyStrategy())

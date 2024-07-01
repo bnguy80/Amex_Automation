@@ -72,7 +72,7 @@ class PDFCollectionManager:
         self.invoice_counter += 1
 
         # Directly invoke processing methods to extract date, total, vendor, for each PDF object
-        # try:\except: block to log pdf that wasn't successful in extracting data 6/28/2024
+        # try:\except: block to log pdf that wasn't successful in extracting data possibly? 6/28/2024
         self._process_pdf_total(pdf)
         self._process_pdf_date(pdf)
         self.text_processor.extract_vendor(pdf)
