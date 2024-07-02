@@ -26,20 +26,12 @@ class InvoiceTransactionMatcher:
         for index, invoice_row in self.invoice_df.iterrows():
             # Try to find a match using each strategy in sequence
             for strategy in self.primary_strategy:
-                if strategy.execute(invoice_row,
-                                    self.transaction_details_df,
-                                    self.matched_transactions,
-                                    self.matched_invoices
-                                    ):
+                if strategy.execute(invoice_row, self.transaction_details_df, self.matched_transactions, self.matched_invoices):
                     break  # If a match is found, break out of the loop and proceed to the next invoice
 
         # Second pass: Apply the fallback strategy only to unmatched invoices and where transaction_details_df "File name" is empty
         for index, invoice_row in self.invoice_df.iterrows():
-            if self.fallback_strategy.execute(invoice_row,
-                                              self.transaction_details_df,
-                                              self.matched_transactions,
-                                              self.matched_invoices
-                                              ):
+            if self.fallback_strategy.execute(invoice_row, self.transaction_details_df, self.matched_transactions, self.matched_invoices):
                 continue  # If a match is found, proceed to the next unmatched invoice after finding a match
 
         # After invoices that could've been matched are matched, print unmatched invoices
@@ -50,8 +42,7 @@ class InvoiceTransactionMatcher:
     def sequence_file_names(self):
         # Sequence file names starting from index 8 across the transaction_details_df
         for i in range(len(self.transaction_details_df)):
-            self.transaction_details_df.at[
-                i, 'File name'] = f"{8 + i} - {self.transaction_details_df.loc[i, 'File name']}"
+            self.transaction_details_df.at[i, 'File name'] = f"{8 + i} - {self.transaction_details_df.loc[i, 'File name']}"
 
 
 invoice_transaction_matcher = InvoiceTransactionMatcher([ExactMatchStrategy(), ExactAmountAndExcludeDateStrategy(), CombinationStrategy()], VendorOnlyStrategy())

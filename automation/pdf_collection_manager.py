@@ -35,33 +35,46 @@ class PDFCollectionManager:
     def reset_counter(self):
         self.invoice_counter = 0
 
+    @staticmethod
+    def _display_processor_used(pattern, data_type, processor_type):
+        if pattern:
+            print(f'Pattern Used to Find {data_type} ({processor_type}): {pattern}')
+        else:
+            print(f'{data_type} could not be found')
+
     def _select_processor_and_extract_total(self, pdf):
         # try:/except: block, use pdfplumber first then except to use ocr 6/28/2024
         pattern_used_pdf = self.text_processor.extract_total(pdf)
         if pdf.total == 666.66:
             pattern_used_ocr = self.ocr_processor.extract_total(pdf)
-
-            # Print the pattern used, if any
-            if pattern_used_ocr:
-                print(f"Pattern Used to Find Amount (OCR): {pattern_used_ocr}")
-            else:
-                print("Amount not found in PDF or OCR.")
+            self._display_processor_used(pattern_used_ocr, 'Amount', 'OCR')
         elif pattern_used_pdf:
-            print(f"Pattern Used to Find Amount (PDF): {pattern_used_pdf}")
+            self._display_processor_used(pattern_used_pdf, 'Amount', 'PDF')
+
+        #     # Print the pattern used, if any
+        #     if pattern_used_ocr:
+        #         print(f"Pattern Used to Find Amount (OCR): {pattern_used_ocr}")
+        #     else:
+        #         print("Amount not found in PDF or OCR.")
+        # elif pattern_used_pdf:
+        #     print(f"Pattern Used to Find Amount (PDF): {pattern_used_pdf}")
 
     def _select_processor_and_extract_date(self, pdf):
         # try:\except: block, use pdfplumber first then except to use ocr 6/28/2024
         pattern_used_pdf = self.text_processor.extract_date(pdf)
         if pdf.date == datetime(1999, 1, 1).strftime('%Y-%m-%d'):
             pattern_used_ocr = self.ocr_processor.extract_date(pdf)
-
-            # Print the pattern used, if any
-            if pattern_used_ocr:
-                print(f"Pattern Used to Find Date (OCR): {pattern_used_ocr}")
-            else:
-                print("Date not found in PDF or OCR.")
+            self._display_processor_used(pattern_used_ocr, 'Date', 'OCR')
         elif pattern_used_pdf:
-            print(f"Pattern Used to Find Date (PDF): {pattern_used_pdf}")
+            self._display_processor_used(pattern_used_pdf, 'Date', 'PDF')
+
+        #     # Print the pattern used, if any
+        #     if pattern_used_ocr:
+        #         print(f"Pattern Used to Find Date (OCR): {pattern_used_ocr}")
+        #     else:
+        #         print("Date not found in PDF or OCR.")
+        # elif pattern_used_pdf:
+        #     print(f"Pattern Used to Find Date (PDF): {pattern_used_pdf}")
 
     def _extract_data_add_invoice_to_collection(self, pdf_path: str, pdf_name: str) -> None:
 
