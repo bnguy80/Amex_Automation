@@ -52,7 +52,7 @@ def process_amex(
     controller = AutomationController(amex_path, amex_statement, amex_start_date, amex_end_date, macro_parameter_1,
                                       macro_parameter_2)
     controller.process_invoices_worksheet()
-    controller.process_transaction_details_worksheet()
+    controller.process_transaction_details_2_worksheet()
 
 
 @app.command(help="Placeholder for a second process. Define functionality here.")

@@ -34,8 +34,8 @@ class PDFCollectionManager {
     + remove_all_pdf(): void
     + get_pdf_collection_dataframe(): pdfs_dataframe: DataFrame
     + reset_counter(pdf: PDF): void
-    - process_total(pdf: PDF): void // Calls the total extraction methods in the correct sequence
-    - process_pdf_date(): void // Calls the date extraction methods in correct sequence
+    - select_processor_and_extract_total(pdf: PDF): void // Calls the total extraction methods in the correct sequence
+    - select_processor_and_extract_date(): void // Calls the date extraction methods in correct sequence
     - extract_data_add_invoice_to_collection(file_path: string, pdf_name: string): void
     + extract_pdf_data_populate_pdm_df(invoice_worksheet: Worksheet, xlookup_table_worksheet: Worksheet): void
 }
@@ -189,7 +189,7 @@ class AutomationController {
     + awm: AmexWorkbookManager()
     -- Methods --
     + process_invoices_worksheet(): void // Processes the Invoice Worksheet with data extracted and uploaded into PDFCollectionManager dataframe
-    + process_transaction_details_worksheet(): void
+    + process_transaction_details_2_worksheet(): void
 }
 
 Workbook *--> "1..*" Worksheet : contains

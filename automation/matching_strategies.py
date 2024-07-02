@@ -117,6 +117,9 @@ class VendorOnlyStrategy(MatchingStrategy):
 
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
 
+        # Not sure why I need to have this right now for this class, because right now I have this strategy 'continue'
+        # in InvoiceTransactionManager when a match is found and move on to the next invoice.
+        # But it is using the same invoice again in some cases if I don't include this section 7/1/2024.
         if invoice_row.name in matched_invoices:
             return False  # Skip processing if the invoice has already been matched
 

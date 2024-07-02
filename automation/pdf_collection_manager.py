@@ -35,7 +35,7 @@ class PDFCollectionManager:
     def reset_counter(self):
         self.invoice_counter = 0
 
-    def _process_pdf_total(self, pdf):
+    def _select_processor_and_extract_total(self, pdf):
         # try:/except: block, use pdfplumber first then except to use ocr 6/28/2024
         pattern_used_pdf = self.text_processor.extract_total(pdf)
         if pdf.total == 666.66:
@@ -49,7 +49,7 @@ class PDFCollectionManager:
         elif pattern_used_pdf:
             print(f"Pattern Used to Find Amount (PDF): {pattern_used_pdf}")
 
-    def _process_pdf_date(self, pdf):
+    def _select_processor_and_extract_date(self, pdf):
         # try:\except: block, use pdfplumber first then except to use ocr 6/28/2024
         pattern_used_pdf = self.text_processor.extract_date(pdf)
         if pdf.date == datetime(1999, 1, 1).strftime('%Y-%m-%d'):
@@ -73,8 +73,8 @@ class PDFCollectionManager:
 
         # Directly invoke processing methods to extract date, total, vendor, for each PDF object
         # try:\except: block to log pdf that wasn't successful in extracting data possibly? 6/28/2024
-        self._process_pdf_total(pdf)
-        self._process_pdf_date(pdf)
+        self._select_processor_and_extract_total(pdf)
+        self._select_processor_and_extract_date(pdf)
         self.text_processor.extract_vendor(pdf)
 
         # If it exists, update the existing entry

@@ -1,6 +1,5 @@
 import os
 
-from tabulate import tabulate
 from tqdm import tqdm
 
 from workbook_manager import TemplateWorkbookManager
@@ -58,7 +57,7 @@ class AutomationController:
         # Save the changes
         self.twm.workbook.save()
 
-    def process_transaction_details_worksheet(self) -> None:
+    def process_transaction_details_2_worksheet(self) -> None:
 
         invoices_worksheet = self.twm.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
         transaction_details_worksheet = self.twm.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
@@ -121,4 +120,4 @@ controller = AutomationController(path_computer,
                                   "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
 
 # controller.process_invoices_worksheet()
-controller.process_transaction_details_worksheet()
+controller.process_transaction_details_2_worksheet()
