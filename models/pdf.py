@@ -6,9 +6,9 @@ from utils.custom_exceptions import PDFError
 
 class PDF:
 
-    def __init__(self, pdf_path):
+    def __init__(self, pdf_path, pdf_name):
         self.pdf_path = pdf_path
-        self.pdf_name = None
+        self.pdf_name = pdf_name
         self._total = None
         self._date = None
         self.vendor = None

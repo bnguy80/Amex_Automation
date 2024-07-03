@@ -42,7 +42,7 @@ class InvoiceTransactionMatcher:
     def sequence_file_names(self):
         # Sequence file names starting from index 8 across the transaction_details_df
         for i in range(len(self.transaction_details_df)):
-            self.transaction_details_df.at[i, 'File name'] = f"{8 + i} - {self.transaction_details_df.loc[i, 'File name']}"
+            self.transaction_details_df.at[i, 'File Name'] = f"{8 + i} - {self.transaction_details_df.loc[i, 'File Name']}"
 
 
 invoice_transaction_matcher = InvoiceTransactionMatcher([ExactMatchStrategy(), ExactAmountAndExcludeDateStrategy(), CombinationStrategy()], VendorOnlyStrategy())

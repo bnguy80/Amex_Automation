@@ -19,26 +19,27 @@ class PDFError {
     -original_exception: Exception
 }
 
-class PDFCollectionManager {
-    note top: Manages a collection of PDF objects, facilitating access by name
+class PDFProcessingManager {
+    note top: Manages the processing of pdf data
     -- Class Variables --
-    - invoice_counter: int // Show progress when retrieving invoices
+    - pdf_counter: int // Show progress when retrieving pdfs
     -- Instance Variables --
-    - pdfs_dataframe: pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
+    - pdf_proc_mng_df: pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
     - start_date: string
     - end_date: string
     - text_processor: PDFProcessor
     - ocr_processor: PDFProcessor
     -- Methods --
-    + remove_pdf(pdf_name: string): void
-    + remove_all_pdf(): void
-    + get_pdf_collection_dataframe(): pdfs_dataframe: DataFrame
+    + remove_pdf_proc_mng_df_row(pdf_name: string): void
+    + clear_pdf_proc_mng_df(): void
+    + get_pdf_proc_mng_df(): pdf_proc_mng_df: DataFrame
     + reset_counter(pdf: PDF): void
-    - {static} display_processor_used(pattern, data_type, processor_type): void
+    - add_pdf(pdf: PDF): void
+    - log_pdf_processing_details(self, pdf: PDF, pattern_used_pdf_amount: string, pattern_used_ocr_amount: string, pattern_used_pdf_date: string, pattern_used_ocr_date: string): void
     - select_processor_and_extract_total(pdf: PDF): void // Calls the total extraction methods in the correct sequence
     - select_processor_and_extract_date(): void // Calls the date extraction methods in correct sequence
-    - extract_data_add_invoice_to_collection(file_path: string, pdf_name: string): void
-    + extract_pdf_data_populate_pdm_df(invoice_worksheet: Worksheet, xlookup_table_worksheet: Worksheet): void
+    - proces_pdf(pdf_path: string, pdf_name: string): void
+    + populate_pdf_proc_mng_df(invoice_worksheet: Worksheet, xlookup_table_worksheet: Worksheet): void
 }
 
 abstract PDFProcessor {
@@ -184,12 +185,12 @@ class AutomationController {
     + amex_workbook_path: string
     + folder_path_macro: string
     + month_folder_macro: string
-    + pcm: PDFCollectionManager(start_date, end_date)
+    + pdf_proc_mng: PDFProcessingManager(start_date, end_date)
     + itm: InvoiceTransactionMatcher()
     + twm: TemplateWorkbookManager()
     + awm: AmexWorkbookManager()
     -- Methods --
-    + process_invoices_worksheet(): void // Processes the Invoice Worksheet with data extracted and uploaded into PDFCollectionManager dataframe
+    + process_invoices_worksheet(): void // Processes the Invoice Worksheet with data extracted and uploaded into PDFProcessingManager dataframe
     + process_transaction_details_2_worksheet(): void
 }
 
@@ -197,12 +198,12 @@ Workbook *--> "1..*" Worksheet : contains
 
 PDF ..> PDFError : throws
 
-PDFCollectionManager *--> "1..*" PDF : contains
-PDFCollectionManager o..> PDFProcessor : utilize
+PDFProcessingManager *--> "1..*" PDF : contains
+PDFProcessingManager o..> PDFProcessor : utilize
 
 AutomationController *..> InvoiceTransactionMatcher : depends on
 AutomationController *..> WorkbookManager : depends on
-AutomationController *..> PDFCollectionManager : utilize
+AutomationController *..> PDFProcessingManager : utilize
 
 MatchingStrategy <|-- ExactMatchStrategy : concrete
 MatchingStrategy <|-- ExactAmountAndExcludeDateStrategy : concrete
