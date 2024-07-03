@@ -2,19 +2,19 @@ from datetime import datetime
 import pandas as pd
 
 from models.pdf import PDF
-from pdf_processor import PDFPlumberProcessor, PDFOCRProcessor
+from pdf_processor import PDFPlumberProcessor, PDFOCRProcessor, PDFProcessor
 
 
 class PDFProcessingManager:
     pdf_counter = 0
 
-    def __init__(self, start_date, end_date):
+    def __init__(self, start_date: str, end_date: str):
         # This mirrors the headers present in the Invoices worksheet of Template – Master.xlsm 7/2/2024
-        self.pdf_proc_mng_df = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
+        self.pdf_proc_mng_df: pd.DataFrame = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
         self.start_date: str = start_date
         self.end_date: str = end_date
-        self.text_processor = PDFPlumberProcessor(start_date, end_date)
-        self.ocr_processor = PDFOCRProcessor(start_date, end_date)
+        self.text_processor: PDFProcessor = PDFPlumberProcessor(start_date, end_date)
+        self.ocr_processor: PDFProcessor = PDFOCRProcessor(start_date, end_date)
 
     def remove_pdf_proc_mng_df_row(self, pdf_name: str) -> None:
         # Find the index of rows where 'File Path' matches pdf_path
@@ -29,13 +29,13 @@ class PDFProcessingManager:
     def clear_pdf_proc_mng_df(self) -> None:
         self.pdf_proc_mng_df = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
 
-    def get_pdf_proc_mng_df(self):
+    def get_pdf_proc_mng_df(self) -> pd.DataFrame:
         return self.pdf_proc_mng_df
 
     def reset_counter(self):
         self.pdf_counter = 0
 
-    def _add_pdf(self, pdf):
+    def _add_pdf(self, pdf: PDF) -> None:
         new_row = {
             'File Name': pdf.pdf_name,
             'File Path': pdf.pdf_path,
@@ -65,7 +65,7 @@ class PDFProcessingManager:
 
         print(log_msg)
 
-    def _select_processor_and_extract_total(self, pdf):
+    def _select_processor_and_extract_total(self, pdf: PDF):
         # try:/except: block, use pdfplumber first then except to use ocr 6/28/2024
         pattern_used_pdf = self.text_processor.extract_total(pdf)
         pattern_used_ocr = None
@@ -73,7 +73,7 @@ class PDFProcessingManager:
             pattern_used_ocr = self.ocr_processor.extract_total(pdf)
         return pattern_used_pdf, pattern_used_ocr
 
-    def _select_processor_and_extract_date(self, pdf):
+    def _select_processor_and_extract_date(self, pdf: PDF):
         # try:\except: block, use pdfplumber first then except to use ocr 6/28/2024
         pattern_used_pdf = self.text_processor.extract_date(pdf)
         pattern_used_ocr = None
@@ -84,7 +84,7 @@ class PDFProcessingManager:
     def _process_pdf(self, pdf_path: str, pdf_name: str) -> None:
 
         # Creates a PDF instance and sets the pdf invoice path and name first that is used later for further data extraction 6/15/2024
-        pdf = PDF(pdf_path, pdf_name)
+        pdf: PDF = PDF(pdf_path, pdf_name)
         # Increment the counter
         self.pdf_counter += 1
 
@@ -97,8 +97,8 @@ class PDFProcessingManager:
         self._add_pdf(pdf)
         self._log_pdf_processing_details(pdf, pattern_used_pdf_total, pattern_used_ocr_total, pattern_used_pdf_date, pattern_used_ocr_date)
 
-    def populate_pdf_proc_mng_df(self, invoice_worksheet, xlookup_table_worksheet):
-        invoice_df = invoice_worksheet.read_data_as_dataframe()
+    def populate_pdf_proc_mng_df(self, invoice_worksheet, xlookup_table_worksheet) -> None:
+        invoice_df: pd.DataFrame = invoice_worksheet.read_data_as_dataframe()
 
         # Populate PDFProcessor vendors_list to be able to match for pdf.vendor during data extraction
         self.text_processor.get_vendors_from_xlookup_worksheet(xlookup_table_worksheet)

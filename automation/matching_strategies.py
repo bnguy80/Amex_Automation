@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 from itertools import combinations
-from typing import Tuple
+from typing import Tuple, Hashable, Set
 
 import numpy as np
 import pandas as pd
@@ -9,30 +9,67 @@ import pandas as pd
 class MatchingStrategy(ABC):
 
     @abstractmethod
-    def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: set, matched_invoices: set):
         pass
 
     # Static method can't be overridden by implementations 6/27/2024
     @staticmethod
-    def load_data(invoice_row: pd.Series) -> Tuple:
+    def _load_invoice_data(invoice_row: pd.Series) -> Tuple:
         """
         Load data from the invoice_df row
-        :param invoice_row: pd.Series
+
+        :param invoice_row: Pd.Series
         :return: Tuple(vendor, total, date, file_name, file_path)
         """
-        vendor = invoice_row['Vendor']
-        total = invoice_row['Amount']
-        date = pd.to_datetime(invoice_row['Date'])
-        file_name = invoice_row['File Name']
-        file_path = invoice_row['File Path']
+        vendor: str = invoice_row['Vendor']
+        total: float = invoice_row['Amount']
+        date: pd.Timestamp = pd.to_datetime(invoice_row['Date'])
+        file_name: str = invoice_row['File Name']
+        file_path: str = invoice_row['File Path']
 
         return vendor, total, date, file_name, file_path
 
+    @staticmethod
+    def _add_match(transaction_details_df: pd.DataFrame, found_match_index: int, file_name: str, file_path: str, match_type: str, matched_transactions: Set[int], matched_invoices: Set[int], invoice_row_index: Hashable) -> None:
+        """
+        Update the transaction_details_df with the found match data.
 
-class ExactAmountDateMatchStrategy(MatchingStrategy):
-    def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+        :param transaction_details_df: DataFrame of transaction details.
+        :param found_match_index: Index of the matched transaction.
+        :param file_name: File name of the matched invoice.
+        :param file_path: File path of the matched invoice.
+        :param match_type: Type of the match.
+        :param matched_transactions: Set of matched transactions.
+        :param matched_invoices: Set of matched invoices.
+        :param invoice_row_index: Index of the invoice row.
+        :return: None
+        """
+        transaction_details_df.at[found_match_index, 'File Name'] = file_name
+        transaction_details_df.at[found_match_index, 'Column1'] = match_type
+        transaction_details_df.at[found_match_index, 'File Path'] = file_path
+        matched_transactions.add(found_match_index)
+        matched_invoices.add(invoice_row_index)
 
-        vendor, total, date, file_name, file_path = self.load_data(invoice_row)
+
+class ExactAmountDateStrategy(MatchingStrategy):
+    """
+    This concrete class extends `MatchingStrategy` and implements the `execute` method.
+    The `execute` method defined in this class uses the exact amount and date for matching.
+
+    Methods
+        - `execute()` -> bool: Executes the matching strategy based on the exact amount and date match.
+    """
+    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[int]) -> bool:
+        """
+        Executes the matching strategy based on the exact amount and date match.
+
+        :param invoice_row: A pd.Series representing the invoice row data.
+        :param transaction_details_df: A pd.DataFrame representing the transaction details data.
+        :param matched_transactions: A set containing the indexes of already matched transactions.
+        :param matched_invoices: A set containing the indexes of already matched invoices.
+        :return: A boolean indicating whether a match was found.
+        """
+        vendor, total, date, file_name, file_path = self._load_invoice_data(invoice_row)
 
         found_match: pd.DataFrame = transaction_details_df[
             (~transaction_details_df.index.isin(matched_transactions)) &  # Excludes transactions already matched
@@ -42,24 +79,35 @@ class ExactAmountDateMatchStrategy(MatchingStrategy):
         ]
 
         if not found_match.empty:
-            first_match_index = found_match.iloc[0].name
-            transaction_details_df.at[first_match_index, 'File Name'] = file_name
-            transaction_details_df.at[first_match_index, 'Column1'] = "Amount & Date Match"
-            transaction_details_df.at[first_match_index, 'File Path'] = file_path
-            matched_transactions.add(first_match_index)
-            matched_invoices.add(invoice_row.name)  # Use invoice_row.name if 'name' is the index or unique identifier
+            found_match_index = found_match.iloc[0].name
+            invoice_row_index = invoice_row.name
+            self._add_match(transaction_details_df, found_match_index, file_name, file_path, 'Exact Amount and Date Match', matched_transactions, matched_invoices, invoice_row_index)
 
-            print(f"Match found for Strategy 1 in transaction with id {first_match_index}!")
+            print(f"Match Found For ExactAmountDateStrategy In Transaction With ID {found_match_index}!")
             return True
 
         return False
 
 
 class ExactAmountAndExcludeDateStrategy(MatchingStrategy):
+    """
+    This concrete class extends `MatchingStrategy` and implements the `execute` method.
+    The `execute` method defined in this class uses the exact amount and excludes the date for matching.
 
-    def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+    Methods
+        - `execute()` -> bool:  Executes the matching strategy based on the exact amount and excluding date.
+    """
+    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[int]) -> bool:
+        """
+        Executes the matching strategy based on the exact amount and excluding date.
 
-        vendor, total, date, file_name, file_path = self.load_data(invoice_row)
+        :param invoice_row: A pd.Series representing the invoice row data.
+        :param transaction_details_df: A pd.DataFrame representing the transaction details data.
+        :param matched_transactions: A set containing the indexes of already matched transactions.
+        :param matched_invoices: A set containing the indexes of already matched invoices.
+        :return: A boolean indicating whether a match was found.
+        """
+        vendor, total, date, file_name, file_path = self._load_invoice_data(invoice_row)
 
         # Filter potential matches by vendor that match to invoice, ensuring they aren't previously matched in the matched_transactions set
         found_match: pd.DataFrame = transaction_details_df[
@@ -69,24 +117,37 @@ class ExactAmountAndExcludeDateStrategy(MatchingStrategy):
         ]
 
         if not found_match.empty:
-            first_match_index = found_match.iloc[0].name
-            transaction_details_df.at[first_match_index, 'File Name'] = file_name
-            transaction_details_df.at[first_match_index, 'Column1'] = 'Amount & Non-Date Match'
-            transaction_details_df.at[first_match_index, 'File Path'] = file_path
-            matched_transactions.add(first_match_index)
-            matched_invoices.add(invoice_row.name)  # Use invoice_row.name if 'name' is the index or unique identifier
+            found_match_index = found_match.iloc[0].name
+            invoice_row_index = invoice_row.name
+            self._add_match(transaction_details_df, found_match_index, file_name, file_path, 'Amount and Exclude Date Match', matched_transactions, matched_invoices, invoice_row_index)
 
-            print(f"Match found for Strategy 2 in transaction with id {first_match_index}!")
+            print(f"Match Found For ExactAmountAndExcludeDateStrategy In Transaction With ID {found_match_index}!")
             return True
 
         return False
 
 
-class CombinationStrategy(MatchingStrategy):
+class CombinationTotalStrategy(MatchingStrategy):
+    """
+    This concrete class extends `MatchingStrategy` and implements the `execute` method.
+    The `execute` method defined in this class uses a combination of transactions that,
+    when summed up, matches the amount.
 
-    def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+    Methods
+        - `execute()` -> bool:
+        Executes the matching strategy based on the date and combination of summed amount to match invoice.
+    """
+    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[int]) -> bool:
+        """
+        Executes the matching strategy based on the date and combination of summed amount to match invoice.
 
-        vendor, total, date, file_name, file_path = self.load_data(invoice_row)
+        :param invoice_row: A pd.Series representing the invoice row data.
+        :param transaction_details_df: A pd.DataFrame representing the transaction details data.
+        :param matched_transactions: A set containing the indexes of already matched transactions.
+        :param matched_invoices: A set containing the indexes of already matched invoices.
+        :return: A boolean indicating whether a match was found.
+        """
+        vendor, total, date, file_name, file_path = self._load_invoice_data(invoice_row)
 
         # Filter potential invoice matches by vendor and exact date, excluding those already matched in the matched_transactions set
         potential_matches: pd.DataFrame = transaction_details_df[
@@ -101,29 +162,41 @@ class CombinationStrategy(MatchingStrategy):
                 if np.isclose(sum(item.Amount for item in combo), total, atol=0.01):
                     # If a valid combination is found, mark all involved transactions
                     for item in combo:
-                        idx = item.Index
-                        transaction_details_df.at[idx, 'File Name'] = file_name
-                        transaction_details_df.at[idx, 'Column1'] = 'Combination Amount Match'
-                        transaction_details_df.at[idx, 'File Path'] = file_path
-                        matched_transactions.add(idx)
-                        matched_invoices.add(invoice_row.name)  # Assuming 'name' is the DataFrame index or unique identifier
+                        found_match_index = item.Index
+                        invoice_row_index = invoice_row.name
+                        self._add_match(transaction_details_df, found_match_index, file_name, file_path, 'Combination Total Match', matched_transactions, matched_invoices, invoice_row_index)
 
-                        print(f"Match found for Strategy 3 in transactions with ids {[item.Index for item in combo]}!")
+                        print(f"Match Found For CombinationTotalStrategy In Transactions With IDs {[item.Index for item in combo]}!")
                         return True  # Stop after finding the first valid combination
         return False
 
 
 class VendorOnlyStrategy(MatchingStrategy):
+    """
+    This concrete class extends `MatchingStrategy` and implements the `execute` method.
+    The `execute` method is defined in this class using only the vendor for matching.
 
-    def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
+    Methods
+        - `execute()` -> bool: Executes the matching strategy based only on the vendor.
+    """
+    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[int]) -> bool:
+        """
+        Executes the matching strategy based only on the vendor.
+        If the invoice has already been matched, the method returns False to skip processing.
 
+        :param invoice_row: A pd.Series representing the invoice row data.
+        :param transaction_details_df: A pd.DataFrame representing the transaction details data.
+        :param matched_transactions: A set containing the indexes of already matched transactions.
+        :param matched_invoices: A set containing the indexes of already matched invoices.
+        :return: A boolean indicating whether a match was found.
+        """
         # Not sure why I need to have this right now for this class, because right now I have this strategy 'continue'
         # in InvoiceTransactionManager when a match is found and move on to the next invoice.
         # But it is using the same invoice again in some cases if I don't include this section 7/1/2024.
         if invoice_row.name in matched_invoices:
             return False  # Skip processing if the invoice has already been matched
 
-        vendor, total, date, file_name, file_path = self.load_data(invoice_row)
+        vendor, total, date, file_name, file_path = self._load_invoice_data(invoice_row)
 
         found_match = transaction_details_df[
             (~transaction_details_df.index.isin(matched_transactions)) &
@@ -132,14 +205,11 @@ class VendorOnlyStrategy(MatchingStrategy):
         ]
 
         if not found_match.empty:
-            first_match_index = found_match.iloc[0].name
-            transaction_details_df.at[first_match_index, 'File Name'] = file_name
-            transaction_details_df.at[first_match_index, 'Column1'] = 'Vendor Only'
-            transaction_details_df.at[first_match_index, 'File Path'] = file_path
-            matched_transactions.add(first_match_index)
-            matched_invoices.add(invoice_row.name)
+            found_match_index = found_match.iloc[0].name
+            invoice_row_index = invoice_row.name
+            self._add_match(transaction_details_df, found_match_index, file_name, file_path, 'Vendor Only Match', matched_transactions, matched_invoices, invoice_row_index)
 
-            print(f"Match found for Vendor Only strategy in transaction with id {first_match_index}!")
+            print(f"Match Found For VendorOnlyStrategy In Transaction With ID {found_match_index}!")
             return True
 
         return False

@@ -2,7 +2,7 @@
 'https://plantuml.com/class-diagram
 
 class PDF {
-    note top: Stores extracted data from PDF files
+    Stores extracted data from PDF files
     -- Instance Variables --
     + pdf_name: string
     + file_path: string
@@ -20,7 +20,7 @@ class PDFError {
 }
 
 class PDFProcessingManager {
-    note top: Manages the processing of pdf data
+    Manages the processing of pdf data
     -- Class Variables --
     - pdf_counter: int // Show progress when retrieving pdfs
     -- Instance Variables --
@@ -73,7 +73,7 @@ class PDFOCRProcessor {
 }
 
 class Worksheet {
-    note top: Utilizes xlwings to interact with Excel and pandas for DataFrame operations
+    Utilizes xlwings to interact with Excel and pandas for DataFrame operations
     -- Instance Variables --
     - name: string
     - sheet: xlwings.Sheet // Usage needed to provide access to the underlying excel sheet, dataframe used as intermediary to manipulate data
@@ -86,7 +86,7 @@ class Worksheet {
 }
 
 class Workbook {
-    note top: Manages Worksheets with xlwings
+    Manages Worksheets with xlwings
     -- Instance Variables --
     - worksheets: dict<string, Worksheet>
     + Workbook(workbook_path: string)  // Constructor now takes a path to open or create a workbook
@@ -130,7 +130,7 @@ class InvoiceUpdateStrategy{
 
 
 class InvoiceMatchingManager {
-    note top: Handles the complex data manipulation tasks for AmexAutomationOrchestrator; dependency injection used here
+   Handles the complex data manipulation tasks for AmexAutomationOrchestrator; dependency injection used here
    -- Instance Variables --
    - invoice_df: pd.DataFrame = None
    - transaction_details_df: pd.DataFrame = None
@@ -148,10 +148,11 @@ class InvoiceMatchingManager {
 abstract MatchingStrategy {
     -- Methods --
     + {abstract} execute(invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: set, matched_invoices: set): boolean
-    - load_data(invoice_row: pd.Series): Tuple
+    - {static} load_invoice_data(invoice_row: pd.Series): Tuple
+    - {static} add_match(transaction_details_df: pd.DataFrame, found_match_index: int, file_name: string, file_path: string, match_type: string, matched_transactions: set, matched_invoices: set, invoice_row_index: int): void
 }
 
-class ExactAmountDateMatchStrategy {
+class ExactAmountDateStrategy {
     + execute(...): boolean
 }
 
@@ -159,7 +160,7 @@ class ExactAmountAndExcludeDateStrategy {
     + execute(...): boolean
 }
 
-class CombinationStrategy {
+class CombinationTotalStrategy {
     + execute(...): boolean
 }
 
@@ -168,9 +169,9 @@ class VendorOnlyStrategy {
 }
 
 class AmexAutomationOrchestrator {
-    note: Acts as the facade
-    note: Coordinating workflow between different components (processing invoices and transactions). --> Need to refactor to outside the class SRP 6/21/2024
-    note: Integrating different parts of the system (PDF handling, transaction processing, Excel integration).
+    Acts as the facade
+    Coordinating workflow between different components (processing invoices and transactions). --> Need to refactor to outside the class SRP 6/21/2024
+    Integrating different parts of the system (PDF handling, transaction processing, Excel integration).
     -- Class Variables --
     - XLOOKUP_TABLE_WORKSHEET_NAME: string
     - TEMPLATE_WORKBOOK_NAME: string
@@ -194,23 +195,25 @@ class AmexAutomationOrchestrator {
     + process_transaction_details_2_worksheet(): void
 }
 
+
+
 Workbook *--> "1..*" Worksheet : contains
 
 PDF ..> PDFError : throws
 
 PDFProcessingManager *--> "1..*" PDF : contains
-PDFProcessingManager o..> PDFProcessor : utilize
+PDFProcessingManager *..> PDFProcessor : depends on
 
-AmexAutomationOrchestrator *..> InvoiceMatchingManager : depends on
-AmexAutomationOrchestrator *..> WorkbookManager : depends on
-AmexAutomationOrchestrator *..> PDFProcessingManager : utilize
+AmexAutomationOrchestrator *..> InvoiceMatchingManager : orchestrates
+AmexAutomationOrchestrator *..> WorkbookManager : utilizes
+AmexAutomationOrchestrator *..> PDFProcessingManager : orchestrates
 
-MatchingStrategy <|-- ExactAmountDateMatchStrategy : concrete
+MatchingStrategy <|-- ExactAmountDateStrategy : concrete
 MatchingStrategy <|-- ExactAmountAndExcludeDateStrategy : concrete
-MatchingStrategy <|-- CombinationStrategy : concrete
+MatchingStrategy <|-- CombinationTotalStrategy : concrete
 MatchingStrategy <|-- VendorOnlyStrategy : concrete
 
-InvoiceMatchingManager o..> MatchingStrategy : utilize
+InvoiceMatchingManager *..> MatchingStrategy : depends on
 
 UpdateStrategy <|-- TransactionDetails2UpdateStrategy : concrete
 UpdateStrategy <|-- InvoiceUpdateStrategy : concrete

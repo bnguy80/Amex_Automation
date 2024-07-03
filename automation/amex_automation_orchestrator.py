@@ -112,12 +112,7 @@ path_computer = "C:/Users/brand/IdeaProjects/Amex Automation DATA"
 macro_truth = r"H:\Amex Automation\t3nas\APPS\\"
 macro_computer = r"C:\Users\brand\IdeaProjects\Amex Automation DATA\t3nas\APPS\\"
 
-controller = AmexAutomationOrchestrator(path_computer,
-                                  "Amex Corp Feb'24 - Addisu Turi (IT).xlsx",
-                                  "01/21/2024",
-                                  "2/21/2024",
-                                        macro_computer,
-                                  "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
-
-controller.process_invoices_worksheet()
+# Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
+controller = AmexAutomationOrchestrator(path_computer, "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024", macro_computer, "[02] Feb 2024")
+# controller.process_invoices_worksheet()
 controller.process_transaction_details_2_worksheet()
