@@ -1,4 +1,4 @@
-from matching_strategies import ExactMatchStrategy, ExactAmountAndExcludeDateStrategy, CombinationStrategy, \
+from matching_strategies import ExactAmountDateMatchStrategy, ExactAmountAndExcludeDateStrategy, CombinationStrategy, \
     VendorOnlyStrategy
 
 from utils.util_functions import print_dataframe
@@ -45,4 +45,4 @@ class InvoiceMatchingManager:
             self.transaction_details_df.at[i, 'File Name'] = f"{8 + i} - {self.transaction_details_df.loc[i, 'File Name']}"
 
 
-invoice_matching_manager = InvoiceMatchingManager([ExactMatchStrategy(), ExactAmountAndExcludeDateStrategy(), CombinationStrategy()], VendorOnlyStrategy())
+invoice_matching_manager = InvoiceMatchingManager([ExactAmountDateMatchStrategy(), ExactAmountAndExcludeDateStrategy(), CombinationStrategy()], VendorOnlyStrategy())

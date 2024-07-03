@@ -29,7 +29,7 @@ class MatchingStrategy(ABC):
         return vendor, total, date, file_name, file_path
 
 
-class ExactMatchStrategy(MatchingStrategy):
+class ExactAmountDateMatchStrategy(MatchingStrategy):
     def execute(self, invoice_row, transaction_details_df, matched_transactions, matched_invoices):
 
         vendor, total, date, file_name, file_path = self.load_data(invoice_row)

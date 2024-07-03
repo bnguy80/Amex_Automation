@@ -151,7 +151,7 @@ abstract MatchingStrategy {
     - load_data(invoice_row: pd.Series): Tuple
 }
 
-class ExactMatchStrategy {
+class ExactAmountDateMatchStrategy {
     + execute(...): boolean
 }
 
@@ -205,7 +205,7 @@ AmexAutomationOrchestrator *..> InvoiceMatchingManager : depends on
 AmexAutomationOrchestrator *..> WorkbookManager : depends on
 AmexAutomationOrchestrator *..> PDFProcessingManager : utilize
 
-MatchingStrategy <|-- ExactMatchStrategy : concrete
+MatchingStrategy <|-- ExactAmountDateMatchStrategy : concrete
 MatchingStrategy <|-- ExactAmountAndExcludeDateStrategy : concrete
 MatchingStrategy <|-- CombinationStrategy : concrete
 MatchingStrategy <|-- VendorOnlyStrategy : concrete

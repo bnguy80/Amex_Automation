@@ -21,7 +21,7 @@
 'N2 .. (Use)
 
 left to right direction
-actor Analyst as a
+actor Admin as a
 actor User as u
 
 package AMEX_Automation {
