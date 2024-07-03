@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from models.workbook import Workbook
-from update_strategies import InvoiceUpdateStrategy, TransactionDetails2UpdateStrategy
+from business_logic.update_strategies import InvoiceUpdateStrategy, TransactionDetails2UpdateStrategy
 
 
 class WorkbookManager(ABC):
