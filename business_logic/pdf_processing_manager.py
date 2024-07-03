@@ -2,7 +2,7 @@ from datetime import datetime
 import pandas as pd
 
 from models.pdf import PDF
-from pdf_processor import PDFPlumberProcessor, PDFOCRProcessor, PDFProcessor
+from business_logic.pdf_processor import PDFPlumberProcessor, PDFOCRProcessor, PDFProcessor
 
 
 class PDFProcessingManager:

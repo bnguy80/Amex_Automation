@@ -1,8 +1,7 @@
 import pandas as pd
 from typing import Optional, List, Set
 
-from matching_strategies import ExactAmountDateStrategy, ExactAmountAndExcludeDateStrategy, CombinationTotalStrategy, \
-    VendorOnlyStrategy
+from business_logic.matching_strategies import ExactAmountDateStrategy, ExactAmountAndExcludeDateStrategy, CombinationTotalStrategy, VendorOnlyStrategy
 
 from utils.util_functions import print_dataframe
 
