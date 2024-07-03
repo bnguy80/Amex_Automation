@@ -4,7 +4,7 @@ from matching_strategies import ExactMatchStrategy, ExactAmountAndExcludeDateStr
 from utils.util_functions import print_dataframe
 
 
-class InvoiceTransactionMatcher:
+class InvoiceMatchingManager:
 
     def __init__(self, primary_strategy, fallback_strategy):
         self.invoice_df = None
@@ -21,7 +21,7 @@ class InvoiceTransactionMatcher:
         self.invoice_df = invoice_df
         self.transaction_details_df = transaction_details_df
 
-    def find_matching_transactions(self):
+    def execute_invoice_matching(self):
         # First pass: Iterate over each invoice row and attempt to match using primary strategies
         for index, invoice_row in self.invoice_df.iterrows():
             # Try to find a match using each strategy in sequence
@@ -45,4 +45,4 @@ class InvoiceTransactionMatcher:
             self.transaction_details_df.at[i, 'File Name'] = f"{8 + i} - {self.transaction_details_df.loc[i, 'File Name']}"
 
 
-invoice_transaction_matcher = InvoiceTransactionMatcher([ExactMatchStrategy(), ExactAmountAndExcludeDateStrategy(), CombinationStrategy()], VendorOnlyStrategy())
+invoice_matching_manager = InvoiceMatchingManager([ExactMatchStrategy(), ExactAmountAndExcludeDateStrategy(), CombinationStrategy()], VendorOnlyStrategy())

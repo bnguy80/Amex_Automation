@@ -129,8 +129,8 @@ class InvoiceUpdateStrategy{
 }
 
 
-class InvoiceTransactionMatcher {
-    note top: Handles the complex data manipulation tasks for AutomationController; dependency injection used here
+class InvoiceMatchingManager {
+    note top: Handles the complex data manipulation tasks for AmexAutomationOrchestrator; dependency injection used here
    -- Instance Variables --
    - invoice_df: pd.DataFrame = None
    - transaction_details_df: pd.DataFrame = None
@@ -140,7 +140,7 @@ class InvoiceTransactionMatcher {
    - fallback_strategy = MatchingStrategy
    -- Methods --
    + set_data(invoice_df: pd.DataFrame, transaction_details_df: pd.DataFrame): void
-   + find_matching_transactions(): void
+   + execute_invoice_matching(): void
    + sequence_file_names(): void
    + apply_conditional_formatting_rule(workbook_name: string): void
 }
@@ -167,7 +167,7 @@ class VendorOnlyStrategy {
     + execute(...): boolean
 }
 
-class AutomationController {
+class AmexAutomationOrchestrator {
     note: Acts as the facade
     note: Coordinating workflow between different components (processing invoices and transactions). --> Need to refactor to outside the class SRP 6/21/2024
     note: Integrating different parts of the system (PDF handling, transaction processing, Excel integration).
@@ -186,9 +186,9 @@ class AutomationController {
     + folder_path_macro: string
     + month_folder_macro: string
     + pdf_proc_mng: PDFProcessingManager(start_date, end_date)
-    + itm: InvoiceTransactionMatcher()
-    + twm: TemplateWorkbookManager()
-    + awm: AmexWorkbookManager()
+    + invoice_matching_manager: InvoiceMatchingManager()
+    + template_workbook_manager: TemplateWorkbookManager()
+    + amex_workbook_manager: AmexWorkbookManager()
     -- Methods --
     + process_invoices_worksheet(): void // Processes the Invoice Worksheet with data extracted and uploaded into PDFProcessingManager dataframe
     + process_transaction_details_2_worksheet(): void
@@ -201,16 +201,16 @@ PDF ..> PDFError : throws
 PDFProcessingManager *--> "1..*" PDF : contains
 PDFProcessingManager o..> PDFProcessor : utilize
 
-AutomationController *..> InvoiceTransactionMatcher : depends on
-AutomationController *..> WorkbookManager : depends on
-AutomationController *..> PDFProcessingManager : utilize
+AmexAutomationOrchestrator *..> InvoiceMatchingManager : depends on
+AmexAutomationOrchestrator *..> WorkbookManager : depends on
+AmexAutomationOrchestrator *..> PDFProcessingManager : utilize
 
 MatchingStrategy <|-- ExactMatchStrategy : concrete
 MatchingStrategy <|-- ExactAmountAndExcludeDateStrategy : concrete
 MatchingStrategy <|-- CombinationStrategy : concrete
 MatchingStrategy <|-- VendorOnlyStrategy : concrete
 
-InvoiceTransactionMatcher o..> MatchingStrategy : utilize
+InvoiceMatchingManager o..> MatchingStrategy : utilize
 
 UpdateStrategy <|-- TransactionDetails2UpdateStrategy : concrete
 UpdateStrategy <|-- InvoiceUpdateStrategy : concrete

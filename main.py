@@ -2,7 +2,7 @@ import sys
 import typer
 from typing import Optional
 from rich.console import Console
-from automation.automation import AutomationController
+from automation.amex_automation_orchestrator import AmexAutomationOrchestrator
 
 app = typer.Typer()
 console = Console()
@@ -49,8 +49,8 @@ def process_amex(
         )
 ):
     """Processes the AMEX statement by handling both invoices and transaction details."""
-    controller = AutomationController(amex_path, amex_statement, amex_start_date, amex_end_date, macro_parameter_1,
-                                      macro_parameter_2)
+    controller = AmexAutomationOrchestrator(amex_path, amex_statement, amex_start_date, amex_end_date, macro_parameter_1,
+                                            macro_parameter_2)
     controller.process_invoices_worksheet()
     controller.process_transaction_details_2_worksheet()
 

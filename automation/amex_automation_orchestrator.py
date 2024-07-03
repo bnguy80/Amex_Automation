@@ -4,11 +4,11 @@ from tqdm import tqdm
 
 from workbook_manager import TemplateWorkbookManager
 from pdf_processing_manager import PDFProcessingManager
-from invoice_transaction_matcher import invoice_transaction_matcher
+from invoice_matching_manager import invoice_matching_manager
 from utils.util_functions import print_dataframe
 
 
-class AutomationController:
+class AmexAutomationOrchestrator:
     XLOOKUP_TABLE_WORKSHEET_NAME = "Xlookup table"  # Make sure this is correct, 3/24/24: is correct inside Template - Master.xlsm 6/15/2024
     TEMPLATE_WORKBOOK_NAME = "Template - Master.xlsm"  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
     TEMPLATE_INVOICES_WORKSHEET_NAME = "Invoices"
@@ -27,17 +27,17 @@ class AutomationController:
         # Start date of Amex Statement transactions
         # End date of Amex Statement transactions
         self.pdf_proc_mng = PDFProcessingManager(start_date, end_date)
-        self.itm = invoice_transaction_matcher  # Using a list of strategies to match invoices to transactions. ONLY ONE INSTANCE 6/22/2024.
-        self.twm = TemplateWorkbookManager(self.TEMPLATE_WORKBOOK_NAME, self.template_workbook_path)
-        # self.awm = AmexWorkbookManager(self.amex_statement, self.amex_workbook_path)
+        self.invoice_matching_manager = invoice_matching_manager  # Using a list of strategies to match invoices to transactions. ONLY ONE INSTANCE 6/22/2024.
+        self.template_workbook_manager = TemplateWorkbookManager(self.TEMPLATE_WORKBOOK_NAME, self.template_workbook_path)
+        # self.amex_workbook_manager = AmexWorkbookManager(self.amex_statement, self.amex_workbook_path)
 
     def process_invoices_worksheet(self):
         # Get initial invoice names and invoice file paths for the "Invoices" worksheet of Template workbook
-        self.twm.workbook.call_macro_workbook(self.LIST_INVOICE_NAME_AND_PATH_MACRO_NAME, self.macro_parameter_1, self.macro_parameter_2)
-        invoice_worksheet = self.twm.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
+        self.template_workbook_manager.workbook.call_macro_workbook(self.LIST_INVOICE_NAME_AND_PATH_MACRO_NAME, self.macro_parameter_1, self.macro_parameter_2)
+        invoice_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
 
         # This step is to get the Xlookup table worksheet to be able to get vendors for pdfs
-        xlookup_table_worksheet = self.twm.get_worksheet(self.XLOOKUP_TABLE_WORKSHEET_NAME)
+        xlookup_table_worksheet = self.template_workbook_manager.get_worksheet(self.XLOOKUP_TABLE_WORKSHEET_NAME)
 
         # This step populates the pdf_processing_manager with all the pdf data of the path, name, total, date, vendor 7/2/2024
         self.pdf_proc_mng.populate_pdf_proc_mng_df(invoice_worksheet, xlookup_table_worksheet)
@@ -55,12 +55,12 @@ class AutomationController:
         progress_bar.close()
 
         # Save the changes
-        self.twm.workbook.save()
+        self.template_workbook_manager.workbook.save()
 
     def process_transaction_details_2_worksheet(self) -> None:
 
-        invoices_worksheet = self.twm.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
-        transaction_details_worksheet = self.twm.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
+        invoices_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
+        transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
 
         # Convert the Invoice worksheet into DataFrame
         invoices_worksheet_df = invoices_worksheet.read_data_as_dataframe()
@@ -75,16 +75,16 @@ class AutomationController:
         if 'File Path' not in transaction_details_worksheet_df.columns:
             transaction_details_worksheet_df['File Path'] = ''
 
-        # Sets the preprocessed dataframes to the InvoiceTransactionMatcher class to do further processing 6/19/2024.
-        self.itm.set_data(invoices_worksheet_df, transaction_details_worksheet_df)
+        # Sets the preprocessed dataframes to the InvoiceMatchingManager class to do further processing 6/19/2024.
+        self.invoice_matching_manager.set_data(invoices_worksheet_df, transaction_details_worksheet_df)
 
         # Matches invoice files found in "Invoices" worksheet to "Transaction Details 2" worksheet transactions
         # Works through primary strategies of 1: exact matching between vendor|date|amount 2: match between vendor|amount|non-matching date or 3: target total between subset of transactions that sum to amount of invoice
         # Fallback strategy of matching only by vendor after going through primary strategies
-        self.itm.find_matching_transactions()
+        self.invoice_matching_manager.execute_invoice_matching()
 
         # Sequence the 'File Name' column of invoices that matches were found for transaction_details_df, starting at index 8 6/29/2024
-        self.itm.sequence_file_names()
+        self.invoice_matching_manager.sequence_file_names()
 
         # Drop the 'File path' column from the transaction_details_worksheet_df 6/23/2024
         if 'File Path' in transaction_details_worksheet_df.columns:
@@ -112,11 +112,11 @@ path_computer = "C:/Users/brand/IdeaProjects/Amex Automation DATA"
 macro_truth = r"H:\Amex Automation\t3nas\APPS\\"
 macro_computer = r"C:\Users\brand\IdeaProjects\Amex Automation DATA\t3nas\APPS\\"
 
-controller = AutomationController(path_computer,
+controller = AmexAutomationOrchestrator(path_computer,
                                   "Amex Corp Feb'24 - Addisu Turi (IT).xlsx",
                                   "01/21/2024",
                                   "2/21/2024",
-                                  macro_computer,
+                                        macro_computer,
                                   "[02] Feb 2024")  # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
 
 controller.process_invoices_worksheet()
