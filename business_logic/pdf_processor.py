@@ -256,11 +256,11 @@ class PDFProcessor(ABC):
 
     @abstractmethod
     def extract_total(self, pdf):
-        pass
+        ...
 
     @abstractmethod
     def extract_date(self, pdf):
-        pass
+        ...
 
     def _get_vendor_patterns(self, pdf_text: str) -> Union[dict, None]:
         for vendor_identifier, patterns in self._VENDOR_PATTERNS.items():

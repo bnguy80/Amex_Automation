@@ -10,7 +10,7 @@ class MatchingStrategy(ABC):
 
     @abstractmethod
     def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: set, matched_invoices: set):
-        pass
+        ...
 
     # Static method can't be overridden by implementations 6/27/2024
     @staticmethod
@@ -30,7 +30,7 @@ class MatchingStrategy(ABC):
         return vendor, total, date, file_name, file_path
 
     @staticmethod
-    def _add_match(transaction_details_df: pd.DataFrame, found_match_index: int, file_name: str, file_path: str, match_type: str, matched_transactions: Set[int], matched_invoices: Set[int], invoice_row_index: Hashable) -> None:
+    def _add_match(transaction_details_df: pd.DataFrame, found_match_index: int, file_name: str, file_path: str, match_type: str, matched_transactions: Set[int], matched_invoices: Set[Hashable], invoice_row_index: Hashable) -> None:
         """
         Update the transaction_details_df with the found match data.
 
@@ -59,7 +59,7 @@ class ExactAmountDateStrategy(MatchingStrategy):
     Methods
         - `execute()` -> bool: Executes the matching strategy based on the exact amount and date match.
     """
-    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[int]) -> bool:
+    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[Hashable]) -> bool:
         """
         Executes the matching strategy based on the exact amount and date match.
 
@@ -97,7 +97,7 @@ class ExactAmountAndExcludeDateStrategy(MatchingStrategy):
     Methods
         - `execute()` -> bool:  Executes the matching strategy based on the exact amount and excluding date.
     """
-    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[int]) -> bool:
+    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[Hashable]) -> bool:
         """
         Executes the matching strategy based on the exact amount and excluding date.
 
@@ -137,7 +137,7 @@ class CombinationTotalStrategy(MatchingStrategy):
         - `execute()` -> bool:
         Executes the matching strategy based on the date and combination of summed amount to match invoice.
     """
-    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[int]) -> bool:
+    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[Hashable]) -> bool:
         """
         Executes the matching strategy based on the date and combination of summed amount to match invoice.
 
@@ -179,7 +179,7 @@ class VendorOnlyStrategy(MatchingStrategy):
     Methods
         - `execute()` -> bool: Executes the matching strategy based only on the vendor.
     """
-    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[int]) -> bool:
+    def execute(self, invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: Set[int], matched_invoices: Set[Hashable]) -> bool:
         """
         Executes the matching strategy based only on the vendor.
         If the invoice has already been matched, the method returns False to skip processing.

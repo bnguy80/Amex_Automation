@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import Optional, List, Set
+from typing import Optional, List, Set, Hashable
 
 from business_logic.matching_strategies import ExactAmountDateStrategy, ExactAmountAndExcludeDateStrategy, CombinationTotalStrategy, VendorOnlyStrategy
 
@@ -43,7 +43,7 @@ class InvoiceMatchingManager:
         self.invoice_df: Optional[pd.DataFrame] = None
         self.transaction_details_df: Optional[pd.DataFrame] = None
         self.matched_transactions: Set[int] = set()  # This set will track matched transactions indexes.
-        self.matched_invoices: Set[int] = set()  # This set will track matched invoice indexes.
+        self.matched_invoices: Set[Hashable] = set()  # This set will track matched invoice indexes.
 
         # The strategies used to match invoices and transactions; each invoice will go through each strategy one by one until a match is found 6/20/2024.
         self.primary_strategy: List = primary_strategy

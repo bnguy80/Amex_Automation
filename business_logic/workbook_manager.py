@@ -13,7 +13,7 @@ class WorkbookManager(ABC):
 
     @abstractmethod
     def select_worksheet_strategy(self, worksheet_name: str):
-        pass
+        ...
 
     def get_worksheet(self, worksheet_name: str):
         worksheet = self.workbook.get_worksheet(worksheet_name)
