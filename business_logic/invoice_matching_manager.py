@@ -21,8 +21,7 @@ class InvoiceMatchingManager:
         - `Fallback_strategy`: A strategy used to match unmatched invoices and empty transaction details File Names.
 
     Methods
-        - `__init__(primary_strategy, fallback_strategy)`:
-        Initializes the `InvoiceMatchingManager` instance with the provided primary and fallback strategies.
+        - `__init__(primary_strategy, fallback_strategy)`: Initializes the `InvoiceMatchingManager` instance with the provided primary and fallback strategies.
         - `Set_data(invoice_df, transaction_details_df) -> None`: Sets the invoice and transaction details data.
         - `Execute_invoice_matching()`: Executes the invoice matching process using the primary and fallback strategies.
         - `Sequence_file_names()`: Sequences the File Names starting from index 8 across the transaction details data.

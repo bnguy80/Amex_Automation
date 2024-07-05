@@ -1,20 +1,20 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-class PDF {
+class PDF <<(D, orchid) dataclass>> {
     Stores extracted data from PDF files
     -- Instance Variables --
     + pdf_name: string
     + file_path: string
     - total: float
-    - date: datetime.date YYYY-MM-DD
+    - date: string YYYY-MM-DD
     + vendor: string
     -- Properties--
-    + date(extracted_date: Union[string, datetime.date]): void
     + total(extracted_total: Union[string, int, float]): void
+    + date(extracted_date: Union[string, datetime.date]): void
 }
 
-class PDFError {
+class PDFError <<(X, red) >> {
     -message: string
     -original_exception: Exception
 }
@@ -24,7 +24,7 @@ class PDFProcessingManager {
     -- Class Variables --
     - pdf_counter: int // Show progress when retrieving pdfs
     -- Instance Variables --
-    - pdf_proc_mng_df: pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
+    + pdf_proc_mng_df: pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
     - start_date: string
     - end_date: string
     - text_processor: PDFProcessor
@@ -134,8 +134,9 @@ class InvoiceMatchingManager {
    -- Instance Variables --
    - invoice_df: pd.DataFrame = None
    - transaction_details_df: pd.DataFrame = None
-   + matched_transactions: set
-   + matched_invoices: set
+   + matched_transactions: set[int]
+   + matched_invoices: set[Hashable] // Set of indexes from the DataFrame's rows, indicating which invoices have been matched
+   end note
    - primary_strategy = MatchingStrategy
    - fallback_strategy = MatchingStrategy
    -- Methods --
@@ -147,9 +148,9 @@ class InvoiceMatchingManager {
 
 abstract MatchingStrategy {
     -- Methods --
-    + {abstract} execute(invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: set, matched_invoices: set): boolean
+    + {abstract} execute(invoice_row: pd.Series, transaction_details_df: pd.DataFrame, matched_transactions: set[int], matched_invoices: set[Hashable]): boolean
     - {static} load_invoice_data(invoice_row: pd.Series): Tuple
-    - {static} add_match(transaction_details_df: pd.DataFrame, found_match_index: int, file_name: string, file_path: string, match_type: string, matched_transactions: set, matched_invoices: set, invoice_row_index: int): void
+    - {static} add_match(transaction_details_df: pd.DataFrame, found_match_index: int, file_name: string, file_path: string, match_type: string, matched_transactions: set[int], matched_invoices: set[Hashable], invoice_row_index: int): void
 }
 
 class ExactAmountDateStrategy {
