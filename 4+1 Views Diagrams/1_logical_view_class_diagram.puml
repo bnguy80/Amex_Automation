@@ -173,10 +173,6 @@ class VendorOnlyStrategy {
     + execute(...): boolean
 }
 
-class ProgressTracking {
-
-}
-
 class AmexAutomationOrchestrator {
     Acts as the facade
     Coordinating workflow between different components (processing invoices and transactions). --> Need to refactor to outside the class SRP 6/21/2024
@@ -203,6 +199,16 @@ class AmexAutomationOrchestrator {
     + prepare_template_workbook(): void
     + process_invoices_worksheet(): void // Processes the Invoice Worksheet with data extracted and uploaded into PDFProcessingManager dataframe
     + process_transaction_details_2_worksheet(): void
+    + process_amex_transaction_details_worksheet(): void
+}
+
+class ProgressTrackingMixin {
+    -- Instance Variables --
+    - progress_bar: tqdm
+    -- Methods --
+    + start_progress_tracking(total_steps: int, description: string): void
+    + update_progress(steps: int = 1): void
+    + complete_progress(): void
 }
 
 class MondayBoard <<(D, orchid), dataclass_json>> {
@@ -225,15 +231,16 @@ AmexAutomationOrchestrator *..> InvoiceMatchingManager : orchestrates
 AmexAutomationOrchestrator *..> WorkbookManager : utilizes
 AmexAutomationOrchestrator *..> PDFProcessingManager : orchestrates
 AmexAutomationOrchestrator *..> DataFrameAdapter : orchestrates
-AmexAutomationOrchestrator *..> ProgressTracking : utilizes
 
 MatchingStrategy <|-- ExactAmountDateStrategy : concrete
 MatchingStrategy <|-- ExactAmountAndExcludeDateStrategy : concrete
 MatchingStrategy <|-- CombinationTotalStrategy : concrete
 MatchingStrategy <|-- VendorOnlyStrategy : concrete
 
+InvoiceMatchingManager ..|> ProgressTrackingMixin : utilizes
 InvoiceMatchingManager *..> MatchingStrategy : depends on
 
+UpdateStrategy ..|> ProgressTrackingMixin : utilizes
 UpdateStrategy <|-- TemplateTransactionDetails2UpdateStrategy : concrete
 UpdateStrategy <|-- TemplateInvoiceUpdateStrategy : concrete
 UpdateStrategy <|-- AmexTransactionDetailsUpdateStrategy : concrete

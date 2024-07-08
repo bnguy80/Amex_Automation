@@ -83,7 +83,7 @@ class ExactAmountDateStrategy(MatchingStrategy):
             invoice_row_index = invoice_row.name
             self._add_match(transaction_details_df, found_match_index, file_name, file_path, 'Exact Amount and Date Match', matched_transactions, matched_invoices, invoice_row_index)
 
-            print(f"Match Found For ExactAmountDateStrategy In Transaction With ID {found_match_index}!")
+            # print(f"Match Found For ExactAmountDateStrategy In Transaction With ID {found_match_index}!")
             return True
 
         return False
@@ -121,7 +121,7 @@ class ExactAmountAndExcludeDateStrategy(MatchingStrategy):
             invoice_row_index = invoice_row.name
             self._add_match(transaction_details_df, found_match_index, file_name, file_path, 'Amount and Exclude Date Match', matched_transactions, matched_invoices, invoice_row_index)
 
-            print(f"Match Found For ExactAmountAndExcludeDateStrategy In Transaction With ID {found_match_index}!")
+            # print(f"Match Found For ExactAmountAndExcludeDateStrategy In Transaction With ID {found_match_index}!")
             return True
 
         return False
@@ -166,7 +166,7 @@ class CombinationTotalStrategy(MatchingStrategy):
                         invoice_row_index = invoice_row.name
                         self._add_match(transaction_details_df, found_match_index, file_name, file_path, 'Combination Total Match', matched_transactions, matched_invoices, invoice_row_index)
 
-                        print(f"Match Found For CombinationTotalStrategy In Transactions With IDs {[item.Index for item in combo]}!")
+                        # print(f"Match Found For CombinationTotalStrategy In Transactions With IDs {[item.Index for item in combo]}!")
                         return True  # Stop after finding the first valid combination
         return False
 
@@ -209,7 +209,7 @@ class VendorOnlyStrategy(MatchingStrategy):
             invoice_row_index = invoice_row.name
             self._add_match(transaction_details_df, found_match_index, file_name, file_path, 'Vendor Only Match', matched_transactions, matched_invoices, invoice_row_index)
 
-            print(f"Match Found For VendorOnlyStrategy In Transaction With ID {found_match_index}!")
+            # print(f"Match Found For VendorOnlyStrategy In Transaction With ID {found_match_index}!")
             return True
 
         return False

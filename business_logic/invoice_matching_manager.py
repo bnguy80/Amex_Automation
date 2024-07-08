@@ -3,10 +3,10 @@ from typing import Optional, List, Set, Hashable
 
 from business_logic.matching_strategies import ExactAmountDateStrategy, ExactAmountAndExcludeDateStrategy, CombinationTotalStrategy, VendorOnlyStrategy
 
-from utils.utilities import print_dataframe
+from utils.utilities import print_dataframe, ProgressTrackingMixin
 
 
-class InvoiceMatchingManager:
+class InvoiceMatchingManager(ProgressTrackingMixin):
     """
     The `InvoiceMatchingManager`
     class is responsible for matching invoices with transaction details using different strategies.
@@ -39,6 +39,7 @@ class InvoiceMatchingManager:
     and other classes used within this class, refer to their respective documentation.
     """
     def __init__(self, primary_strategy, fallback_strategy):
+        super().__init__()  # ProgressTracking
         self.invoice_df: Optional[pd.DataFrame] = None
         self.transaction_details_df: Optional[pd.DataFrame] = None
         self.matched_transactions: Set[int] = set()  # This set will track matched transactions indexes.
@@ -58,6 +59,7 @@ class InvoiceMatchingManager:
         :return: None
         """
         self.invoice_df: pd.DataFrame = invoice_df
+        self.start_progress_tracking(total_steps=len(invoice_df.index), description="Matching Invoices")
         self.transaction_details_df: pd.DataFrame = transaction_details_df
 
     def execute_invoice_matching(self) -> None:
@@ -71,11 +73,13 @@ class InvoiceMatchingManager:
             # Try to find a match using each strategy in sequence
             for strategy in self.primary_strategy:
                 if strategy.execute(invoice_row, self.transaction_details_df, self.matched_transactions, self.matched_invoices):
+                    self.update_progress()
                     break  # If a match is found, break out of the loop and proceed to the next invoice
 
         # Second pass: Apply the fallback strategy only to unmatched invoices and where transaction_details_df "File name" is empty
         for _, invoice_row in self.invoice_df.iterrows():
             if self.fallback_strategy.execute(invoice_row, self.transaction_details_df, self.matched_transactions, self.matched_invoices):
+                self.update_progress()
                 continue  # If a match is found, proceed to the next unmatched invoice after finding a match
 
         # After invoices that could've been matched are matched, print unmatched invoices
@@ -83,14 +87,20 @@ class InvoiceMatchingManager:
         if not unmatched_invoices_df.empty:
             print_dataframe(unmatched_invoices_df, "Unmatched Invoices:")
 
+        self.complete_progress()
+
     def sequence_file_names(self) -> None:
         """
         Sequence File Names starting from index 8 across the transaction_details_df.
 
         :return: None
         """
+        self.start_progress_tracking(len(self.transaction_details_df), description="Sequencing File Names in Transaction Details 2 Dataframe:")
         for i in range(len(self.transaction_details_df)):
             self.transaction_details_df.at[i, 'File Name'] = f"{8 + i} - {self.transaction_details_df.loc[i, 'File Name']}"
+            self.update_progress()
+
+        self.complete_progress()
 
 
 invoice_matching_manager = InvoiceMatchingManager([ExactAmountDateStrategy(), ExactAmountAndExcludeDateStrategy(), CombinationTotalStrategy()], VendorOnlyStrategy())

@@ -4,10 +4,13 @@ from typing import Union
 import pandas as pd
 
 from models.worksheet import Worksheet
+from utils.utilities import ProgressTrackingMixin
 
 
-class UpdateStrategy:
+class UpdateStrategy(ABC, ProgressTrackingMixin):
     """The Strategy interface."""
+    def __init__(self):
+        super().__init__()
 
     @abstractmethod
     def update_worksheet(self, worksheet: Worksheet, data: Union[pd.DataFrame, Worksheet]):
@@ -17,8 +20,9 @@ class UpdateStrategy:
 class TemplateInvoiceUpdateStrategy(UpdateStrategy):
 
     def update_worksheet(self, worksheet: Worksheet, data: pd.DataFrame):
-        # Assuming 'data_df' is a DataFrame with columns ['File Name', 'File Path', 'Amount', 'Vendor', 'Date']
+        self.start_progress_tracking(len(data), "Updating Invoices Worksheet:")
 
+        # Assuming 'data_df' is a DataFrame with columns ['File Name', 'File Path', 'Amount', 'Vendor', 'Date']
         # Read the existing data from the worksheet into a DataFrame
         existing_data_df = worksheet.read_data_as_dataframe()
 
@@ -32,15 +36,18 @@ class TemplateInvoiceUpdateStrategy(UpdateStrategy):
                 existing_data_df.loc[mask, 'Amount'] = data_row['Amount']
                 existing_data_df.loc[mask, 'Vendor'] = data_row['Vendor']
                 existing_data_df.loc[mask, 'Date'] = data_row['Date']
+                self.update_progress()
 
         # Write the updated DataFrame back to the Excel sheet
         # This step overwrites the existing data starting from the specified cell range
         worksheet.sheet.range('A7').options(index=False).value = existing_data_df.reset_index(drop=True)
+        self.complete_progress()
 
 
 class TemplateTransactionDetails2UpdateStrategy(UpdateStrategy):
 
     def update_worksheet(self, worksheet: Worksheet, data: pd.DataFrame):
+        self.start_progress_tracking(len(data), "Updating Transaction Details 2 Worksheet:")
 
         start_row = 8  # Headers are in row 7, data starts at row 8
         last_row = start_row + len(data) - 1
@@ -59,14 +66,18 @@ class TemplateTransactionDetails2UpdateStrategy(UpdateStrategy):
             worksheet.sheet.range(f'G{index}').formula = f'=TEXTBEFORE(C{index}," ")'
             # Explanation formula set in column 'H'
             worksheet.sheet.range(f'H{index}').formula = f'=TEXTJOIN("/", TRUE, "Amex", "IT", G{index}, TEXTAFTER(I{index},"- "))'
+            self.update_progress()
+
+        self.complete_progress()
 
 
 class AmexTransactionDetailsUpdateStrategy(UpdateStrategy):
 
     def update_worksheet(self, worksheet: Worksheet, data: Worksheet):
+        self.start_progress_tracking(1, "Updating Amex Transaction Details Worksheet:")
         last_row = data.sheet.range('A' + str(data.sheet.cells.last_cell.row)).end('up').row
         data_range = f'A7:K{last_row}'  # Update column range as necessary
         worksheet_start_row = 'A7'
         data.sheet.range(data_range).copy(worksheet.sheet.range(worksheet_start_row))
-
-
+        self.update_progress()
+        self.complete_progress()

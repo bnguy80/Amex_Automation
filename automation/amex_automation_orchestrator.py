@@ -8,13 +8,13 @@ from utils.utilities import print_dataframe
 
 
 class AmexAutomationOrchestrator:
-    XLOOKUP_TABLE_WORKSHEET_NAME = "Xlookup table"  # Make sure this is correct, 3/24/24: is correct inside Template - Master.xlsm 6/15/2024
-    TEMPLATE_WORKBOOK_NAME = "Template - Master.xlsm"  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
-    TEMPLATE_INVOICES_WORKSHEET_NAME = "Invoices"
-    TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME = "Transaction Details 2"
-    AMEX_TRANSACTION_DETAILS_WORKSHEET_NAME = "Transaction Details"
-    LIST_INVOICE_NAME_AND_PATH_MACRO_NAME = "ListFilesInSpecificFolder"  # Macro name to get invoice pdf file Names and file_paths from the invoices folder 6/15/2024
-    RESIZE_TABLE_MACRO_NAME = "ResizeTable"
+    XLOOKUP_TABLE_WORKSHEET_NAME: str = "Xlookup table"  # Make sure this is correct, 3/24/24: is correct inside Template - Master.xlsm 6/15/2024
+    TEMPLATE_WORKBOOK_NAME: str = "Template - Master.xlsm"  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
+    TEMPLATE_INVOICES_WORKSHEET_NAME: str = "Invoices"
+    TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME: str = "Transaction Details 2"
+    AMEX_TRANSACTION_DETAILS_WORKSHEET_NAME: str = "Transaction Details"
+    LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: str = "ListFilesInSpecificFolder"  # Macro name to get invoice pdf file Names and file_paths from the invoices folder 6/15/2024
+    RESIZE_TABLE_MACRO_NAME: str = "ResizeTable"
 
     def __init__(self, amex_path, amex_statement_name, start_date, end_date, macro_parameter_1=None, macro_parameter_2=None):
 
@@ -36,7 +36,6 @@ class AmexAutomationOrchestrator:
 
         amex_statement = self.amex_workbook_manager.get_worksheet(self.AMEX_TRANSACTION_DETAILS_WORKSHEET_NAME)
         amex_statement_df = amex_statement.read_data_as_dataframe()
-
         # Close the Workbook after getting the data so that there is no confusing with running macros in Template - Master.xlsm 7/7/2024
         self.amex_workbook_manager.workbook.close()
 
@@ -71,14 +70,13 @@ class AmexAutomationOrchestrator:
 
     def process_transaction_details_2_worksheet(self) -> None:
 
-        invoices_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
-        transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
-
         # Convert the Invoice worksheet into DataFrame
+        invoices_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
         invoices_worksheet_df = invoices_worksheet.read_data_as_dataframe()
         print_dataframe(invoices_worksheet_df, "Invoices DataFrame Before Matching Process:")
 
         # Convert Transaction Details 2 worksheet into DataFrame
+        transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
         transaction_details_worksheet_df = transaction_details_worksheet.read_data_as_dataframe()
         # Print the transaction details DataFrame before matching
         print_dataframe(transaction_details_worksheet_df, "Transaction Details 2 DataFrame Before Matching Process:")
@@ -106,7 +104,7 @@ class AmexAutomationOrchestrator:
 
         transaction_details_worksheet.update_sheet(transaction_details_worksheet_df)
 
-    def process_amex_statements_worksheet(self) -> None:
+    def process_amex_transaction_details_worksheet(self) -> None:
         transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
         transaction_details_worksheet_df = transaction_details_worksheet.read_data_as_dataframe()
 
@@ -127,5 +125,5 @@ macro_computer = r"C:\Users\brand\IdeaProjects\Amex Automation DATA\t3nas\APPS\\
 controller = AmexAutomationOrchestrator(path_computer, "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024", macro_computer, "[02] Feb 2024")
 # controller.prepare_template_workbook()
 # controller.process_invoices_worksheet()
-controller.process_transaction_details_2_worksheet()
-# controller.process_amex_statements_worksheet()
+# controller.process_transaction_details_2_worksheet()
+# controller.process_amex_transation_details_worksheet()
