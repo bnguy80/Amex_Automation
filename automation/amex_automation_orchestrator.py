@@ -2,7 +2,7 @@ import os
 
 from tqdm import tqdm
 
-from business_logic.workbook_manager import TemplateWorkbookManager
+from business_logic.workbook_manager import TemplateWorkbookManager, AmexWorkbookManager
 from business_logic.pdf_processing_manager import PDFProcessingManager
 from business_logic.invoice_matching_manager import invoice_matching_manager
 from utils.util_functions import print_dataframe
@@ -14,13 +14,14 @@ class AmexAutomationOrchestrator:
     TEMPLATE_INVOICES_WORKSHEET_NAME = "Invoices"
     TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME = "Transaction Details 2"
     LIST_INVOICE_NAME_AND_PATH_MACRO_NAME = "ListFilesInSpecificFolder"  # Macro name to get invoice pdf file Names and file_paths from the invoices folder 6/15/2024
+    RESIZE_TABLE_MACRO_NAME = "ResizeTable"
 
     def __init__(self, amex_path, amex_statement_name, start_date, end_date, macro_parameter_1=None, macro_parameter_2=None):
 
         self.amex_path = amex_path  # The directory where the AMEX Statement workbook is located 6/16/2024
         self.amex_statement = amex_statement_name  # This is the final workbook that the automation will put the data into; sent to Ana 6/15/2024.
         self.template_workbook_path = os.path.join(self.amex_path, self.TEMPLATE_WORKBOOK_NAME)
-        self.amex_workbook_path = os.path.join(self.amex_path, self.amex_statement)
+        self.amex_workbook_path = str(os.path.join(self.amex_path, self.amex_statement))
         self.macro_parameter_1 = macro_parameter_1
         self.macro_parameter_2 = macro_parameter_2
 
@@ -29,7 +30,28 @@ class AmexAutomationOrchestrator:
         self.pdf_proc_mng = PDFProcessingManager(start_date, end_date)
         self.invoice_matching_manager = invoice_matching_manager  # Using a list of strategies to match invoices to transactions. ONLY ONE INSTANCE 6/22/2024.
         self.template_workbook_manager = TemplateWorkbookManager(self.TEMPLATE_WORKBOOK_NAME, self.template_workbook_path)
-        # self.amex_workbook_manager = AmexWorkbookManager(self.amex_statement, self.amex_workbook_path)
+        self.amex_workbook_manager = AmexWorkbookManager(self.amex_statement, self.amex_workbook_path)
+
+    def prepare_template_workbook(self):
+
+        amex_statement = self.amex_workbook_manager.get_worksheet("Transaction Details")
+        amex_statement_df = amex_statement.read_data_as_dataframe()
+        print_dataframe(amex_statement_df, "Amex Statement Dataframe:")
+
+        invoice_worksheet = self.template_workbook_manager.get_worksheet("Transaction Details 2")
+
+        num_updates = len(amex_statement_df.index)
+        progress_bar = tqdm(total=num_updates, desc="Updating Transaction Details 2 Worksheet from Initial AMEX Workbook", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
+
+        self.pdf_proc_mng.reset_counter()
+
+        # Before updating the worksheet need to clear the contents of the Date, Description, Amount columns from the table first --> VBA macro? 7/7/2024
+
+        invoice_worksheet.update_sheet(amex_statement_df, progress_bar)
+
+        self.template_workbook_manager.workbook.call_macro_workbook(self.RESIZE_TABLE_MACRO_NAME)
+
+        progress_bar.close()
 
     def process_invoices_worksheet(self):
 
@@ -116,4 +138,5 @@ macro_computer = r"C:\Users\brand\IdeaProjects\Amex Automation DATA\t3nas\APPS\\
 # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
 controller = AmexAutomationOrchestrator(path_computer, "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024", macro_computer, "[02] Feb 2024")
 # controller.process_invoices_worksheet()
-controller.process_transaction_details_2_worksheet()
+# controller.process_transaction_details_2_worksheet()
+controller.prepare_template_workbook()

@@ -97,7 +97,7 @@ class Workbook {
     + get_worksheet(worksheet_name: string): worksheets[worksheet_name: string]
     + get_all_worksheets(): worksheets
     + save(save_path: None): void  // Method to save changes to the workbook to same location, but when parameter passed saves to different location
-    + call_macro_workbook(macro_name: string, macro_parameter_1: None, macro_parameter_2: void): void
+    + call_macro_workbook(macro_name: string, macro_parameter_1: string, macro_parameter_2: string): void
 }
 
 abstract class WorkbookManager {
@@ -108,11 +108,11 @@ abstract class WorkbookManager {
     + get_worksheet(worksheet_name: String) : Worksheet
 }
 
-class TemplateWorkbookManager{
+class TemplateWorkbookManager {
     + select_worksheet_strategy(...) : UpdateStrategy
 }
 
-class AmexWorkbookManager{
+class AmexWorkbookManager {
     + select_worksheet_strategy(...) : UpdateStrategy
 }
 
@@ -120,11 +120,15 @@ interface UpdateStrategy {
     + {abstract} update_worksheet(worksheet : Worksheet, data_df : DataFrame, progress_bar : ProgressBar) : void
 }
 
-class TransactionDetails2UpdateStrategy{
+class TransactionDetails2UpdateStrategy {
     + update_worksheet(...) : void
 }
 
-class InvoiceUpdateStrategy{
+class InvoiceUpdateStrategy {
+    + update_worksheet(...) : void
+}
+
+class AmexStatementUpdateStrategy {
     + update_worksheet(...) : void
 }
 
@@ -132,8 +136,8 @@ class InvoiceUpdateStrategy{
 class InvoiceMatchingManager {
    Handles the complex data manipulation tasks for AmexAutomationOrchestrator; dependency injection used here
    -- Instance Variables --
-   - invoice_df: pd.DataFrame = None
-   - transaction_details_df: pd.DataFrame = None
+   - invoice_df: Optional[pd.DataFrame] = None
+   - transaction_details_df: Optional[pd.DataFrame] = None
    + matched_transactions: set[int]
    + matched_invoices: set[Hashable] // Set of indexes from the DataFrame's rows, indicating which invoices have been matched
    end note
@@ -143,7 +147,6 @@ class InvoiceMatchingManager {
    + set_data(invoice_df: pd.DataFrame, transaction_details_df: pd.DataFrame): void
    + execute_invoice_matching(): void
    + sequence_file_names(): void
-   + apply_conditional_formatting_rule(workbook_name: string): void
 }
 
 abstract MatchingStrategy {
@@ -192,10 +195,18 @@ class AmexAutomationOrchestrator {
     + template_workbook_manager: TemplateWorkbookManager()
     + amex_workbook_manager: AmexWorkbookManager()
     -- Methods --
+    + prepare_template_workbook(): void
     + process_invoices_worksheet(): void // Processes the Invoice Worksheet with data extracted and uploaded into PDFProcessingManager dataframe
     + process_transaction_details_2_worksheet(): void
 }
 
+class MondayBoard <<(D, orchid), dataclass_json>> {
+
+}
+
+class DataFrameAdapter {
+
+}
 
 
 Workbook *--> "1..*" Worksheet : contains
@@ -208,6 +219,7 @@ PDFProcessingManager *..> PDFProcessor : depends on
 AmexAutomationOrchestrator *..> InvoiceMatchingManager : orchestrates
 AmexAutomationOrchestrator *..> WorkbookManager : utilizes
 AmexAutomationOrchestrator *..> PDFProcessingManager : orchestrates
+AmexAutomationOrchestrator *..> DataFrameAdapter : orchestrates
 
 MatchingStrategy <|-- ExactAmountDateStrategy : concrete
 MatchingStrategy <|-- ExactAmountAndExcludeDateStrategy : concrete
@@ -218,6 +230,7 @@ InvoiceMatchingManager *..> MatchingStrategy : depends on
 
 UpdateStrategy <|-- TransactionDetails2UpdateStrategy : concrete
 UpdateStrategy <|-- InvoiceUpdateStrategy : concrete
+UpdateStrategy <|-- AmexStatementUpdateStrategy : concrete
 
 Worksheet *..> UpdateStrategy : contain
 
@@ -229,5 +242,7 @@ WorkbookManager ..> UpdateStrategy : sets
 
 PDFProcessor <|-- PDFPlumberProcessor : concrete
 PDFProcessor <|-- PDFOCRProcessor : concrete
+
+DataFrameAdapter *..> MondayBoard : utilizes
 
 @enduml

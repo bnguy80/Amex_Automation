@@ -2,6 +2,8 @@ import xlwings as xw
 
 from models.worksheet import Worksheet
 
+from typing import Optional
+
 
 class Workbook:
 
@@ -64,6 +66,9 @@ class Workbook:
         else:
             self.workbook.save()
 
-    def call_macro_workbook(self, macro_name, macro_parameter_1: None, macro_parameter_2: None):
+    def call_macro_workbook(self, macro_name, macro_parameter_1: Optional[str] = None, macro_parameter_2: Optional[str] = None):
         macro_vba = self.workbook.app.macro(macro_name)
-        macro_vba(macro_parameter_1, macro_parameter_2)
+        if macro_parameter_1 and macro_parameter_2:
+            macro_vba(macro_parameter_1, macro_parameter_2)
+        else:
+            macro_vba()

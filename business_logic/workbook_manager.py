@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from models.workbook import Workbook
-from business_logic.update_strategies import InvoiceUpdateStrategy, TransactionDetails2UpdateStrategy
+from business_logic.update_strategies import InvoiceUpdateStrategy, TransactionDetails2UpdateStrategy, AmexUpdateStrategy
 
 
 class WorkbookManager(ABC):
@@ -38,4 +38,9 @@ class TemplateWorkbookManager(WorkbookManager):
 class AmexWorkbookManager(WorkbookManager):
 
     def select_worksheet_strategy(self, worksheet_name: str):
-        pass
+        if worksheet_name == "Transaction Details":
+            strategy = AmexUpdateStrategy()
+        else:
+            strategy = None
+
+        return strategy

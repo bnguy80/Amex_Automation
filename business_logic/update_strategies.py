@@ -59,3 +59,9 @@ class TransactionDetails2UpdateStrategy(UpdateStrategy):
 
             # Update the progress bar after each row is processed
             progress_bar.update(1)
+
+
+class AmexUpdateStrategy(UpdateStrategy):
+
+    def update_worksheet(self, worksheet, data_df, progress_bar):
+        pass
