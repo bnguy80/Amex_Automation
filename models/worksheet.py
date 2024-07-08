@@ -22,4 +22,4 @@ class Worksheet:
         self.strategy = strategy
 
     def update_sheet(self, data_df, progress_bar) -> None:
-        self.strategy.update_worksheet(self, data_df, progress_bar)
+        self.strategy.update_worksheet(self, data_df)

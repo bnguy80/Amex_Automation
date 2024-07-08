@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from models.workbook import Workbook
-from business_logic.update_strategies import InvoiceUpdateStrategy, TransactionDetails2UpdateStrategy, AmexUpdateStrategy
+from business_logic.update_strategies import TemplateInvoiceUpdateStrategy, TemplateTransactionDetails2UpdateStrategy, AmexTransactionDetailsUpdateStrategy
 
 
 class WorkbookManager(ABC):
@@ -26,9 +26,9 @@ class TemplateWorkbookManager(WorkbookManager):
 
     def select_worksheet_strategy(self, worksheet_name: str):
         if worksheet_name == "Invoices":
-            strategy = InvoiceUpdateStrategy()
+            strategy = TemplateInvoiceUpdateStrategy()
         elif worksheet_name == "Transaction Details 2":
-            strategy = TransactionDetails2UpdateStrategy()
+            strategy = TemplateTransactionDetails2UpdateStrategy()
         else:
             strategy = None
 
@@ -39,7 +39,7 @@ class AmexWorkbookManager(WorkbookManager):
 
     def select_worksheet_strategy(self, worksheet_name: str):
         if worksheet_name == "Transaction Details":
-            strategy = AmexUpdateStrategy()
+            strategy = AmexTransactionDetailsUpdateStrategy()
         else:
             strategy = None
 

@@ -97,6 +97,7 @@ class Workbook {
     + get_worksheet(worksheet_name: string): worksheets[worksheet_name: string]
     + get_all_worksheets(): worksheets
     + save(save_path: None): void  // Method to save changes to the workbook to same location, but when parameter passed saves to different location
+    + close(): void
     + call_macro_workbook(macro_name: string, macro_parameter_1: string, macro_parameter_2: string): void
 }
 
@@ -117,18 +118,18 @@ class AmexWorkbookManager {
 }
 
 interface UpdateStrategy {
-    + {abstract} update_worksheet(worksheet : Worksheet, data_df : DataFrame, progress_bar : ProgressBar) : void
+    + {abstract} update_worksheet(worksheet : Worksheet, data : Union[pd.DataFrame, Worksheet] progress_bar : ProgressBar) : void
 }
 
-class TransactionDetails2UpdateStrategy {
+class TemplateTransactionDetails2UpdateStrategy {
     + update_worksheet(...) : void
 }
 
-class InvoiceUpdateStrategy {
+class TemplateInvoiceUpdateStrategy {
     + update_worksheet(...) : void
 }
 
-class AmexStatementUpdateStrategy {
+class AmexTransactionDetailsUpdateStrategy {
     + update_worksheet(...) : void
 }
 
@@ -170,6 +171,10 @@ class CombinationTotalStrategy {
 
 class VendorOnlyStrategy {
     + execute(...): boolean
+}
+
+class ProgressTracking {
+
 }
 
 class AmexAutomationOrchestrator {
@@ -220,6 +225,7 @@ AmexAutomationOrchestrator *..> InvoiceMatchingManager : orchestrates
 AmexAutomationOrchestrator *..> WorkbookManager : utilizes
 AmexAutomationOrchestrator *..> PDFProcessingManager : orchestrates
 AmexAutomationOrchestrator *..> DataFrameAdapter : orchestrates
+AmexAutomationOrchestrator *..> ProgressTracking : utilizes
 
 MatchingStrategy <|-- ExactAmountDateStrategy : concrete
 MatchingStrategy <|-- ExactAmountAndExcludeDateStrategy : concrete
@@ -228,9 +234,9 @@ MatchingStrategy <|-- VendorOnlyStrategy : concrete
 
 InvoiceMatchingManager *..> MatchingStrategy : depends on
 
-UpdateStrategy <|-- TransactionDetails2UpdateStrategy : concrete
-UpdateStrategy <|-- InvoiceUpdateStrategy : concrete
-UpdateStrategy <|-- AmexStatementUpdateStrategy : concrete
+UpdateStrategy <|-- TemplateTransactionDetails2UpdateStrategy : concrete
+UpdateStrategy <|-- TemplateInvoiceUpdateStrategy : concrete
+UpdateStrategy <|-- AmexTransactionDetailsUpdateStrategy : concrete
 
 Worksheet *..> UpdateStrategy : contain
 

@@ -66,6 +66,9 @@ class Workbook:
         else:
             self.workbook.save()
 
+    def close(self) -> None:
+        self.workbook.close()
+
     def call_macro_workbook(self, macro_name, macro_parameter_1: Optional[str] = None, macro_parameter_2: Optional[str] = None):
         macro_vba = self.workbook.app.macro(macro_name)
         if macro_parameter_1 and macro_parameter_2:
