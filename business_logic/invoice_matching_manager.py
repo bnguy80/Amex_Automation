@@ -3,7 +3,7 @@ from typing import Optional, List, Set, Hashable
 
 from business_logic.matching_strategies import ExactAmountDateStrategy, ExactAmountAndExcludeDateStrategy, CombinationTotalStrategy, VendorOnlyStrategy
 
-from utils.util_functions import print_dataframe
+from utils.utilities import print_dataframe
 
 
 class InvoiceMatchingManager:

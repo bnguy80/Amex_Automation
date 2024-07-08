@@ -21,5 +21,5 @@ class Worksheet:
     def set_strategy(self, strategy):
         self.strategy = strategy
 
-    def update_sheet(self, data_df, progress_bar) -> None:
+    def update_sheet(self, data_df) -> None:
         self.strategy.update_worksheet(self, data_df)

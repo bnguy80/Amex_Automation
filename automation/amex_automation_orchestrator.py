@@ -1,12 +1,10 @@
 import os
 import time
 
-from tqdm import tqdm
-
 from business_logic.workbook_manager import TemplateWorkbookManager, AmexWorkbookManager
 from business_logic.pdf_processing_manager import PDFProcessingManager
 from business_logic.invoice_matching_manager import invoice_matching_manager
-from utils.util_functions import ProgressTracking
+from utils.utilities import print_dataframe
 
 
 class AmexAutomationOrchestrator:
@@ -27,7 +25,6 @@ class AmexAutomationOrchestrator:
         self.macro_parameter_1 = macro_parameter_1
         self.macro_parameter_2 = macro_parameter_2
 
-        self.progress_tracking = ProgressTracking()
         # Start date of Amex Statement transactions
         # End date of Amex Statement transactions
         self.pdf_proc_mng = PDFProcessingManager(start_date, end_date)
@@ -39,7 +36,6 @@ class AmexAutomationOrchestrator:
 
         amex_statement = self.amex_workbook_manager.get_worksheet(self.AMEX_TRANSACTION_DETAILS_WORKSHEET_NAME)
         amex_statement_df = amex_statement.read_data_as_dataframe()
-        print_dataframe(amex_statement_df, "Amex Statement Dataframe:")
 
         # Close the Workbook after getting the data so that there is no confusing with running macros in Template - Master.xlsm 7/7/2024
         self.amex_workbook_manager.workbook.close()
@@ -48,11 +44,7 @@ class AmexAutomationOrchestrator:
         # Before updating the worksheet need to clear the contents of the Date, Description, Amount columns from the table first --> VBA macro? 7/7/2024
 
         transaction_details_worksheet = self.template_workbook_manager.get_worksheet("Transaction Details 2")
-
-        num_updates = len(amex_statement_df.index)
-        # progress_bar = tqdm(total=num_updates, desc="Updating Transaction Details 2 Worksheet from Initial AMEX Workbook", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
-
-        transaction_details_worksheet.update_sheet(amex_statement_df, progress_bar)
+        transaction_details_worksheet.update_sheet(amex_statement_df)
 
         # After updating the worksheet, resize the table 7/7/2024
         self.template_workbook_manager.workbook.call_macro_workbook(self.RESIZE_TABLE_MACRO_NAME)
@@ -69,13 +61,10 @@ class AmexAutomationOrchestrator:
 
         # This step populates the pdf_processing_manager with all the pdf data of the path, name, total, date, vendor 7/2/2024
         self.pdf_proc_mng.populate_pdf_proc_mng_df(invoice_worksheet, xlookup_table_worksheet)
-
         pdf_proc_mng_df = self.pdf_proc_mng.get_pdf_proc_mng_df()
-        num_updates = len(pdf_proc_mng_df.index)
-        # progress_bar = tqdm(total=num_updates, desc="Updating Invoices Worksheet from Extracted PDF Data", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
 
         # Updates the Invoice worksheet from pdf_proc_mng_df with all required data to begin matching between transaction statements in transaction_details_df 7/2/2024
-        invoice_worksheet.update_sheet(pdf_proc_mng_df, progress_bar)
+        invoice_worksheet.update_sheet(pdf_proc_mng_df)
 
         # Save the changes
         self.template_workbook_manager.workbook.save()
@@ -87,12 +76,12 @@ class AmexAutomationOrchestrator:
 
         # Convert the Invoice worksheet into DataFrame
         invoices_worksheet_df = invoices_worksheet.read_data_as_dataframe()
-        self.progress_tracking.print_dataframe(invoices_worksheet_df, "Invoices DataFrame Before Matching Process:")
+        print_dataframe(invoices_worksheet_df, "Invoices DataFrame Before Matching Process:")
 
         # Convert Transaction Details 2 worksheet into DataFrame
         transaction_details_worksheet_df = transaction_details_worksheet.read_data_as_dataframe()
         # Print the transaction details DataFrame before matching
-        self.progress_tracking.print_dataframe(transaction_details_worksheet_df, "Transaction Details 2 DataFrame Before Matching Process:")
+        print_dataframe(transaction_details_worksheet_df, "Transaction Details 2 DataFrame Before Matching Process:")
 
         # Update with the 'File path' column to the end if it isn't already present.
         if 'File Path' not in transaction_details_worksheet_df.columns:
@@ -113,22 +102,16 @@ class AmexAutomationOrchestrator:
         if 'File Path' in transaction_details_worksheet_df.columns:
             transaction_details_worksheet_df = transaction_details_worksheet_df.drop('File Path', axis=1)
 
-        self.progress_tracking.print_dataframe(transaction_details_worksheet_df, "Transaction Details 2 DataFrame After Matching Sequencing File Names:")
+        print_dataframe(transaction_details_worksheet_df, "Transaction Details 2 DataFrame After Matching Sequencing File Names:")
 
-        num_updates = len(transaction_details_worksheet_df.index)
-        # progress_bar = tqdm(total=num_updates, desc="Updating Transaction Details 2 Worksheet From Matched Invoices", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
-
-        transaction_details_worksheet.update_sheet(transaction_details_worksheet_df, progress_bar)
+        transaction_details_worksheet.update_sheet(transaction_details_worksheet_df)
 
     def process_amex_statements_worksheet(self) -> None:
         transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
         transaction_details_worksheet_df = transaction_details_worksheet.read_data_as_dataframe()
 
-        num_updates = len(transaction_details_worksheet_df.index)
-        # progress_bar = tqdm(total=num_updates, desc="Updating Transaction Details Worksheet in AMEX Statement After Automation", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}')
-
         amex_worksheet = self.amex_workbook_manager.get_worksheet(self.AMEX_TRANSACTION_DETAILS_WORKSHEET_NAME)
-        amex_worksheet.update_sheet(transaction_details_worksheet,progress_bar)
+        amex_worksheet.update_sheet(transaction_details_worksheet)
 
 
 # "H:/Amex Automation" Automation Truth--> amex_path
@@ -144,5 +127,5 @@ macro_computer = r"C:\Users\brand\IdeaProjects\Amex Automation DATA\t3nas\APPS\\
 controller = AmexAutomationOrchestrator(path_computer, "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024", macro_computer, "[02] Feb 2024")
 # controller.prepare_template_workbook()
 # controller.process_invoices_worksheet()
-# controller.process_transaction_details_2_worksheet()
-controller.process_amex_statements_worksheet()
+controller.process_transaction_details_2_worksheet()
+# controller.process_amex_statements_worksheet()

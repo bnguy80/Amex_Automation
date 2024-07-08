@@ -118,7 +118,7 @@ class AmexWorkbookManager {
 }
 
 interface UpdateStrategy {
-    + {abstract} update_worksheet(worksheet : Worksheet, data : Union[pd.DataFrame, Worksheet] progress_bar : ProgressBar) : void
+    + {abstract} update_worksheet(worksheet : Worksheet, data : Union[pd.DataFrame, Worksheet]) : void
 }
 
 class TemplateTransactionDetails2UpdateStrategy {
