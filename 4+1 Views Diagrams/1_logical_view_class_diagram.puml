@@ -33,7 +33,7 @@ class PDFProcessingManager {
     + remove_pdf_proc_mng_df_row(pdf_name: string): void
     + clear_pdf_proc_mng_df(): void
     + get_pdf_proc_mng_df(): pdf_proc_mng_df: DataFrame
-    + reset_counter(pdf: PDF): void
+    - reset_counter(pdf: PDF): void
     - add_pdf(pdf: PDF): void
     - log_pdf_processing_details(self, pdf: PDF, pattern_used_pdf_amount: string, pattern_used_ocr_amount: string, pattern_used_pdf_date: string, pattern_used_ocr_date: string): void
     - select_processor_and_extract_total(pdf: PDF): void // Calls the total extraction methods in the correct sequence

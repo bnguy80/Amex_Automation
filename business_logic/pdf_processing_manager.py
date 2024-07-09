@@ -33,7 +33,7 @@ class PDFProcessingManager:
     def get_pdf_proc_mng_df(self) -> pd.DataFrame:
         return self.pdf_proc_mng_df
 
-    def reset_counter(self):
+    def _reset_counter(self):
         self.pdf_counter = 0
 
     def _add_pdf(self, pdf: PDF) -> None:
@@ -107,3 +107,5 @@ class PDFProcessingManager:
         # Creating pdf instances; setting the path, name, total, date, vendor for each one. Then add it into the pdf_collection_dataframe 6/16/2024
         for _, row in invoice_df.iterrows():
             self._process_pdf(row['File Path'], row['File Name'])
+
+        self._reset_counter()
