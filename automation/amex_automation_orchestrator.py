@@ -125,5 +125,5 @@ macro_computer = r"C:\Users\brand\IdeaProjects\Amex Automation DATA\t3nas\APPS\\
 controller = AmexAutomationOrchestrator(path_computer, "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024", macro_computer, "[02] Feb 2024")
 # controller.prepare_template_workbook()
 # controller.process_invoices_worksheet()
-# controller.process_transaction_details_2_worksheet()
+controller.process_transaction_details_2_worksheet()
 # controller.process_amex_transation_details_worksheet()

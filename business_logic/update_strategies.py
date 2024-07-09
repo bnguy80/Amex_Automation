@@ -9,8 +9,8 @@ from utils.utilities import ProgressTrackingMixin
 
 class UpdateStrategy(ABC, ProgressTrackingMixin):
     """The Strategy interface."""
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     @abstractmethod
     def update_worksheet(self, worksheet: Worksheet, data: Union[pd.DataFrame, Worksheet]):

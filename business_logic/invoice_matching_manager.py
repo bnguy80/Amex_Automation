@@ -38,8 +38,8 @@ class InvoiceMatchingManager(ProgressTrackingMixin):
     For more details about the primary_strategy, fallback_strategy,
     and other classes used within this class, refer to their respective documentation.
     """
-    def __init__(self, primary_strategy, fallback_strategy):
-        super().__init__()  # ProgressTracking
+    def __init__(self, primary_strategy, fallback_strategy, **kwargs):
+        super().__init__(**kwargs)  # Making sure that parameters aren't consumed by other classes through inheritance--> MRO 7/8/2024
         self.invoice_df: Optional[pd.DataFrame] = None
         self.transaction_details_df: Optional[pd.DataFrame] = None
         self.matched_transactions: Set[int] = set()  # This set will track matched transactions indexes.

@@ -14,14 +14,16 @@ def print_dataframe(df: pd.DataFrame, message: str):
 
 class ProgressTrackingMixin:
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.progress_bar = None
 
     def start_progress_tracking(self, total_steps: int, description: str = ""):
         if self.progress_bar is None:
-            self.progress_bar = tqdm(total=total_steps, desc=description)
+            self.progress_bar = tqdm(total=total_steps, desc=description, bar_format='{l_bar}{bar}|{r_bar}{bar}')
 
-    def update_progress(self, steps: int = 1):
+    def update_progress(self):
+        steps: int = 1
         if self.progress_bar is not None:
             self.progress_bar.update(steps)
             time.sleep(0.005)
