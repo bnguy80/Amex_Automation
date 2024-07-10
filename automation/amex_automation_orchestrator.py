@@ -48,7 +48,6 @@ class AmexAutomationOrchestrator:
         # After updating the worksheet, resize the table 7/7/2024
         self.template_workbook_manager.workbook.call_macro_workbook(self.RESIZE_TABLE_MACRO_NAME)
 
-
     def process_invoices_worksheet(self):
 
         # Get initial invoice names and invoice file paths for the "Invoices" worksheet of Template workbook
@@ -126,4 +125,4 @@ controller = AmexAutomationOrchestrator(path_computer, "Amex Corp Feb'24 - Addis
 # controller.prepare_template_workbook()
 # controller.process_invoices_worksheet()
 controller.process_transaction_details_2_worksheet()
-# controller.process_amex_transation_details_worksheet()
+# controller.process_amex_transaction_details_worksheet()
