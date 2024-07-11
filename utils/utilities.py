@@ -15,7 +15,7 @@ def print_dataframe(df: pd.DataFrame, message: str):
 class ProgressTrackingMixin:
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(**kwargs)  # type: ignore[call-arg]
         self.progress_bar = None
 
     def start_progress_tracking(self, total_steps: int, description: str = ""):
