@@ -42,7 +42,7 @@ class AmexAutomationOrchestrator:
         # Also keep in mind that the CLOUDFLARE transaction will only show the total before the split between MARKETING (.5098039216) and COMMS (.4901960784) 7/7/2024
         # Before updating the worksheet need to clear the contents of the Date, Description, Amount columns from the table first --> VBA macro? 7/7/2024
 
-        transaction_details_worksheet = self.template_workbook_manager.get_worksheet("Transaction Details 2")
+        transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
         transaction_details_worksheet.update_sheet(amex_statement_df)
 
         # After updating the worksheet, resize the table 7/7/2024

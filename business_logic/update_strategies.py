@@ -75,9 +75,11 @@ class AmexTransactionDetailsUpdateStrategy(UpdateStrategy):
 
     def update_worksheet(self, worksheet: Worksheet, data: Worksheet):
         self.start_progress_tracking(1, "Updating Amex Transaction Details Worksheet:")
-        last_row = data.sheet.range('A' + str(data.sheet.cells.last_cell.row)).end('up').row
-        data_range = f'A7:K{last_row}'  # Update column range as necessary
+        # last_row = data.sheet.range('A' + str(data.sheet.cells.last_cell.row)).end('up').row
         worksheet_start_row = 'A7'
+        data_last_row_index: int = data.sheet.cells.last_cell.row
+        data_range = f'A7:K{data_last_row_index}'  # Update column range as necessary
+        # Copying range from data Worksheet and pasting it in the location starting at 'A7' in worksheet 7/11/2024
         data.sheet.range(data_range).copy(worksheet.sheet.range(worksheet_start_row))
         self.update_progress()
         self.complete_progress()
