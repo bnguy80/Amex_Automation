@@ -33,7 +33,7 @@ class PDFProcessingManager:
     def get_pdf_proc_mng_df(self) -> pd.DataFrame:
         return self.pdf_proc_mng_df
 
-    def _reset_counter(self):
+    def _reset_counter(self) -> None:
         self.pdf_counter = 0
 
     def _add_pdf(self, pdf: PDF) -> None:
@@ -46,7 +46,7 @@ class PDFProcessingManager:
         }
         self.pdf_proc_mng_df = pd.concat([self.pdf_proc_mng_df, pd.DataFrame([new_row])], ignore_index=True)
 
-    def _log_pdf_processing_details(self, pdf, pattern_used_pdf_amount, pattern_used_ocr_amount, pattern_used_pdf_date, pattern_used_ocr_date):
+    def _log_pdf_processing_details(self, pdf, pattern_used_pdf_amount, pattern_used_ocr_amount, pattern_used_pdf_date, pattern_used_ocr_date) -> None:
 
         log_msg = f"Processing PDF {self.pdf_counter}:\n"
         log_msg += f"File Name: {pdf.pdf_name}\n"

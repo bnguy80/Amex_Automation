@@ -14,7 +14,7 @@ class MatchingStrategy(ABC):
 
     # Static method can't be overridden by implementations 6/27/2024
     @staticmethod
-    def _load_invoice_data(invoice_row: pd.Series) -> Tuple:
+    def _load_invoice_data(invoice_row: pd.Series) -> Tuple[str, float, pd.Timestamp, str, str]:
         """
         Load data from the invoice_df row
 
