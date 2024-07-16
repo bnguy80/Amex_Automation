@@ -242,6 +242,16 @@ class PDFProcessor(ABC):
             'total': [
                 r'Total:\s+([0-9,]+\.\d{2})\s+USD'
             ]
+        },
+        # GODADDY, need to use OCR,
+        # will still populate date and total pattern that would have found a match using pdfplumber 7/15/2024
+        'GoDaddy.com': {
+            'date': [
+
+            ],
+            'total': [
+
+            ]
         }
     }
 
