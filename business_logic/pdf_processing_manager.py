@@ -3,19 +3,17 @@ from datetime import datetime
 import pandas as pd
 
 from models.pdf import PDF
-from business_logic.pdf_processor import PDFPlumberProcessor, PDFOCRProcessor, PDFProcessor
+from business_logic.pdf_processor import PDFProcessor
 
 
 class PDFProcessingManager:
     pdf_counter = 0
 
-    def __init__(self, start_date: str, end_date: str):
+    def __init__(self, text_processor: PDFProcessor, ocr_processor: PDFProcessor):
         # This mirrors the headers present in the Invoices worksheet of Template – Master.xlsm 7/2/2024
         self.pdf_proc_mng_df: pd.DataFrame = pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
-        self.start_date: str = start_date
-        self.end_date: str = end_date
-        self.text_processor: PDFProcessor = PDFPlumberProcessor(start_date, end_date)
-        self.ocr_processor: PDFProcessor = PDFOCRProcessor(start_date, end_date)
+        self.text_processor: PDFProcessor = text_processor
+        self.ocr_processor: PDFProcessor = ocr_processor
 
     def remove_pdf_proc_mng_df_row(self, pdf_name: str) -> None:
         # Find the index of rows where 'File Path' matches pdf_path

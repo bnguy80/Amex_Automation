@@ -2,6 +2,7 @@ import os
 import time
 
 from business_logic.workbook_manager import TemplateWorkbookManager, AmexWorkbookManager
+from business_logic.pdf_processor import PDFPlumberProcessor, PDFOCRProcessor, GeneralPattern, VendorSpecificPattern
 from business_logic.pdf_processing_manager import PDFProcessingManager
 from business_logic.invoice_matching_manager import invoice_matching_manager
 from utils.utilities import print_dataframe
@@ -27,10 +28,10 @@ class AmexAutomationOrchestrator:
 
         # Start date of Amex Statement transactions
         # End date of Amex Statement transactions
-        self.pdf_proc_mng = PDFProcessingManager(start_date, end_date)
+        self.pdf_proc_mng = PDFProcessingManager(PDFPlumberProcessor(start_date, end_date, VendorSpecificPattern(), GeneralPattern()),PDFOCRProcessor(start_date, end_date, GeneralPattern()))
         self.invoice_matching_manager = invoice_matching_manager  # Using a list of strategies to match invoices to transactions. ONLY ONE INSTANCE 6/22/2024.
         self.template_workbook_manager = TemplateWorkbookManager(self.TEMPLATE_WORKBOOK_NAME, self.template_workbook_path)
-        self.amex_workbook_manager = AmexWorkbookManager(self.amex_statement, self.amex_workbook_path)
+        # self.amex_workbook_manager = AmexWorkbookManager(self.amex_statement, self.amex_workbook_path)  # When this is not commented and program runs then confusion of macro to run Workbook error 7/21/2024
 
     def prepare_template_workbook(self):
 
@@ -122,7 +123,7 @@ macro_computer = r"C:\Users\brand\IdeaProjects\Amex Automation DATA\t3nas\APPS\\
 
 # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
 controller = AmexAutomationOrchestrator(path_computer, "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024", macro_computer, "[02] Feb 2024")
-# controller.prepare_template_workbook()
-# controller.process_invoices_worksheet()
-controller.process_transaction_details_2_worksheet()
+# controller.prepare_template_workbook() # Working on this 7/21/2024
+controller.process_invoices_worksheet()
+# controller.process_transaction_details_2_worksheet()
 # controller.process_amex_transaction_details_worksheet()

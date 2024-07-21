@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Optional, List, Set, Hashable
 
-from business_logic.matching_strategies import ExactAmountDateStrategy, ExactAmountAndExcludeDateStrategy, CombinationTotalStrategy, VendorOnlyStrategy
+from business_logic.matching_strategies import MatchingStrategy, ExactAmountDateStrategy, ExactAmountAndExcludeDateStrategy, CombinationTotalStrategy, VendorOnlyStrategy
 
 from utils.utilities import print_dataframe, ProgressTrackingMixin
 
@@ -17,18 +17,18 @@ class InvoiceMatchingManager(ProgressTrackingMixin):
         - `transaction_details_df`: A DataFrame representing the transaction details data.
         - `matched_transactions`: A set that tracks the matched transaction indexes.
         - `matched_invoices`: A set that tracks the matched invoice indexes.
-        - `Primary_strategy`: A list containing the primary strategies used to match invoices and transactions.
-        - `Fallback_strategy`: A strategy used to match unmatched invoices and empty transaction details File Names.
+        - `primary_strategies`: A list containing the primary strategies used to match invoices and transactions.
+        - `fallback_strategy`: A strategy used to match unmatched invoices and empty transaction details File Names.
 
     Methods
-        - `__init__(primary_strategy, fallback_strategy)`: Initializes the `InvoiceMatchingManager` instance with the provided primary and fallback strategies.
+        - `__init__(primary_strategies, fallback_strategy, **kwargs)`: Initializes the `InvoiceMatchingManager` instance with the provided primary and fallback strategies.
         - `Set_data(invoice_df, transaction_details_df) -> None`: Sets the invoice and transaction details data.
         - `Execute_invoice_matching()`: Executes the invoice matching process using the primary and fallback strategies.
         - `Sequence_file_names()`: Sequences the File Names starting from index 8 across the transaction details data.
 
     Example usage
     ```
-    manager = InvoiceMatchingManager(primary_strategy, fallback_strategy)
+    manager = InvoiceMatchingManager(primary_strategies, fallback_strategy)
     manager.set_data(invoice_df, transaction_details_df)
     manager.execute_invoice_matching()
     manager.sequence_file_names()
@@ -38,7 +38,7 @@ class InvoiceMatchingManager(ProgressTrackingMixin):
     For more details about the primary_strategy, fallback_strategy,
     and other classes used within this class, refer to their respective documentation.
     """
-    def __init__(self, primary_strategy, fallback_strategy, **kwargs):
+    def __init__(self, primary_strategies: List[MatchingStrategy], fallback_strategy: MatchingStrategy, **kwargs):
         super().__init__(**kwargs)  # Making sure that parameters aren't consumed by other classes through inheritance--> MRO 7/8/2024
         self.invoice_df: Optional[pd.DataFrame] = None
         self.transaction_details_df: Optional[pd.DataFrame] = None
@@ -46,9 +46,9 @@ class InvoiceMatchingManager(ProgressTrackingMixin):
         self.matched_invoices: Set[Hashable] = set()  # This set will track matched invoice indexes.
 
         # The strategies used to match invoices and transactions; each invoice will go through each strategy one by one until a match is found 6/20/2024.
-        self.primary_strategy: List = primary_strategy
+        self.primary_strategy: List[MatchingStrategy] = primary_strategies
         # After the pass through of primary strategies to match invoices and transactions; match with a broader approach
-        self.fallback_strategy = fallback_strategy
+        self.fallback_strategy: MatchingStrategy = fallback_strategy
 
     def set_data(self, invoice_df: pd.DataFrame, transaction_details_df: pd.DataFrame) -> None:
         """

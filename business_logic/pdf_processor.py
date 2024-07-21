@@ -1,6 +1,6 @@
 import datetime
 from abc import abstractmethod, ABC
-from typing import Union
+from typing import Union, List, Protocol
 
 import pdfplumber
 import pdf2image
@@ -35,7 +35,25 @@ poppler_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin"  # 
 # pdftotext_path = "C:/Users/brand/OneDrive/Desktop/poppler-24.02.0/Library/bin/"
 # os.environ['PATH'] += os.pathsep + pdftotext_path
 
-class PDFProcessor(ABC):
+class GeneralPatternProvider(Protocol):
+
+    def get_total_pattern(self) -> List[str]:
+        """Returns a list of generic total patterns"""
+
+    def get_date_pattern(self) -> List[str]:
+        """Returns a list of generic date patterns"""
+
+
+class VendorSpecificPatternProvider(Protocol):
+
+    def get_total_pattern(self, pdf_text: str) -> List[str]:
+        """Returns the vendor-specific total pattern"""
+
+    def get_date_pattern(self, pdf_text: str) -> List[str]:
+        """Returns the vendor-specific date pattern"""
+
+
+class GeneralPattern:
     # Static fallback patterns for pdfplumber and OCR; DON'T CHANGE ORDER!
     _TOTAL_PATTERNS = [
         r"Grand Total(?: \(USD\))?:?\s+\$?(\d[\d,]*\.\d{2})",
@@ -57,6 +75,14 @@ class PDFProcessor(ABC):
         r'[A-Za-z]+ \d{1,2}, \d{4}'
     ]
 
+    def get_total_pattern(self) -> List[str]:
+        return self._TOTAL_PATTERNS
+
+    def get_date_pattern(self) -> List[str]:
+        return self._DATE_PATTERNS
+
+
+class VendorSpecificPattern:
     # Template for vendor-specific patterns to extract total amounts and dates from identified invoice PDFs 6/16/2024.
     _VENDOR_PATTERNS = {
         # Comcast Business Internet
@@ -255,6 +281,21 @@ class PDFProcessor(ABC):
         }
     }
 
+    def get_total_pattern(self, pdf_text: str) -> List[str]:
+        for vendor_identifier, patterns in self._VENDOR_PATTERNS.items():
+            if vendor_identifier in pdf_text:
+                return patterns['total']
+        return []
+
+    def get_date_pattern(self, pdf_text: str) -> List[str]:
+        for vendor_identifier, patterns in self._VENDOR_PATTERNS.items():
+            if vendor_identifier in pdf_text:
+                return patterns['date']
+        return []
+    
+
+class PDFProcessor(ABC):
+
     _FALL_BACK_TOTAL = float(666.66)  # DON'T CHANGE 6/16/2024
     _FALL_BACK_DATE = datetime.date(1999, 1, 1)  # DON'T CHANGE 6/16/2024
     _FALL_BACK_VENDOR = 'Unknown'  # DON'T CHANGE 6/16/2024
@@ -271,12 +312,6 @@ class PDFProcessor(ABC):
     @abstractmethod
     def extract_date(self, pdf):
         ...
-
-    def _get_vendor_patterns(self, pdf_text: str) -> Union[dict, None]:
-        for vendor_identifier, patterns in self._VENDOR_PATTERNS.items():
-            if vendor_identifier in pdf_text:
-                return patterns
-        return None
 
     def get_vendors_from_xlookup_worksheet(self, xlookup_table_worksheet) -> None:
 
@@ -322,17 +357,20 @@ class PDFProcessor(ABC):
 
 class PDFPlumberProcessor(PDFProcessor):
 
+    def __init__(self, start_date, end_date, vendor_specific_pattern: VendorSpecificPatternProvider, general_pattern: GeneralPatternProvider):
+        super().__init__(start_date, end_date)
+        self.vendor_specific_pattern = vendor_specific_pattern
+        self.general_pattern = general_pattern
+
     def extract_total(self, pdf):
 
         try:
             with pdfplumber.open(pdf.pdf_path) as pdf_text:
                 text = ' '.join(page.extract_text() or '' for page in pdf_text.pages)
 
-            vendor_info = self._get_vendor_patterns(text)
-            if vendor_info and 'total ' in vendor_info:
-                total_patterns = vendor_info['total ']
-            else:
-                total_patterns = self._TOTAL_PATTERNS
+            total_patterns = self.vendor_specific_pattern.get_total_pattern(text)
+            if len(total_patterns) == 0:
+                total_patterns = self.general_pattern.get_total_pattern()
 
             # Search for the total using the determined patterns
             for pattern in total_patterns:
@@ -356,11 +394,9 @@ class PDFPlumberProcessor(PDFProcessor):
             with pdfplumber.open(pdf.pdf_path) as pdf_text:
                 text = ' '.join(page.extract_text() or '' for page in pdf_text.pages)
 
-            vendor_info = self._get_vendor_patterns(text)
-            if vendor_info and 'date ' in vendor_info:
-                date_patterns = vendor_info['date ']
-            else:
-                date_patterns = self._DATE_PATTERNS
+            date_patterns = self.vendor_specific_pattern.get_date_pattern(text)
+            if len(date_patterns) == 0:
+                date_patterns = self.general_pattern.get_date_pattern()
 
             for pattern in date_patterns:
                 dates = re.findall(pattern, text)
@@ -377,14 +413,19 @@ class PDFPlumberProcessor(PDFProcessor):
 
 class PDFOCRProcessor(PDFProcessor):
 
+    def __init__(self, start_date, end_date, general_pattern: GeneralPatternProvider):
+        super().__init__(start_date, end_date)
+        self.general_pattern = general_pattern
+
     def extract_total(self, pdf):
 
         try:
+            total_patterns = self.general_pattern.get_total_pattern()
             images = pdf2image.convert_from_path(pdf.pdf_path, poppler_path=poppler_path)
 
             for image in images:
                 ocr_text = pytesseract.image_to_string(image)
-                for pattern in self._TOTAL_PATTERNS:
+                for pattern in total_patterns:
                     match = re.search(pattern, ocr_text, re.IGNORECASE)
                     if match:
                         extracted_value = match.group(1).replace(',', '')
@@ -398,13 +439,14 @@ class PDFOCRProcessor(PDFProcessor):
     def extract_date(self, pdf):
 
         try:
+            date_patterns = self.general_pattern.get_date_pattern()
             start_date = dateparser.parse(self.start_date)
             end_date = dateparser.parse(self.end_date)
             images = pdf2image.convert_from_path(pdf.pdf_path, poppler_path=poppler_path)
 
             for image in images:
                 ocr_text = pytesseract.image_to_string(image)
-                for pattern in self._DATE_PATTERNS:
+                for pattern in date_patterns:
                     dates = re.findall(pattern, ocr_text)
                     for date_text in dates:
                         parsed_date = dateparser.parse(date_text)

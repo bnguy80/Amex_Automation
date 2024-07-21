@@ -14,7 +14,7 @@ class PDF <<(D, orchid) dataclass>> {
     + date(extracted_date: Union[string, datetime.date]): void
 }
 
-class PDFError <<(X, red) >> {
+class PDFError <<(X, red) exception>> {
     -message: string
     -original_exception: Exception
 }
@@ -25,8 +25,6 @@ class PDFProcessingManager {
     - pdf_counter: int // Show progress when retrieving pdfs
     -- Instance Variables --
     + pdf_proc_mng_df: pd.DataFrame(columns=['File Name', 'File Path', 'Amount', 'Vendor', 'Date'])
-    - start_date: string
-    - end_date: string
     - text_processor: PDFProcessor
     - ocr_processor: PDFProcessor
     -- Methods --
@@ -44,9 +42,6 @@ class PDFProcessingManager {
 
 abstract PDFProcessor {
     -- Class Variables --
-    - TOTAL_PATTERNS = List
-    - DATE_PATTERNS = List
-    - VENDOR_PATTERNS = dict
     - FALL_BACK_TOTAL = float
     - FALL_BACK_DATE = datetime
     - FALL_BACK_VENDOR = string
@@ -57,19 +52,50 @@ abstract PDFProcessor {
     -- Methods --
     + {abstract} extract_total(pdf: PDF): return pattern
     + {abstract} extract_date(pdf: PDF): return pattern
-    - get_vendor_patterns(pdf_text: string): return patterns
     + get_vendors_from_xlookup_worksheet(xlookup_table_worksheet: Worksheet): void // populates the vendors_list to be able to extract pdf.vendor.
     + extract_vendor(pdf: PDF): void
 }
 
-class PDFPlumberProcessor {
+class PDFPlumberProcessor extends PDFProcessor{
+    - vendor_specific_patter: VendorSpecificPatternProvider
+    - general_pattern: GeneralPatternProvider
     + extract_total(...): pattern
     + extract_date(...): pattern
 }
 
-class PDFOCRProcessor {
+class PDFOCRProcessor extends PDFProcessor{
+    - general_pattern: GeneralPatternProvider
     + extract_total(...): pattern
     + extract_date(...): pattern
+}
+
+class GeneralPatternProvider <<(P, pink) protocol >> {
+    --Methods--
+    + get_total_pattern(): List[str]
+    + get_date_pattern(): List[str]
+}
+
+class VendorSpecificPatternProvider <<(P, pink) protocol >> {
+    --Methods--
+    + get_total_pattern(pdf_text: str): List[str]
+    + get_date_pattern(pdf_text: str): List[str]
+}
+
+class GeneralPattern implements GeneralPatternProvider {
+    --Class Variables--
+    - TOTAL_PATTERNS = List
+    - DATE_PATTERNS = List
+    --Methods--
+    + get_total_pattern(): List[str]
+    + get_date_pattern(): List[str]
+}
+
+class VendorSpecificPattern implements VendorSpecificPatternProvider {
+    --Class Variables--
+    - VENDOR_PATTERNS = dict
+    --Methods--
+    + get_total_pattern(pdf_text: str): List[str]
+    + get_date_pattern(pdf_text: str): List[str]
 }
 
 class Worksheet {
@@ -78,9 +104,9 @@ class Worksheet {
     - name: string
     - sheet: xlwings.Sheet // Usage needed to provide access to the underlying excel sheet, dataframe used as intermediary to manipulate data
     - worksheet_dataframe: pandas.DataFrame
-    - strategy: Strategy
+    - strategy: Optional[UpdateStrategy]
     -- Methods --
-    + set_strategy(Strategy): void
+    + set_strategy(strategy: UpdateStrategy): void
     + read_data_as_dataframe(): pandas.DataFrame // Reads data from sheet reference to and returns a dataframe of the sheet
     + update_sheet(dataframe: pandas.DataFrame, progress_bar): void // writes manipulated dataframe back into Excel sheet
 }
@@ -101,7 +127,7 @@ class Workbook {
     + call_macro_workbook(macro_name: string, macro_parameter_1: string, macro_parameter_2: string): void
 }
 
-abstract class WorkbookManager {
+abstract WorkbookManager {
     + workbook_name: string
     + workbook_path: string
     + workbook : Workbook
@@ -109,27 +135,27 @@ abstract class WorkbookManager {
     + get_worksheet(worksheet_name: String) : Worksheet
 }
 
-class TemplateWorkbookManager {
+class TemplateWorkbookManager extends WorkbookManager{
     + select_worksheet_strategy(...) : UpdateStrategy
 }
 
-class AmexWorkbookManager {
+class AmexWorkbookManager extends WorkbookManager{
     + select_worksheet_strategy(...) : UpdateStrategy
 }
 
-interface UpdateStrategy {
+abstract UpdateStrategy {
     + {abstract} update_worksheet(worksheet : Worksheet, data : Union[pd.DataFrame, Worksheet]) : void
 }
 
-class TemplateTransactionDetails2UpdateStrategy {
+class TemplateTransactionDetails2UpdateStrategy extends UpdateStrategy{
     + update_worksheet(...) : void
 }
 
-class TemplateInvoiceUpdateStrategy {
+class TemplateInvoiceUpdateStrategy extends UpdateStrategy{
     + update_worksheet(...) : void
 }
 
-class AmexTransactionDetailsUpdateStrategy {
+class AmexTransactionDetailsUpdateStrategy extends UpdateStrategy{
     + update_worksheet(...) : void
 }
 
@@ -142,8 +168,8 @@ class InvoiceMatchingManager {
    + matched_transactions: set[int]
    + matched_invoices: set[Hashable] // Set of indexes from the DataFrame's rows, indicating which invoices have been matched
    end note
-   - primary_strategy = MatchingStrategy
-   - fallback_strategy = MatchingStrategy
+   - primary_strategies: List[MatchingStrategy] = MatchingStrategy
+   - fallback_strategy: MatchingStrategy = MatchingStrategy
    -- Methods --
    + set_data(invoice_df: pd.DataFrame, transaction_details_df: pd.DataFrame): void
    + execute_invoice_matching(): void
@@ -157,19 +183,19 @@ abstract MatchingStrategy {
     - {static} add_match(transaction_details_df: pd.DataFrame, found_match_index: int, file_name: string, file_path: string, match_type: string, matched_transactions: set[int], matched_invoices: set[Hashable], invoice_row_index: int): void
 }
 
-class ExactAmountDateStrategy {
+class ExactAmountDateStrategy extends MatchingStrategy{
     + execute(...): boolean
 }
 
-class ExactAmountAndExcludeDateStrategy {
+class ExactAmountAndExcludeDateStrategy extends MatchingStrategy{
     + execute(...): boolean
 }
 
-class CombinationTotalStrategy {
+class CombinationTotalStrategy extends MatchingStrategy{
     + execute(...): boolean
 }
 
-class VendorOnlyStrategy {
+class VendorOnlyStrategy extends MatchingStrategy{
     + execute(...): boolean
 }
 
@@ -191,7 +217,7 @@ class AmexAutomationOrchestrator {
     + amex_workbook_path: string
     + folder_path_macro: string
     + month_folder_macro: string
-    + pdf_proc_mng: PDFProcessingManager(start_date, end_date)
+    + pdf_proc_mng: PDFProcessingManager(PDFPlumberProcessor(start_date, end_date, VendorSpecificPattern, GeneralPattern), PDFOCRProcessor(start_date, end_date, GeneralPattern))
     + invoice_matching_manager: InvoiceMatchingManager()
     + template_workbook_manager: TemplateWorkbookManager()
     + amex_workbook_manager: AmexWorkbookManager()
@@ -232,29 +258,19 @@ AmexAutomationOrchestrator *..> WorkbookManager : utilizes
 AmexAutomationOrchestrator *..> PDFProcessingManager : orchestrates
 AmexAutomationOrchestrator *..> DataFrameAdapter : orchestrates
 
-MatchingStrategy <|-- ExactAmountDateStrategy : concrete
-MatchingStrategy <|-- ExactAmountAndExcludeDateStrategy : concrete
-MatchingStrategy <|-- CombinationTotalStrategy : concrete
-MatchingStrategy <|-- VendorOnlyStrategy : concrete
-
 InvoiceMatchingManager ..|> ProgressTrackingMixin : utilizes
 InvoiceMatchingManager *..> MatchingStrategy : depends on
 
 UpdateStrategy ..|> ProgressTrackingMixin : utilizes
-UpdateStrategy <|-- TemplateTransactionDetails2UpdateStrategy : concrete
-UpdateStrategy <|-- TemplateInvoiceUpdateStrategy : concrete
-UpdateStrategy <|-- AmexTransactionDetailsUpdateStrategy : concrete
 
-Worksheet *..> UpdateStrategy : contain
+Worksheet *..> "1..1" UpdateStrategy : contain
 
-WorkbookManager <|-- TemplateWorkbookManager : concrete
-WorkbookManager <|-- AmexWorkbookManager  : concrete
-
-WorkbookManager "1" *--> "1" Workbook : creates
+WorkbookManager *--> "1..1" Workbook : creates
 WorkbookManager ..> UpdateStrategy : sets
 
-PDFProcessor <|-- PDFPlumberProcessor : concrete
-PDFProcessor <|-- PDFOCRProcessor : concrete
+PDFPlumberProcessor *..> VendorSpecificPatternProvider: uses
+PDFPlumberProcessor *..> GeneralPatternProvider: uses
+PDFOCRProcessor *..> GeneralPatternProvider: uses
 
 DataFrameAdapter *..> MondayBoard : utilizes
 
