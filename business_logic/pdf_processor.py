@@ -359,8 +359,8 @@ class PDFPlumberProcessor(PDFProcessor):
 
     def __init__(self, start_date, end_date, vendor_specific_pattern: VendorSpecificPatternProvider, general_pattern: GeneralPatternProvider):
         super().__init__(start_date, end_date)
-        self.vendor_specific_pattern = vendor_specific_pattern
-        self.general_pattern = general_pattern
+        self._vendor_specific_pattern = vendor_specific_pattern
+        self._general_pattern = general_pattern
 
     def extract_total(self, pdf):
 
@@ -368,9 +368,9 @@ class PDFPlumberProcessor(PDFProcessor):
             with pdfplumber.open(pdf.pdf_path) as pdf_text:
                 text = ' '.join(page.extract_text() or '' for page in pdf_text.pages)
 
-            total_patterns = self.vendor_specific_pattern.get_total_pattern(text)
+            total_patterns = self._vendor_specific_pattern.get_total_pattern(text)
             if len(total_patterns) == 0:
-                total_patterns = self.general_pattern.get_total_pattern()
+                total_patterns = self._general_pattern.get_total_pattern()
 
             # Search for the total using the determined patterns
             for pattern in total_patterns:
@@ -394,9 +394,9 @@ class PDFPlumberProcessor(PDFProcessor):
             with pdfplumber.open(pdf.pdf_path) as pdf_text:
                 text = ' '.join(page.extract_text() or '' for page in pdf_text.pages)
 
-            date_patterns = self.vendor_specific_pattern.get_date_pattern(text)
+            date_patterns = self._vendor_specific_pattern.get_date_pattern(text)
             if len(date_patterns) == 0:
-                date_patterns = self.general_pattern.get_date_pattern()
+                date_patterns = self._general_pattern.get_date_pattern()
 
             for pattern in date_patterns:
                 dates = re.findall(pattern, text)
@@ -415,12 +415,12 @@ class PDFOCRProcessor(PDFProcessor):
 
     def __init__(self, start_date, end_date, general_pattern: GeneralPatternProvider):
         super().__init__(start_date, end_date)
-        self.general_pattern = general_pattern
+        self._general_pattern = general_pattern
 
     def extract_total(self, pdf):
 
         try:
-            total_patterns = self.general_pattern.get_total_pattern()
+            total_patterns = self._general_pattern.get_total_pattern()
             images = pdf2image.convert_from_path(pdf.pdf_path, poppler_path=poppler_path)
 
             for image in images:
@@ -439,7 +439,7 @@ class PDFOCRProcessor(PDFProcessor):
     def extract_date(self, pdf):
 
         try:
-            date_patterns = self.general_pattern.get_date_pattern()
+            date_patterns = self._general_pattern.get_date_pattern()
             start_date = dateparser.parse(self.start_date)
             end_date = dateparser.parse(self.end_date)
             images = pdf2image.convert_from_path(pdf.pdf_path, poppler_path=poppler_path)
