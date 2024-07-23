@@ -2,15 +2,13 @@ from typing import Optional
 
 import pandas as pd
 
-from business_logic.update_strategies import UpdateStrategy
-
 
 class Worksheet:
     def __init__(self, name, sheet):
         self.name = name
         self.sheet = sheet
         self.worksheet_dataframe = pd.DataFrame()
-        self.strategy: Optional[UpdateStrategy] = None
+        self.strategy = None
 
     # We will assume whichever sheet we're interacting with Invoices, Transactions Details 2, and so on the sheet.range starts at 'A7' 6/19/2024
     def read_data_as_dataframe(self):
@@ -22,7 +20,7 @@ class Worksheet:
         else:
             return dataframe
 
-    def set_strategy(self, strategy: UpdateStrategy):
+    def set_strategy(self, strategy):
         self.strategy = strategy
 
     def update_sheet(self, data_df) -> None:
