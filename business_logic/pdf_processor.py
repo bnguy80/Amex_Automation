@@ -278,6 +278,14 @@ class VendorSpecificPattern:
             'total': [
 
             ]
+        },
+        'Monday.com': {
+            'date': [
+
+            ],
+            'total': [
+
+            ]
         }
     }
 
@@ -301,9 +309,9 @@ class PDFProcessor(ABC):
     _FALL_BACK_VENDOR = 'Unknown'  # DON'T CHANGE 6/16/2024
 
     def __init__(self, start_date, end_date):
-        self.start_date = start_date
-        self.end_date = end_date
-        self.vendors_list = []
+        self._start_date = start_date
+        self._end_date = end_date
+        self._vendors_list = []
 
     @abstractmethod
     def extract_total(self, pdf):
@@ -315,7 +323,7 @@ class PDFProcessor(ABC):
 
     def get_vendors_from_xlookup_worksheet(self, xlookup_table_worksheet) -> None:
 
-        self.vendors_list.clear()  # Clear existing vendors to avoid duplication
+        self._vendors_list.clear()  # Clear existing vendors to avoid duplication
         sheet = xlookup_table_worksheet.sheet
         vendors_range = sheet.range('A8:A' + str(sheet.cells.last_cell.row)).value
 
@@ -324,23 +332,23 @@ class PDFProcessor(ABC):
             for vendor in vendors_range:
                 # Check if the vendor is a tuple and has a non-None first element
                 if isinstance(vendor, tuple) and vendor[0] is not None:
-                    self.vendors_list.append(vendor[0])
+                    self._vendors_list.append(vendor[0])
                 # Check if the vendor is not a tuple and is not None
                 elif not isinstance(vendor, tuple) and vendor is not None:
-                    self.vendors_list.append(vendor)
+                    self._vendors_list.append(vendor)
                 # Break the loop if None is encountered
                 else:
                     break
         elif vendors_range is not None:
             # If vendors_range is a single value (string or tuple), turn it into a list
-            self.vendors_list = [vendors_range[0]] if isinstance(vendors_range, tuple) else [vendors_range]
+            self._vendors_list = [vendors_range[0]] if isinstance(vendors_range, tuple) else [vendors_range]
 
     def extract_vendor(self, pdf):
 
         lower_file_name = pdf.pdf_name.lower()
         matched_vendor = None
 
-        for vendor in self.vendors_list:
+        for vendor in self._vendors_list:
             if vendor is None:
                 continue
 
@@ -388,8 +396,8 @@ class PDFPlumberProcessor(PDFProcessor):
     def extract_date(self, pdf):
 
         try:
-            start_date = dateparser.parse(self.start_date)
-            end_date = dateparser.parse(self.end_date)
+            start_date = dateparser.parse(self._start_date)
+            end_date = dateparser.parse(self._end_date)
 
             with pdfplumber.open(pdf.pdf_path) as pdf_text:
                 text = ' '.join(page.extract_text() or '' for page in pdf_text.pages)
@@ -440,8 +448,8 @@ class PDFOCRProcessor(PDFProcessor):
 
         try:
             date_patterns = self._general_pattern.get_date_pattern()
-            start_date = dateparser.parse(self.start_date)
-            end_date = dateparser.parse(self.end_date)
+            start_date = dateparser.parse(self._start_date)
+            end_date = dateparser.parse(self._end_date)
             images = pdf2image.convert_from_path(pdf.pdf_path, poppler_path=poppler_path)
 
             for image in images:
