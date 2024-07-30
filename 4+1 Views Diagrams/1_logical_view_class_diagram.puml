@@ -228,6 +228,29 @@ class AmexAutomationOrchestrator {
     + process_amex_transaction_details_worksheet(): void
 }
 
+class SystemConfigurations <<(D, orchid) dataclass>> {
+    -- Instance Variables --
+    + start_date: string
+    + end_date: string
+    + macro_parameter: string
+    + template_x_lookup_table_worksheet_name: string
+    + template_invoices_worksheet_name: string
+    + template_transaction_details_2_worksheet_name: string
+    + amex_transaction_details_worksheet_name: string
+    + template_list_invoice_name_and_path_macro_name: string
+    + template_resize_table_macro_name: string
+    + amex_template_workbooks_path: string
+    + template_workbook_name: string
+    + amex_workbook_path: string
+    + template_workbook_path: string
+
+}
+
+class SystemConfigurationsError <<(X, red) exception>> {
+    -message: string
+    -original_exception: Exception
+}
+
 class ProgressTrackingMixin {
     -- Instance Variables --
     - progress_bar: tqdm
@@ -249,6 +272,7 @@ class DataFrameAdapter {
 Workbook *--> "1..*" Worksheet : contains
 
 PDF ..> PDFError : throws
+SystemConfigurations ..> SystemConfigurationsError : throws
 
 PDFProcessingManager *--> "1..*" PDF : contains
 PDFProcessingManager *..> PDFProcessor : depends on
@@ -256,6 +280,7 @@ PDFProcessingManager *..> PDFProcessor : depends on
 AmexAutomationOrchestrator *..> InvoiceMatchingManager : orchestrates
 AmexAutomationOrchestrator *..> WorkbookManager : utilizes
 AmexAutomationOrchestrator *..> PDFProcessingManager : orchestrates
+AmexAutomationOrchestrator *..> SystemConfigurations : utilizes
 AmexAutomationOrchestrator *..> DataFrameAdapter : orchestrates
 
 InvoiceMatchingManager ..|> ProgressTrackingMixin : utilizes

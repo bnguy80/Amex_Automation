@@ -1,26 +1,63 @@
 import os
 import time
 
+from dataclasses import dataclass, field
+
 from business_logic.workbook_manager import TemplateWorkbookManager, AmexWorkbookManager
 from business_logic.pdf_processor import PDFPlumberProcessor, PDFOCRProcessor, GeneralPattern, VendorSpecificPattern
 from business_logic.pdf_processing_manager import PDFProcessingManager
 from business_logic.invoice_matching_manager import invoice_matching_manager
 from utils.utilities import print_dataframe
 
+@dataclass
+class SystemConfigurations:
+    """
+    Hold configurations used across the automation system components
+    """
+    start_date: str
+    end_date: str
+    macro_parameter_1: str
+    macro_parameter_2: str
+    amex_workbook_name: str  # This is the final workbook that the automation will put the data into; sent to Ana 6/15/2024.
+
+    template_x_lookup_table_worksheet_name: str = field(default="Xlookup table")  # Make sure this is correct, 3/24/24: is correct inside Template - Master.xlsm 6/15/2024
+    template_invoices_worksheet_name: str = field(default="Invoices")
+    template_transaction_details_2_worksheet_name: str = field(default="Transaction Details 2")
+    amex_transaction_details_worksheet_name: str = field(default="Transaction Details")
+
+    template_list_invoice_name_and_path_macro_name: str = field(default="ListFilesInSpecificOrder")  # Macro name to get invoice pdf file names and file_paths from the invoices folder 6/15/2024
+    template_resize_table_macro_name: str = field(default="ResizeTable")
+
+    amex_template_workbooks_path: str = field(default="H:/Amex Automation")  # The directory where the AMEX Statement workbook and Template - Master workbook is located 6/16/2024
+    template_workbook_name: str = field(default="Template - Master.xlsm")  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
+
+    # init=False ensures that can't be set when creating a new instance, will be calculated in __post_init__ 7/29/2024
+    amex_workbook_path: str = field(default=None, init=False)
+    template_workbook_path: str = field(default=None, init=False)
+
+    # Initial creation of object workbook paths shouldn't change 7/29/2024
+    def __post_init__(self):
+        # Build the full paths after initialization
+        if self.template_workbook_name and self.amex_template_workbooks_path:
+            self.template_workbook_path = os.path.join(self.amex_template_workbooks_path, self.template_workbook_name)
+        if self.amex_workbook_name and self.amex_template_workbooks_path:
+            self.amex_workbook_path = os.path.join(self.amex_template_workbooks_path, self.amex_workbook_name)
+
+
 
 class AmexAutomationOrchestrator:
-    XLOOKUP_TABLE_WORKSHEET_NAME: str = "Xlookup table"  # Make sure this is correct, 3/24/24: is correct inside Template - Master.xlsm 6/15/2024
-    TEMPLATE_WORKBOOK_NAME: str = "Template - Master.xlsm"  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
+    XLOOKUP_TABLE_WORKSHEET_NAME: str = "Xlookup table"
+    TEMPLATE_WORKBOOK_NAME: str = "Template - Master.xlsm"
     TEMPLATE_INVOICES_WORKSHEET_NAME: str = "Invoices"
     TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME: str = "Transaction Details 2"
     AMEX_TRANSACTION_DETAILS_WORKSHEET_NAME: str = "Transaction Details"
-    LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: str = "ListFilesInSpecificFolder"  # Macro name to get invoice pdf file Names and file_paths from the invoices folder 6/15/2024
+    LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: str = "ListFilesInSpecificFolder"
     RESIZE_TABLE_MACRO_NAME: str = "ResizeTable"
 
     def __init__(self, amex_path, amex_statement_name, start_date, end_date, macro_parameter_1=None, macro_parameter_2=None):
 
-        self.amex_path = amex_path  # The directory where the AMEX Statement workbook is located 6/16/2024
-        self.amex_statement = amex_statement_name  # This is the final workbook that the automation will put the data into; sent to Ana 6/15/2024.
+        self.amex_path = amex_path
+        self.amex_statement = amex_statement_name
         self.template_workbook_path = os.path.join(self.amex_path, self.TEMPLATE_WORKBOOK_NAME)
         self.amex_workbook_path = str(os.path.join(self.amex_path, self.amex_statement))
         self.macro_parameter_1 = macro_parameter_1
@@ -121,9 +158,17 @@ path_computer = "C:/Users/brand/IdeaProjects/Amex Automation DATA"
 macro_truth = r"H:\Amex Automation\t3nas\APPS\\"
 macro_computer = r"C:\Users\brand\IdeaProjects\Amex Automation DATA\t3nas\APPS\\"
 
+options = SystemConfigurations(
+                amex_template_workbooks_path=path_computer,
+                macro_parameter_1=macro_computer,
+                amex_workbook_name="Amex Corp Feb'24 - Addisu Turi (IT).xlsx",
+                start_date="01/21/2024", end_date="2/21/2024",
+                macro_parameter_2="[02] Feb 2024"
+)
+
 # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
 controller = AmexAutomationOrchestrator(path_computer, "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024", "2/21/2024", macro_computer, "[02] Feb 2024")
 # controller.prepare_template_workbook() # Working on this 7/21/2024
-controller.process_invoices_worksheet()
+# controller.process_invoices_worksheet()
 # controller.process_transaction_details_2_worksheet()
 # controller.process_amex_transaction_details_worksheet()
