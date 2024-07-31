@@ -57,14 +57,18 @@ abstract PDFProcessor {
 }
 
 class PDFPlumberProcessor extends PDFProcessor{
-    - vendor_specific_patter: VendorSpecificPatternProvider
+    -- Instance Variables --
+    - vendor_specific_pattern: VendorSpecificPatternProvider
     - general_pattern: GeneralPatternProvider
+    -- Methods --
     + extract_total(...): pattern
     + extract_date(...): pattern
 }
 
 class PDFOCRProcessor extends PDFProcessor{
+    -- Instance Variables --
     - general_pattern: GeneralPatternProvider
+    -- Methods --
     + extract_total(...): pattern
     + extract_date(...): pattern
 }
@@ -168,8 +172,8 @@ class InvoiceMatchingManager {
    + matched_transactions: set[int]
    + matched_invoices: set[Hashable] // Set of indexes from the DataFrame's rows, indicating which invoices have been matched
    end note
-   - primary_strategies: List[MatchingStrategy] = MatchingStrategy
-   - fallback_strategy: MatchingStrategy = MatchingStrategy
+   - primary_strategies: List[MatchingStrategy]
+   - fallback_strategy: MatchingStrategy
    -- Methods --
    + set_data(invoice_df: pd.DataFrame, transaction_details_df: pd.DataFrame): void
    + execute_invoice_matching(): void
@@ -243,6 +247,8 @@ class SystemConfigurations <<(D, orchid) dataclass>> {
     + template_workbook_name: string
     + amex_workbook_path: string
     + template_workbook_path: string
+    + vendor_specific_pattern : VendorSpecificPattern
+    + general_pattern: GeneralPattern
 
 }
 
@@ -275,27 +281,27 @@ PDF ..> PDFError : throws
 SystemConfigurations ..> SystemConfigurationsError : throws
 
 PDFProcessingManager *--> "1..*" PDF : contains
-PDFProcessingManager *..> PDFProcessor : depends on
+PDFProcessingManager ..> PDFProcessor : uses dependency injection
 
 AmexAutomationOrchestrator *..> InvoiceMatchingManager : orchestrates
-AmexAutomationOrchestrator *..> WorkbookManager : utilizes
+AmexAutomationOrchestrator *..> WorkbookManager : utilizes Composition
 AmexAutomationOrchestrator *..> PDFProcessingManager : orchestrates
-AmexAutomationOrchestrator *..> SystemConfigurations : utilizes
+AmexAutomationOrchestrator *..> SystemConfigurations : utilizes Composition
 AmexAutomationOrchestrator *..> DataFrameAdapter : orchestrates
 
-InvoiceMatchingManager ..|> ProgressTrackingMixin : utilizes
-InvoiceMatchingManager *..> MatchingStrategy : depends on
+InvoiceMatchingManager ..|> ProgressTrackingMixin : utilizes Mixin
+InvoiceMatchingManager ..> MatchingStrategy : uses dependency injection
 
-UpdateStrategy ..|> ProgressTrackingMixin : utilizes
+UpdateStrategy ..|> ProgressTrackingMixin : utilizes Mixin
 
 Worksheet *..> "1..1" UpdateStrategy : contain
 
 WorkbookManager *--> "1..1" Workbook : creates
 WorkbookManager ..> UpdateStrategy : sets
 
-PDFPlumberProcessor *..> VendorSpecificPatternProvider: uses
-PDFPlumberProcessor *..> GeneralPatternProvider: uses
-PDFOCRProcessor *..> GeneralPatternProvider: uses
+PDFPlumberProcessor ..> VendorSpecificPatternProvider: uses dependency injection
+PDFPlumberProcessor ..> GeneralPatternProvider: uses dependency injection
+PDFOCRProcessor ..> GeneralPatternProvider: uses dependency injection
 
 DataFrameAdapter *..> MondayBoard : utilizes
 
