@@ -41,7 +41,11 @@ class SystemConfigurations:
 	template_workbook_path: str = field(default=None, init=False)
 
 	vendor_specific_pattern = VendorSpecificPattern()
-	general_patter = GeneralPattern()
+	general_pattern = GeneralPattern()
+	# primary_strategy = []
+	# fallback_strategy = VendorOnlyStrategy()
+	# text_processor
+	# ocr_processor
 
 	# Initial creation of object workbook paths shouldn't change 7/29/2024
 	def __post_init__(self):
