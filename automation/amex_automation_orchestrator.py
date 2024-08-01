@@ -21,20 +21,17 @@ class SystemConfigurations:
 	macro_parameter_2: str
 	amex_workbook_name: str  # This is the final workbook that the automation will put the data into; sent to Ana 6/15/2024.
 
-	template_x_lookup_table_worksheet_name: str = field(
-		default="Xlookup table")  # Make sure this is correct, 3/24/24: is correct inside Template - Master.xlsm 6/15/2024
+	template_x_lookup_table_worksheet_name: str = field(default="Xlookup table")  # Make sure this is correct, 3/24/24: is correct inside Template - Master.xlsm 6/15/2024
 	template_invoices_worksheet_name: str = field(default="Invoices")
 	template_transaction_details_2_worksheet_name: str = field(default="Transaction Details 2")
 	amex_transaction_details_worksheet_name: str = field(default="Transaction Details")
 
-	template_list_invoice_name_and_path_macro_name: str = field(
-		default="ListFilesInSpecificOrder")  # Macro name to get invoice pdf file names and file_paths from the invoices folder 6/15/2024
+	template_list_invoice_name_and_path_macro_name: str = field(default="ListFilesInSpecificOrder")  # Macro name to get invoice pdf file names and file_paths from the invoices folder 6/15/2024
 	template_resize_table_macro_name: str = field(default="ResizeTable")
 
 	amex_template_workbooks_path: str = field(
 		default="H:/Amex Automation")  # The directory where the AMEX Statement workbook and Template - Master workbook is located 6/16/2024
-	template_workbook_name: str = field(
-		default="Template - Master.xlsm")  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
+	template_workbook_name: str = field(default="Template - Master.xlsm")  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
 
 	# init=False ensures that can't be set when creating a new instance, will be calculated in __post_init__ 7/29/2024
 	amex_workbook_path: str = field(default=None, init=False)
@@ -57,22 +54,22 @@ class SystemConfigurations:
 
 
 class AmexAutomationOrchestrator:
-	XLOOKUP_TABLE_WORKSHEET_NAME: str = "Xlookup table"
-	TEMPLATE_WORKBOOK_NAME: str = "Template - Master.xlsm"
-	TEMPLATE_INVOICES_WORKSHEET_NAME: str = "Invoices"
-	TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME: str = "Transaction Details 2"
-	AMEX_TRANSACTION_DETAILS_WORKSHEET_NAME: str = "Transaction Details"
-	LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: str = "ListFilesInSpecificFolder"
-	RESIZE_TABLE_MACRO_NAME: str = "ResizeTable"
+	# XLOOKUP_TABLE_WORKSHEET_NAME: str = "Xlookup table"
+	# TEMPLATE_WORKBOOK_NAME: str = "Template - Master.xlsm"
+	# TEMPLATE_INVOICES_WORKSHEET_NAME: str = "Invoices"
+	# TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME: str = "Transaction Details 2"
+	# AMEX_TRANSACTION_DETAILS_WORKSHEET_NAME: str = "Transaction Details"
+	# LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: str = "ListFilesInSpecificFolder"
+	# RESIZE_TABLE_MACRO_NAME: str = "ResizeTable"
 
 	def __init__(self, amex_path, amex_statement_name, start_date, end_date, macro_parameter_1=None, macro_parameter_2=None):
 
-		self.amex_path = amex_path
-		self.amex_statement = amex_statement_name
-		self.template_workbook_path = os.path.join(self.amex_path, self.TEMPLATE_WORKBOOK_NAME)
-		self.amex_workbook_path = str(os.path.join(self.amex_path, self.amex_statement))
-		self.macro_parameter_1 = macro_parameter_1
-		self.macro_parameter_2 = macro_parameter_2
+		# self.amex_path = amex_path
+		# self.amex_statement = amex_statement_name
+		# self.template_workbook_path = os.path.join(self.amex_path, self.TEMPLATE_WORKBOOK_NAME)
+		# self.amex_workbook_path = str(os.path.join(self.amex_path, self.amex_statement))
+		# self.macro_parameter_1 = macro_parameter_1
+		# self.macro_parameter_2 = macro_parameter_2
 
 		# Start date of Amex Statement transactions
 		# End date of Amex Statement transactions
@@ -94,8 +91,7 @@ class AmexAutomationOrchestrator:
 		# Also keep in mind that the CLOUDFLARE transaction will only show the total before the split between MARKETING (.5098039216) and COMMS (.4901960784) 7/7/2024
 		# Before updating the worksheet need to clear the contents of the Date, Description, Amount columns from the table first --> VBA macro? 7/7/2024
 
-		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(
-			self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
+		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
 		transaction_details_worksheet.update_sheet(amex_statement_df)
 
 		# After updating the worksheet, resize the table 7/7/2024
@@ -128,8 +124,7 @@ class AmexAutomationOrchestrator:
 		print_dataframe(invoices_worksheet_df, "Invoices DataFrame Before Matching Process:")
 
 		# Convert Transaction Details 2 worksheet into DataFrame
-		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(
-			self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
+		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
 		transaction_details_worksheet_df = transaction_details_worksheet.read_data_as_dataframe()
 		# Print the transaction details DataFrame before matching
 		print_dataframe(transaction_details_worksheet_df, "Transaction Details 2 DataFrame Before Matching Process:")
@@ -158,8 +153,7 @@ class AmexAutomationOrchestrator:
 		transaction_details_worksheet.update_sheet(transaction_details_worksheet_df)
 
 	def process_amex_transaction_details_worksheet(self) -> None:
-		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(
-			self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
+		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
 		transaction_details_worksheet_df = transaction_details_worksheet.read_data_as_dataframe()
 
 		amex_worksheet = self.amex_workbook_manager.get_worksheet(self.AMEX_TRANSACTION_DETAILS_WORKSHEET_NAME)
