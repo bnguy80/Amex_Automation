@@ -15,8 +15,8 @@ class SystemConfigurations:
 	"""
     Hold configurations used across the automation system components
     """
-	start_date: str
-	end_date: str
+	start_date: str  # Start date of Amex Statement transactions
+	end_date: str  # End date of Amex Statement transactions
 	macro_parameter_1: str
 	macro_parameter_2: str
 	amex_workbook_name: str  # This is the final workbook that the automation will put the data into; sent to Ana 6/15/2024.
@@ -29,8 +29,7 @@ class SystemConfigurations:
 	template_list_invoice_name_and_path_macro_name: str = field(default="ListFilesInSpecificOrder")  # Macro name to get invoice pdf file names and file_paths from the invoices folder 6/15/2024
 	template_resize_table_macro_name: str = field(default="ResizeTable")
 
-	amex_template_workbooks_path: str = field(
-		default="H:/Amex Automation")  # The directory where the AMEX Statement workbook and Template - Master workbook is located 6/16/2024
+	amex_template_workbooks_path: str = field(default="H:/Amex Automation")  # The directory where the AMEX Statement workbook and Template - Master workbook is located 6/16/2024
 	template_workbook_name: str = field(default="Template - Master.xlsm")  # This is the workbook that we will be storing the intermediary data for matching AMEX Statement transactions and invoices for 6/15/2024.
 
 	# init=False ensures that can't be set when creating a new instance, will be calculated in __post_init__ 7/29/2024
@@ -62,7 +61,7 @@ class AmexAutomationOrchestrator:
 	# LIST_INVOICE_NAME_AND_PATH_MACRO_NAME: str = "ListFilesInSpecificFolder"
 	# RESIZE_TABLE_MACRO_NAME: str = "ResizeTable"
 
-	def __init__(self, amex_path, amex_statement_name, start_date, end_date, macro_parameter_1=None, macro_parameter_2=None):
+	def __init__(self, system_configurations: SystemConfigurations):
 
 		# self.amex_path = amex_path
 		# self.amex_statement = amex_statement_name
@@ -71,19 +70,19 @@ class AmexAutomationOrchestrator:
 		# self.macro_parameter_1 = macro_parameter_1
 		# self.macro_parameter_2 = macro_parameter_2
 
-		# Start date of Amex Statement transactions
-		# End date of Amex Statement transactions
+		self.systemconfig = system_configurations
 		self.pdf_proc_mng = PDFProcessingManager(
-			PDFPlumberProcessor(start_date, end_date, VendorSpecificPattern(), GeneralPattern()),
-			PDFOCRProcessor(start_date, end_date, GeneralPattern()))
+			PDFPlumberProcessor(self.systemconfig.start_date, self.systemconfig.end_date, self.systemconfig.vendor_specific_pattern, self.systemconfig.general_pattern),
+			PDFOCRProcessor(self.systemconfig.start_date, self.systemconfig.end_date, self.systemconfig.general_pattern)
+		)
 		self.invoice_matching_manager = invoice_matching_manager  # Using a list of strategies to match invoices to transactions. ONLY ONE INSTANCE 6/22/2024.
-		self.template_workbook_manager = TemplateWorkbookManager(self.TEMPLATE_WORKBOOK_NAME, self.template_workbook_path)
+		self.template_workbook_manager = TemplateWorkbookManager(self.systemconfig.template_workbook_name, self.systemconfig.template_workbook_path)
 
 	# self.amex_workbook_manager = AmexWorkbookManager(self.amex_statement, self.amex_workbook_path)  # When this is not commented and program runs then confusion of macro to run Workbook error 7/21/2024
 
 	def prepare_template_workbook(self):
 
-		amex_statement = self.amex_workbook_manager.get_worksheet(self.AMEX_TRANSACTION_DETAILS_WORKSHEET_NAME)
+		amex_statement = self.amex_workbook_manager.get_worksheet(self.systemconfig.amex_transaction_details_worksheet_name)
 		amex_statement_df = amex_statement.read_data_as_dataframe()
 		# Close the Workbook after getting the data so that there is no confusing with running macros in Template - Master.xlsm 7/7/2024
 		self.amex_workbook_manager.workbook.close()
@@ -91,20 +90,20 @@ class AmexAutomationOrchestrator:
 		# Also keep in mind that the CLOUDFLARE transaction will only show the total before the split between MARKETING (.5098039216) and COMMS (.4901960784) 7/7/2024
 		# Before updating the worksheet need to clear the contents of the Date, Description, Amount columns from the table first --> VBA macro? 7/7/2024
 
-		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
+		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.systemconfig.template_transaction_details_2_worksheet_name)
 		transaction_details_worksheet.update_sheet(amex_statement_df)
 
 		# After updating the worksheet, resize the table 7/7/2024
-		self.template_workbook_manager.workbook.call_macro_workbook(self.RESIZE_TABLE_MACRO_NAME)
+		self.template_workbook_manager.workbook.call_macro_workbook(self.systemconfig.template_resize_table_macro_name)
 
 	def process_invoices_worksheet(self):
 
-		# Get initial invoice names and invoice file paths for the "Invoices" worksheet of Template workbook
-		self.template_workbook_manager.workbook.call_macro_workbook(self.LIST_INVOICE_NAME_AND_PATH_MACRO_NAME, self.macro_parameter_1, self.macro_parameter_2)
-		invoice_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
+		# Get initial invoice names and invoice file paths for the "Invoices" worksheet of Template workbook calling the macro "ListFilesInSpecificOrder"
+		self.template_workbook_manager.workbook.call_macro_workbook(self.systemconfig.template_list_invoice_name_and_path_macro_name, self.systemconfig.macro_parameter_1, self.systemconfig.macro_parameter_2)
+		invoice_worksheet = self.template_workbook_manager.get_worksheet(self.systemconfig.template_invoices_worksheet_name)
 
 		# This step is to get the Xlookup table worksheet to be able to get vendors for pdfs
-		xlookup_table_worksheet = self.template_workbook_manager.get_worksheet(self.XLOOKUP_TABLE_WORKSHEET_NAME)
+		xlookup_table_worksheet = self.template_workbook_manager.get_worksheet(self.systemconfig.template_x_lookup_table_worksheet_name)
 
 		# This step populates the pdf_processing_manager with all the pdf data of the path, name, total, date, vendor 7/2/2024
 		self.pdf_proc_mng.populate_pdf_proc_mng_df(invoice_worksheet, xlookup_table_worksheet)
@@ -119,12 +118,12 @@ class AmexAutomationOrchestrator:
 	def process_transaction_details_2_worksheet(self) -> None:
 
 		# Convert the Invoice worksheet into DataFrame
-		invoices_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_INVOICES_WORKSHEET_NAME)
+		invoices_worksheet = self.template_workbook_manager.get_worksheet(self.systemconfig.template_invoices_worksheet_name)
 		invoices_worksheet_df = invoices_worksheet.read_data_as_dataframe()
 		print_dataframe(invoices_worksheet_df, "Invoices DataFrame Before Matching Process:")
 
 		# Convert Transaction Details 2 worksheet into DataFrame
-		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
+		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.systemconfig.template_transaction_details_2_worksheet_name)
 		transaction_details_worksheet_df = transaction_details_worksheet.read_data_as_dataframe()
 		# Print the transaction details DataFrame before matching
 		print_dataframe(transaction_details_worksheet_df, "Transaction Details 2 DataFrame Before Matching Process:")
@@ -153,10 +152,10 @@ class AmexAutomationOrchestrator:
 		transaction_details_worksheet.update_sheet(transaction_details_worksheet_df)
 
 	def process_amex_transaction_details_worksheet(self) -> None:
-		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.TEMPLATE_TRANSACTION_DETAILS_2_WORKSHEET_NAME)
+		transaction_details_worksheet = self.template_workbook_manager.get_worksheet(self.systemconfig.template_transaction_details_2_worksheet_name)
 		transaction_details_worksheet_df = transaction_details_worksheet.read_data_as_dataframe()
 
-		amex_worksheet = self.amex_workbook_manager.get_worksheet(self.AMEX_TRANSACTION_DETAILS_WORKSHEET_NAME)
+		amex_worksheet = self.amex_workbook_manager.get_worksheet(self.systemconfig.amex_transaction_details_worksheet_name)
 		amex_worksheet.update_sheet(transaction_details_worksheet)
 
 
@@ -178,8 +177,7 @@ options = SystemConfigurations(
 )
 
 # Make sure to have "r" and \ at the end to treat as raw string parameter 6/15/2024
-controller = AmexAutomationOrchestrator(path_computer, "Amex Corp Feb'24 - Addisu Turi (IT).xlsx", "01/21/2024",
-										"2/21/2024", macro_computer, "[02] Feb 2024")
+controller = AmexAutomationOrchestrator(options)
 # controller.prepare_template_workbook() # Working on this 7/21/2024
 # controller.process_invoices_worksheet()
 # controller.process_transaction_details_2_worksheet()
